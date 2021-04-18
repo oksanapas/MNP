@@ -1,0 +1,253 @@
+<html>
+<head>
+<title>Demo MNP</title>
+<script>
+var b1=0;
+function myFunction1() {
+if (b1==0){
+document.getElementById("button1").style.background = "navy";
+document.getElementById("display11").style.background="pink";
+document.getElementById("display12").style.background="pink";
+document.getElementById("display31").style.background="pink";
+document.getElementById("display41").style.background="pink";
+b1=1;}
+else{
+document.getElementById("button1").style.background = "#4CAF50";
+document.getElementById("display11").style.background="#F5EEF8";
+document.getElementById("display12").style.background="#F5EEF8";
+document.getElementById("display31").style.background="lightgreen";
+document.getElementById("display41").style.background="#F9E79F";
+  b1=0;}
+}
+
+
+var b2=0;
+function myFunction2() {
+if (b2==0){
+document.getElementById("button2").style.background = "navy";
+document.getElementById("display12").style.background="pink";
+  document.getElementById("display14").style.background="pink";
+  document.getElementById("display33").style.background="pink";
+  document.getElementById("display41").style.background="pink";
+  document.getElementById("display43").style.background="pink";
+  b2=1;}
+else{
+document.getElementById("button2").style.background = "#4CAF50";
+	document.getElementById("display12").style.background="#F5EEF8";
+  document.getElementById("display14").style.background="#F5EEF8";
+  document.getElementById("display33").style.background="lightgreen";
+  document.getElementById("display41").style.background="#F9E79F";
+  document.getElementById("display43").style.background="#F9E79F";
+  b2=0;  }
+}
+
+
+var b3=0;
+function myFunction3() {
+if (b3==0){
+document.getElementById("button3").style.background = "navy";
+document.getElementById("display12").style.background="pink";
+  document.getElementById("display13").style.background="pink";
+  document.getElementById("display21").style.background="pink";
+  document.getElementById("display22").style.background="pink";
+  document.getElementById("display23").style.background="pink";
+  b3=1;}
+else{
+document.getElementById("button3").style.background = "#4CAF50";
+	document.getElementById("display12").style.background="#F5EEF8";
+  document.getElementById("display13").style.background="#F5EEF8";
+  document.getElementById("display21").style.background="lightblue";
+  document.getElementById("display22").style.background="lightblue";
+  document.getElementById("display23").style.background="lightblue";
+  b3=0;  }
+}
+
+var b4=0;
+function myFunction4() {
+if (b4==0){
+document.getElementById("button4").style.background = "navy";
+document.getElementById("display11").style.background="pink";
+document.getElementById("display12").style.background="pink";
+document.getElementById("display24").style.background="pink";
+document.getElementById("display25").style.background="pink";
+document.getElementById("display31").style.background="pink";
+document.getElementById("display32").style.background="pink";
+  b4=1;}
+else{
+document.getElementById("button4").style.background = "#4CAF50";
+document.getElementById("display11").style.background="#F5EEF8";
+document.getElementById("display12").style.background="#F5EEF8";
+document.getElementById("display24").style.background="lightblue";
+document.getElementById("display25").style.background="lightblue";
+document.getElementById("display31").style.background="lightgreen";
+document.getElementById("display32").style.background="lightgreen";
+  b4=0;  }
+}
+
+var b5=0;
+function myFunction5() {
+if (b5==0){
+document.getElementById("button5").style.background = "navy";
+document.getElementById("display24").style.background="pink";
+document.getElementById("display25").style.background="pink";
+document.getElementById("display32").style.background="pink";
+  b5=1;}
+else{
+document.getElementById("button5").style.background = "#4CAF50";
+document.getElementById("display24").style.background="lightblue";
+document.getElementById("display25").style.background="lightblue";
+document.getElementById("display32").style.background="lightgreen";
+  b5=0;  }
+}
+</script>
+
+
+<style>
+
+.all {display:block;
+  column-count: 1;
+  font-family:Comfortaa;
+}
+.tema {
+  font-size:large;
+  text-align:center;
+}
+.item{
+  padding:5px;
+  margin:3px;
+}
+
+.group1 {
+  background-color: #F5EEF8;
+  border-color: #F5EEF8;
+  border-width: 0;
+  border-style: solid;
+}
+
+.group2 {
+  background-color: lightgreen;
+  border-color: lightgreen;
+  border-width: 0;
+  border-style: solid;
+}
+
+.group3 {
+  background-color: lightblue;
+  border-color: lightblue;
+  border-width: 0;
+  border-style: solid;
+}
+
+.group4 {
+  background-color: #F9E79F;
+  border-color: #F9E79F;
+  border-width: 0;
+  border-style: solid;
+}
+
+
+
+.button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin:3px;
+}
+</style>
+</head>
+<body>
+<button onclick="myFunction1()" class="button" id="button1">Папки</button>
+
+<button onclick="myFunction2()" class="button" id="button2">Пошук</button>
+
+<button onclick="myFunction3()" class="button" id="button3">Скретч</button>
+
+<button onclick="myFunction4()" class="button" id="button4">Текст</button>
+
+<button onclick="myFunction5()" class="button" id="button5">Графіка</button>
+
+<table>
+<tr>
+ <td width=50% valign=top> 
+
+  <div class="display1 group1">
+  <div class="item" id="display11">
+  Досліджує і оцінює вплив інформаційних технологій на своє життя, навколишній світ і розвиток [ІФО 1.1]
+  </div>
+</div>
+
+<div class="display2 group1">
+  <div class="item" id="display12">Знаходить, збирає, зберігає, представляє, перетворює, структурує, аналізує і узагальнює дані різних типів [ІФО 1.2]</div>
+</div>
+
+<div class="display3 group1">
+  <div class="item" id="display13">Будує інформаційні моделі об'єктів, явищ і процесів [ІФО 1.3]</div>
+</div>
+
+<div class="display3 group1">
+  <div class="item" id="display14">Критично оцінює інформацію, отриману з різних джерел [ІФО 1.4]</div>
+</div>
+</td>
+
+
+<td width=50% valign=top>
+<div class="display12 group3">
+  <div class="item" id="display21">Розробляє і реалізовує алгоритми [ІФО 2.1]</div>
+</div>
+
+<div class="display13 group3">
+  <div class="item" id="display22">Створює і налагоджує програмні проекти [ІФО 2.2]</div>
+</div>
+
+<div class="display14 group3">
+  <div class="item" id="display23">Розробляє модульні проекти [ІФО 2.3]</div>
+</div>
+
+<div class="display15 group3">
+  <div class="item" id="display24">Створює та опрацьовує інформаційні продукти з використанням даних різних типів [ІФО 2.4]</div>
+</div>
+
+<div class="display16 group3">
+  <div class="item" id="display25">Співпрацює в команді для створення інформаційного продукту [ІФО 2.5]</div>
+</div>
+</td>
+</tr>
+
+
+<tr>
+<td width=50% valign=top>
+<div class="display4 group2">
+  <div class="item"  id="display31">Використовує широкий спектр цифрових пристроїв [ІФО 3.1]</div>
+</div>
+
+<div class="display5 group2">
+  <div class="item"  id="display32">Організовує власне інформаційне середовище [ІФО 3.2]</div>
+</div>
+
+<div class="display6 group2">
+  <div class="item"  id="display33">Використовує комунікаційні технології та мережі для власного розвитку, спілкування і співпраці [ІФО 3.3]</div>
+</div>
+</td>
+
+<td width=50% valign=top>
+<div class="display18 group4">
+  <div class="item" id="display41">Обґрунтовує вплив технологій на навколишнє середовище і власний добробут, захищає себе і свій інформаційний простір [ІФО 4.1]</div>
+</div>
+
+<div class="display19 group4">
+  <div class="item" id="display42">Усвідомлено дотримується норм соціальної, міжкультурної і міжособистісної взаємодії [ІФО 4.2]</div>
+</div>
+
+<div class="display20 group4">
+  <div class="item" id="display43">Усвідомлено дотримується норм правової взаємодії [ІФО 4.3]</div>
+</div>  
+  </td>
+</tr>
+</table>
+</body>
+</html>
