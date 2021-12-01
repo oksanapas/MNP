@@ -1,186 +1,247 @@
 <html>
 <head>
-<title>Demo MNP</title>
 <script>
 var b1 = 0;
-
 function myFunction1() {
-  if (b1 == 0) {
-    document.getElementById("button1").style.background = "navy";
-    document.getElementById("display11").style.background = "pink";
-    document.getElementById("display12").style.background = "pink";
-    document.getElementById("display31").style.background = "pink";
-    document.getElementById("display41").style.background = "pink";
-    document.getElementById("display112").style.background = "pink";
-    document.getElementById("display113").style.background = "pink";
-    document.getElementById("display121").style.background = "pink";
-    document.getElementById("display123").style.background = "pink";
-    document.getElementById("display311").style.background = "pink";
-    document.getElementById("display411").style.background = "pink";
-    b1 = 1;
-  } else {
+	let mas=[11,12,25,31,32,41,111,112,121,253,311,312,322,411,1112,1121,1214,2531,3111,3112,3122,3221,4111,3311,331,33];	
+	if (b1 == 0) {
+		document.getElementById("button1").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b1 = 1;
+	}
+ else { 
     document.getElementById("button1").style.background = "#4CAF50";
-    document.getElementById("display11").style.background = "#F5EEF8";
-    document.getElementById("display12").style.background = "#F5EEF8";
-    document.getElementById("display31").style.background = "lightgreen";
-    document.getElementById("display41").style.background = "#F9E79F";
-    document.getElementById("display112").style.background = "#F5EEF8";
-    document.getElementById("display113").style.background = "#F5EEF8";
-    document.getElementById("display121").style.background = "#F5EEF8";
-    document.getElementById("display123").style.background = "#F5EEF8";
-    document.getElementById("display311").style.background = "lightgreen";
-    document.getElementById("display411").style.background = "#F9E79F";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
     b1 = 0;
   }
 }
 
-
 var b2 = 0;
-
 function myFunction2() {
-  if (b2 == 0) {
-    document.getElementById("button2").style.background = "navy";
-    document.getElementById("display12").style.background = "pink";
-    document.getElementById("display14").style.background = "pink";
-    document.getElementById("display33").style.background = "pink";
-    document.getElementById("display41").style.background = "pink";
-    document.getElementById("display43").style.background = "pink";
-    document.getElementById("display122").style.background = "pink";
-    document.getElementById("display141").style.background = "pink";
-    document.getElementById("display142").style.background = "pink";
-    document.getElementById("display331").style.background = "pink";
-    document.getElementById("display411").style.background = "pink";
-    document.getElementById("display431").style.background = "pink";
-    b2 = 1;
-  } else {
+	let mas=[1221,1223,1411,1412,1421,1422,2542,4312,4313,122,141,142,254,431,12,14,25,43];	
+	if (b2 == 0) {
+		document.getElementById("button2").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b2 = 1;
+	}
+ else { 
     document.getElementById("button2").style.background = "#4CAF50";
-    document.getElementById("display12").style.background = "#F5EEF8";
-    document.getElementById("display14").style.background = "#F5EEF8";
-    document.getElementById("display33").style.background = "lightgreen";
-    document.getElementById("display41").style.background = "#F9E79F";
-    document.getElementById("display43").style.background = "#F9E79F";
-    document.getElementById("display122").style.background = "#F5EEF8";
-    document.getElementById("display141").style.background = "#F5EEF8";
-    document.getElementById("display142").style.background = "#F5EEF8";
-    document.getElementById("display331").style.background = "lightgreen";
-    document.getElementById("display411").style.background = "#F9E79F";
-    document.getElementById("display431").style.background = "#F9E79F";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
     b2 = 0;
   }
 }
 
 
 var b3 = 0;
-
 function myFunction3() {
-  if (b3 == 0) {
-    document.getElementById("button3").style.background = "navy";
-    document.getElementById("display12").style.background = "pink";
-    document.getElementById("display13").style.background = "pink";
-    document.getElementById("display21").style.background = "pink";
-    document.getElementById("display22").style.background = "pink";
-    document.getElementById("display23").style.background = "pink";
-    document.getElementById("display122").style.background = "pink";
-    document.getElementById("display131").style.background = "pink";
-    document.getElementById("display132").style.background = "pink";
-    document.getElementById("display212").style.background = "pink";
-    document.getElementById("display221").style.background = "pink";
-    document.getElementById("display222").style.background = "pink";
-    document.getElementById("display231").style.background = "pink";
-    document.getElementById("display211").style.background = "pink";
-    b3 = 1;
-  } else {
+	let mas=[1222,1313,1321,2122,2211,2212,2221,2121,2213,2111,2112,2113,2512,122,131,132,212,221,212,211,251,12,13,21,22,25];	
+	if (b3 == 0) {
+		document.getElementById("button3").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b3 = 1;
+	}
+ else { 
     document.getElementById("button3").style.background = "#4CAF50";
-    document.getElementById("display12").style.background = "#F5EEF8";
-    document.getElementById("display13").style.background = "#F5EEF8";
-    document.getElementById("display21").style.background = "lightblue";
-    document.getElementById("display22").style.background = "lightblue";
-    document.getElementById("display23").style.background = "lightblue";
-    document.getElementById("display122").style.background = "#F5EEF8";
-    document.getElementById("display131").style.background = "#F5EEF8";
-    document.getElementById("display132").style.background = "#F5EEF8";
-    document.getElementById("display212").style.background = "lightblue";
-    document.getElementById("display221").style.background = "lightblue";
-    document.getElementById("display222").style.background = "lightblue";
-    document.getElementById("display231").style.background = "lightblue";
-    document.getElementById("display211").style.background = "lightblue";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
     b3 = 0;
   }
 }
 
 var b4 = 0;
-
 function myFunction4() {
-  if (b4 == 0) {
-    document.getElementById("button4").style.background = "navy";
-    document.getElementById("display11").style.background = "pink";
-    document.getElementById("display12").style.background = "pink";
-    document.getElementById("display24").style.background = "pink";
-    document.getElementById("display25").style.background = "pink";
-    document.getElementById("display31").style.background = "pink";
-    document.getElementById("display32").style.background = "pink";
-    document.getElementById("display112").style.background = "pink";
-    document.getElementById("display123").style.background = "pink";
-    document.getElementById("display241").style.background = "pink";
-    document.getElementById("display243").style.background = "pink";
-    document.getElementById("display252").style.background = "pink";
-    document.getElementById("display254").style.background = "pink";
-    document.getElementById("display311").style.background = "pink";
-    document.getElementById("display321").style.background = "pink";
-    b4 = 1;
-  } else {
+	let mas=[1122,1231,2411,2431,2435,2521,3113,3212,112,123,241,243,252,311,321,11,12,24,25,31,32];	
+	if (b4 == 0) {
+		document.getElementById("button4").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b4 = 1;
+	}
+ else { 
     document.getElementById("button4").style.background = "#4CAF50";
-    document.getElementById("display11").style.background = "#F5EEF8";
-    document.getElementById("display12").style.background = "#F5EEF8";
-    document.getElementById("display24").style.background = "lightblue";
-    document.getElementById("display25").style.background = "lightblue";
-    document.getElementById("display31").style.background = "lightgreen";
-    document.getElementById("display32").style.background = "lightgreen";
-    document.getElementById("display112").style.background = "#F5EEF8";
-    document.getElementById("display123").style.background = "#F5EEF8";
-    document.getElementById("display241").style.background = "lightblue";
-    document.getElementById("display243").style.background = "lightblue";
-    document.getElementById("display252").style.background = "lightblue";
-    document.getElementById("display254").style.background = "lightblue";
-    document.getElementById("display311").style.background = "lightgreen";
-    document.getElementById("display321").style.background = "lightgreen";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
     b4 = 0;
   }
 }
 
 var b5 = 0;
-
 function myFunction5() {
-  if (b5 == 0) {
-    document.getElementById("button5").style.background = "navy";
-    document.getElementById("display24").style.background = "pink";
-    document.getElementById("display25").style.background = "pink";
-    document.getElementById("display32").style.background = "pink";
-    document.getElementById("display242").style.background = "pink";
-    document.getElementById("display243").style.background = "pink";
-    document.getElementById("display251").style.background = "pink";
-    document.getElementById("display252").style.background = "pink";
-    document.getElementById("display253").style.background = "pink";
-    document.getElementById("display321").style.background = "pink";
-    b5 = 1;
-  } else {
+	let mas=[2421,2432,2533,3213,242,243,243,321,24,25,32];	
+	if (b5 == 0) {
+		document.getElementById("button5").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b5 = 1;
+	}
+ else { 
     document.getElementById("button5").style.background = "#4CAF50";
-    document.getElementById("display24").style.background = "lightblue";
-    document.getElementById("display25").style.background = "lightblue";
-    document.getElementById("display32").style.background = "lightgreen";
-    document.getElementById("display242").style.background = "lightblue";
-    document.getElementById("display243").style.background = "lightblue";
-    document.getElementById("display251").style.background = "lightblue";
-    document.getElementById("display252").style.background = "lightblue";
-    document.getElementById("display253").style.background = "lightblue";
-    document.getElementById("display321").style.background = "lightgreen";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
     b5 = 0;
   }
 }
 
+var b6 = 0;
+function myFunction6() {
+	let mas=[1112,1211,2434,2532,2433,4313,111,121,243,253,431,11,12,24,25,43];	
+	if (b6 == 0) {
+		document.getElementById("button6").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b6 = 1;
+	}
+ else { 
+    document.getElementById("button6").style.background = "#009688";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
+    b6 = 0;
+  }
+}
+
+var b7 = 0;
+function myFunction7() {
+	let mas=[1131,1132,2523,3121,3123,3214,3312,3314,4222,4113,113,252,312,321,331,422,411,11,25,31,32,33,42,41];	
+	if (b7 == 0) {
+		document.getElementById("button7").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b7 = 1;
+	}
+ else { 
+    document.getElementById("button7").style.background = "#009688";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
+    b7 = 0;
+  }
+}
+
+var b8 = 0;
+function myFunction8() {
+	let mas=[1111,1312,1322,1212,2114,2214,2222,2223,2311,2312,2313,2314,2541,111,131,132,121,211,221,222,231,254,11,13,12,21,22,23,25];	
+	if (b8 == 0) {
+		document.getElementById("button8").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b8 = 1;
+	}
+ else { 
+    document.getElementById("button8").style.background = "#009688";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
+    b8 = 0;
+  }
+}
+
+var b9 = 0;
+function myFunction9() {
+	let mas=[2522,3313,3315,4112,4121,4122,4123,4131,4211,4212,4213,4221,4223,252,331,411,412,413,421,422,25,33,41,42];	
+	if (b9 == 0) {
+		document.getElementById("button9").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b9 = 1;
+	}
+ else { 
+    document.getElementById("button9").style.background = "#009688";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
+    b9 = 0;
+  }
+}
+
+var b10 = 0;
+function myFunction10() {
+	let mas=[1213,1311,1232,2511,2436,2422,3211,4311,121,131,123,251,243,242,321,431,12,13,25,24,32,43];	
+	if (b10 == 0) {
+		document.getElementById("button10").style.background = "navy";
+		for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			document.getElementById(n).style.background = "pink";
+		}
+		b10 = 1;
+	}
+ else { 
+    document.getElementById("button10").style.background = "#009688";
+	for (let x = 0; x < mas.length; x++){
+			let n="display"+mas[x].toString();
+			if (document.getElementById(n).classList.contains("group1")){document.getElementById(n).style.background = "#F5EEF8";}
+			if (document.getElementById(n).classList.contains("group2")){document.getElementById(n).style.background = "lightgreen";}
+			if (document.getElementById(n).classList.contains("group3")){document.getElementById(n).style.background = "lightblue";}
+			if (document.getElementById(n).classList.contains("group4")){document.getElementById(n).style.background = "#F9E79F";}
+		}
+    b10 = 0;
+  }
+}
 </script>
-
-
 <style>
 
 .all {display:block;
@@ -238,272 +299,446 @@ function myFunction5() {
   margin:3px;
 }
 
+.button6 {
+  background-color: #009688; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin:3px;
+}
+
 td{vertical-align:top;}
 </style>
 </head>
 <body>
-<button onclick="myFunction1()" class="button" id="button1">Папки</button>
-
-<button onclick="myFunction2()" class="button" id="button2">Пошук</button>
-
-<button onclick="myFunction3()" class="button" id="button3">Скретч</button>
-
-<button onclick="myFunction4()" class="button" id="button4">Текст</button>
-
-<button onclick="myFunction5()" class="button" id="button5">Графіка</button>
-
+<button onclick="myFunction1()" class="button" id="button1">Власне цифрове середовище</button>
+<button onclick="myFunction2()" class="button" id="button2">Пошук в інтернеті</button>
+<button onclick="myFunction3()" class="button" id="button3">Анімації та узори</button>
+<button onclick="myFunction4()" class="button" id="button4">Текстові документи</button>
+<button onclick="myFunction5()" class="button" id="button5">Комп'ютерна графіка</button>
+<p>
+  <button onclick="myFunction6()" class="button6" id="button6">Презентації та анімації</button>
+  <button onclick="myFunction7()" class="button6" id="button7">Інформаційні системи та мережі</button>
+  <button onclick="myFunction8()" class="button6" id="button8">Ігрові проєкти</button>
+  <button onclick="myFunction9()" class="button6" id="button9">Спілкування в інтернеті</button>
+  <button onclick="myFunction10()" class="button6" id="button10">Інформаційна мозаїка</button>
+</p>
 <table>
   <tr>
-    <td valign=top width=20%>
+    <td colspan=3>
+      <div class="group1">
+        <h3>Робота з інформацією, даними, моделями
+        </h3>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td valign=top width=10%>
       <div class="display1 group1">
-        <div class="item" id="display11">
+        <div class="item group1" id="display11">
           Досліджує і оцінює вплив інформаційних технологій на своє життя, навколишній світ і розвиток [ІФО 1.1]</div>
       </div>
     </td>
-    <td valign=top>
+    <td valign=top width=25%>
       <div class="display3 group1">
-        <div class="item" id="display111">пояснює призначення і використовує цифрові пристрої і технології для здійснення інформаційних процесів у повсякденному житті та навчальній діяльності [6 ІФО 1.1.1]</div>
+        <div class="item group1" id="display111">пояснює призначення і використовує цифрові пристрої і технології для здійснення інформаційних процесів у повсякденному житті та навчальній діяльності [6 ІФО 1.1.1]</div>
       </div>
       <div class="display3 group1">
-        <div class="item" id="display112">обирає цифрові пристрої та/чи інформаційні технології для розв'язання задачі [6 ІФО 1.1.2]</div>
+        <div class="item group1" id="display112">обирає цифрові пристрої та/чи інформаційні технології для розв'язання задачі [6 ІФО 1.1.2]</div>
       </div>
       <div class="display3 group1">
-        <div class="item" id="display113">висловлює міркування щодо сучасних інформаційних технологій і їх місця в суспільстві [6 ІФО 1.1.3]</div>
+        <div class="item group1" id="display113">висловлює міркування щодо сучасних інформаційних технологій і їх місця в суспільстві [6 ІФО 1.1.3]</div>
       </div>
     </td>
-
-    <td valign=top width=20%>
-      <div class="display12 group3">
-        <div class="item" id="display21">Розробляє і реалізовує алгоритми [ІФО 2.1]</div>
-      </div>
-    </td>
-
-    <td valign=top>
-      <div class="display3 group3">
-        <div class="item" id="display211">розробляє алгоритми, поєднуючи базові структури, для розв'язання задач [6 ІФО 2.1.1]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display212">корегує алгоритм за потреби [6 ІФО 2.1.2]</div>
-      </div>
+    <td>
+      <div class="item group1" id="display1111">розрізняє та пояснює інформаційні процеси в навколишньому середовищі в контексті розв’язання конкретних задач [6 ІФО 1.1.1-1]</div>
+      <div class="item group1" id="display1112"> розпізнає життєві, навчальні проблеми, для розв’язання яких можна застосувати цифрові технології [6 ІФО 1.1.1-2]</div>
+      <div class="item group1" id="display1121">описує призначення та застосування цифрових пристроїв і технологій для здійснення інформаційних процесів з використанням відповідної термінології [6 ІФО 1.1.2-1]</div>
+      <div class="item group1" id="display1122"> пояснює вибір та використовує цифрові пристрої і технології для розв’язання конкретних задач [6 ІФО 1.1.2-2]</div>
+      <div class="item group1" id="display1131">наводить приклади поширення цифрових інновацій у громаді, суспільстві, застосування їх для навчання, комунікації і творчості [6 ІФО 1.1.3-1]</div>
+      <div class="item  group1" id="display1132"> описує та оцінює позитивний і негативний вплив інформаційних технологій на власне життя і суспільство [6 ІФО 1.1.3-2]</div>
     </td>
   </tr>
-
   <tr>
     <td valign=top>
       <div class="display2 group1">
-        <div class="item" id="display12">Знаходить, збирає, зберігає, представляє, перетворює, структурує, аналізує і узагальнює дані різних типів [ІФО 1.2]</div>
+        <div class="item group1" id="display12">Знаходить, збирає, зберігає, представляє, перетворює, структурує, аналізує і узагальнює дані різних типів [ІФО 1.2]</div>
       </div>
     </td>
     <td valign=top>
       <div class="display3 group1">
-        <div class="item" id="display121">визначає потребу в отриманні даних, шукає, збирає і зберігає дані, застосовуючи різні пристрої, технології і способи [6 ІФО 1.2.1]</div>
+        <div class="item group1" id="display121">визначає потребу в отриманні даних, шукає, збирає і зберігає дані, застосовуючи різні пристрої, технології і способи [6 ІФО 1.2.1]</div>
       </div>
       <div class="display3 group1">
-        <div class="item" id="display122">аналізує дані для підтвердження чи спростування тверджень [6 ІФО 1.2.2]</div>
+        <div class="item group1" id="display122">аналізує дані для підтвердження чи спростування тверджень [6 ІФО 1.2.2]</div>
       </div>
       <div class="display3 group1">
-        <div class="item" id="display123">обирає спосіб структурування і візуалізації зібраних чи отриманих даних з використанням різних видів інфографіки [6 ІФО 1.2.3]</div>
-      </div>
-
-    </td>
-    <td>
-      <div class="display13 group3">
-        <div class="item" id="display22">Створює і налагоджує програмні проекти [ІФО 2.2]</div>
+        <div class="item group1" id="display123">обирає спосіб структурування і візуалізації зібраних чи отриманих даних з використанням різних видів інфографіки [6 ІФО 1.2.3]</div>
       </div>
     </td>
     <td>
-      <div class="display3 group3">
-        <div class="item" id="display221">складає і налагоджує програмні проекти для розв'язання задач/проблем і творчого самовираження [6 ІФО 2.2.1]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display222">виявляє наполегливість, коли стикається з помилками і проблемами під час роботи над проектом [6 ІФО 2.2.2]</div>
-      </div>
+      <div class="item group1" id="display1211">визначає формат і обсяг даних, потрібних для розв’язання задачі, підтвердження чи спростування тверджень [6 ІФО 1.2.1-1]</div>
+      <div class="item group1" id="display1212">
+        обирає та застосовує цифрові інструменти для збирання чи отримання даних [6 ІФО 1.2.1-2] </div>
+      <div class="item group1" id="display1213">розпізнає дані різних типів і наводить їх приклади [6 ІФО 1.2.1-3] </div>
+      <div class="item group1" id="display1214">зберігає результати пошуку або власної роботи на зовнішніх носіях або мережних/хмарних ресурсах [6 ІФО 1.2.1-4] </div>
+      <div class="item group1" id="display1221">обирає ключові слова і методи пошуку, формулює різні типи запитань та/або запитів для пошуку потрібної інформації та/чи файлів на носіях [6 ІФО 1.2.2-1] </div>
+      <div class="item group1" id="display1222">визначає прості закономірності на підставі аналізу набору даних [6 ІФО 1.2.2-2] </div>
+      <div class="item group1" id="display1223">створює / обирає і подає набори даних для перевірки чи доведення тверджень [6 ІФО 1.2.2-3] </div>
+      <div class="item group1" id="display1231">представляє дані, створюючи таблиці, схеми, діаграми тощо, з виконанням необхідних проміжних перетворень [6 ІФО 1.2.3-1] </div>
+      <div class="item group1" id="display1232">пояснює схеми і діаграми систем реального і віртуального світу [6 ІФО 1.2.3-2]</div>
     </td>
   </tr>
   <tr>
     <td valign=top>
       <div class="display3 group1">
-        <div class="item" id="display13">Будує інформаційні моделі об'єктів, явищ і процесів [ІФО 1.3]</div>
+        <div class="item group1" id="display13">Будує інформаційні моделі об'єктів, явищ і процесів [ІФО 1.3]</div>
       </div>
     </td>
     <td>
-
       <div class="display3 group1">
-        <div class="item" id="display131">обирає істотні властивості об'єктів і їх значення, необхідні для представлення цих об'єктів у контексті розв'язання життєвої/навчальної проблеми [6 ІФО 1.3.1]</div>
+        <div class="item group1" id="display131">обирає істотні властивості об'єктів і їх значення, необхідні для представлення цих об'єктів у контексті розв'язання життєвої/навчальної проблеми [6 ІФО 1.3.1]</div>
       </div>
       <div class="display3 group1">
-        <div class="item" id="display132">використовує готові чи створені моделі для дослідження, експериментує з ними [6 ІФО 1.3.2]</div>
+        <div class="item group1" id="display132">використовує готові чи створені моделі для дослідження, експериментує з ними [6 ІФО 1.3.2]</div>
       </div>
     </td>
     <td>
-      <div class="display14 group3">
-        <div class="item" id="display23">Розробляє модульні проекти [ІФО 2.3]</div>
-      </div>
-    </td>
-    <td>
-      <div class="display3 group3">
-        <div class="item" id="display231">розділяє задачу на підзадачі та розв'язує їх, комбінуючи проект із блоків команд [6 ІФО 2.3.1]</div>
-      </div>
+      <div class="item group1" id="display1311">оцінює істотність/ важливість/ необхідність/ адекватність інформації в контексті розв’язання життєвої/навчальної проблеми [6 ІФО 1.3.1-1]</div>
+      <div class="item group1" id="display1312">обирає властивості об’єктів, що є істотними для розв’язання задачі, і визначає їх допустимі значення [6 ІФО 1.3.1-2]</div>
+      <div class="item group1" id="display1313">
+        пояснює прості причинно-наслідкові зв’язки в готовій моделі, використовуючи шаблон “якщо, то”, “що треба зробити, щоб” [6 ІФО 1.3.1-3]</div>
+      <div class="item group1" id="display1321">
+        планує і реалізує експеримент з готовими чи створеними моделями для підтвердження чи спростування гіпотези [6 ІФО 1.3.2-1]</div>
+      <div class="item group1" id="display1322">
+        робить висновки, наскільки отримані результати експерименту з моделлю відповідають гіпотезі/прогнозу [6 ІФО 1.3.2-2]</div>
     </td>
   </tr>
   <tr>
     <td>
       <div class="display3 group1">
-        <div class="item" id="display14">Критично оцінює інформацію, отриману з різних джерел [ІФО 1.4]</div>
+        <div class="item group1" id="display14">Критично оцінює інформацію, отриману з різних джерел [ІФО 1.4]</div>
       </div>
     </td>
     <td>
       <div class="display3 group1">
-        <div class="item" id="display141">пояснює вплив джерел інформації на формування власних поглядів та інших точок зору [6 ІФО 1.4.1]</div>
+        <div class="item group1" id="display141">пояснює вплив джерел інформації на формування власних поглядів та інших точок зору [6 ІФО 1.4.1]</div>
       </div>
       <div class="display3 group1">
-        <div class="item" id="display142">будує власні судження про медіатексти, визначаючи достовірність інформації та надійність джерел [6 ІФО 1.4.2]</div>
+        <div class="item group1" id="display142">будує власні судження про медіатексти, визначаючи достовірність інформації та надійність джерел [6 ІФО 1.4.2]</div>
       </div>
     </td>
     <td>
-      <div class="display15 group3">
-        <div class="item" id="display24">Створює та опрацьовує інформаційні продукти з використанням даних різних типів [ІФО 2.4]</div>
-      </div>
+      <div class="item group1" id="display1411">розпізнає факти і судження в інформаційних джерелах [6 ІФО 1.4.1-1]</div>
+      <div class="item group1" id="display1412">порівнює інформацію з різних джерел за наданими критеріями [6 ІФО 1.4.1-2]</div>
+      <div class="item group1" id="display1421">наводить аргументи щодо надійності джерел і достовірності інформації в медіатекстах [6 ІФО 1.4.2-1]</div>
+      <div class="item group1" id="display1422">використовує запропоновані ресурси для перевірки сумнівної інформації і надійності джерел [6 ІФО 1.4.2-2]</div>
     </td>
-    <td>
-      <div class="display3 group3">
-        <div class="item" id="display241">оцінює власні можливості і доступні ресурси для створення інформаційних продуктів з метою розв'язання життєвих/навчальних проблем [6 ІФО 2.4.1]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display242">пояснює вибір програмних засобів для опрацювання даних різних типів (принаймні трьох) і створення відповідних інформаційних продуктів [6 ІФО 2.4.2]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display243">створює інформаційні продукти та оцінює їх якість за вказаними критеріями [6 ІФО 2.4.3]</div>
+
+  </tr>
+  <tr>
+    <td colspan=3>
+      <div class="group2">
+        <h3>
+          Створення інформаційних продуктів
+        </h3>
       </div>
     </td>
   </tr>
   <tr>
-    <td></td>
-    <td></td>
-    <td>
-      <div class="display16 group3">
-        <div class="item" id="display25">Співпрацює в команді для створення інформаційного продукту [ІФО 2.5]</div>
+    <td valign=top>
+      <div class="display12 group2">
+        <div class="item group2" id="display21">Розробляє і реалізовує алгоритми [ІФО 2.1]</div>
+      </div>
+    </td>
+    <td valign=top>
+      <div class="display3 group2">
+        <div class="item group2" id="display211">розробляє алгоритми, поєднуючи базові структури, для розв'язання задач [6 ІФО 2.1.1]</div>
+      </div>
+      <div class="display3 group2">
+        <div class="item group2" id="display212">корегує алгоритм за потреби [6 ІФО 2.1.2]</div>
       </div>
     </td>
     <td>
-      <div class="display3 group3">
-        <div class="item" id="display251">складає план виконання своєї роботи із створення інформаційного продукту відповідно до ролі в групі [6 ІФО 2.5.1]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display252">пояснює роль членів групи і користь співробітництва для виконання спільного завдання із створення інформаційного продукту [6 ІФО 2.5.2]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display253">бере участь у спільному створенні інформаційного продукту, враховуючи власний і груповий емоційний стан [6 ІФО 2.5.3]</div>
-      </div>
-      <div class="display3 group3">
-        <div class="item" id="display254">коментує свою та чужу діяльність із створення інформаційного продукту, за потреби надає конструктивні відгуки [6 ІФО 2.5.4]</div>
+      <div class="item group2" id="display2111">складає лінійні, розгалужені та циклічні алгоритми для розв’язання задач [6 ІФО 2.1.1-1]</div>
+      <div class="item group2" id="display2112">представляє алгоритм одним чи кількома способами [6 ІФО 2.1.1-2]</div>
+      <div class="item group2" id="display2113"> поєднує базові структури для розв’язання задачі [6 ІФО 2.1.1-3]</div>
+      <div class="item group2" id="display2114"> пропонує способи перевірки коректності алгоритму та використовує їх [6 ІФО 2.1.1-4]</div>
+      <div class="item group2" id="display2121">
+        знаходить, пояснює і пропонує варіанти виправлення простих логічних помилок [6 ІФО 2.1.2-1]</div>
+      <div class="item group2" id="display2122"> робить висновок щодо відповідності алгоритму для розв’язання задачі [6 ІФО 2.1.2-2]
       </div>
     </td>
   </tr>
-
-
-
-
   <tr>
     <td>
-      <div class="display4 group2">
-        <div class="item" id="display31">Використовує широкий спектр цифрових пристроїв [ІФО 3.1]</div>
+      <div class="display13 group2">
+        <div class="item group2" id="display22">Створює і налагоджує програмні проекти [ІФО 2.2]</div>
       </div>
     </td>
     <td>
-      <div class="display4 group2">
-        <div class="item" id="display311">розуміє призначення, можливості та обмеження цифрових пристроїв різного типу, зумовлені їх складовими, використовує їх для власних потреб у навчанні і житті [6 ІФО 3.1.1]</div>
+      <div class="display3 group2">
+        <div class="item group2" id="display221">складає і налагоджує програмні проекти для розв'язання задач/проблем і творчого самовираження [6 ІФО 2.2.1]</div>
       </div>
-      <div class="display4 group2">
-        <div class="item" id="display312">пояснює взаємозв'язок між апаратною і програмною складовими інформаційної системи [6 ІФО 3.1.2]</div>
-      </div>
-    </td>
-
-    <td>
-      <div class="display18 group4">
-        <div class="item" id="display41">Обґрунтовує вплив технологій на навколишнє середовище і власний добробут, захищає себе і свій інформаційний простір [ІФО 4.1]</div>
+      <div class="display3 group2">
+        <div class="item group2" id="display222">виявляє наполегливість, коли стикається з помилками і проблемами під час роботи над проектом [6 ІФО 2.2.2]</div>
       </div>
     </td>
     <td>
-      <div class="display18 group4">
-        <div class="item" id="display411">описує вплив цифрових технологій на навколишнє середовище і добробут суспільства [6 ІФО 4.1.1]</div>
-      </div>
-      <div class="display18 group4">
-        <div class="item" id="display412">дотримується правил кібербезпеки [6 ІФО 4.1.2]</div>
-      </div>
-      <div class="display18 group4">
-        <div class="item" id="display413">розрізняє себе в реальному і віртуальному світі, передбачає власний "цифровий слід" [6 ІФО 4.1.3]</div>
-      </div>
-
-
-
+      <div class="item group2" id="display2211">наводить приклади виконавців і команд, які вони виконують [6 ІФО 2.2.1-1]</div>
+      <div class="item group2" id="display2212">створює і виконує програмний проект у середовищі програмування (візуальне, блокове або інше) [6 ІФО 2.2.1-2]</div>
+      <div class="item group2" id="display2213"> проводить перевірку роботи програмного проекту на заданих прикладах і робить висновки щодо коректності його роботи [6 ІФО 2.2.1-3]</div>
+      <div class="item group2" id="display2214"> пропонує власні способи перевірки правильності роботи проекту [6 ІФО 2.2.1-4]</div>
+      <div class="item group2" id="display2221"> розпізнає типові помилки, які виникають під час запуску програмного проекту, і пропонує способи їх усунення [6 ІФО 2.2.2-1]</div>
+      <div class="item group2" id="display2222"> докладає зусиль і виявляє гнучкість, використовуючи доступні ресурси і стратегії для подолання перешкод і розв’язання проблем під час реалізації програмних проектів [6 ІФО 2.2.2-2]</div>
+      <div class="item group2" id="display2223"> прогнозує зміну результату роботи проекту внаслідок внесення змін до нього [6 ІФО 2.2.2-3]</div>
     </td>
   </tr>
 
 
   <tr>
     <td>
-      <div class="display5 group2">
-        <div class="item" id="display32">Організовує власне інформаційне середовище [ІФО 3.2]</div>
+      <div class="display14 group2">
+        <div class="item group2" id="display23">Розробляє модульні проекти [ІФО 2.3]</div>
       </div>
     </td>
     <td>
-      <div class="display5 group2">
-        <div class="item" id="display321">організовує власне інформаційне середовище на основі доступних пристроїв і технологій, налаштовує програмні та апаратні засоби залежно від власних потреб [6 ІФО 3.2.1]</div>
+      <div class="display3 group2">
+        <div class="item group2" id="display231">розділяє задачу на підзадачі та розв'язує їх, комбінуючи проект із блоків команд [6 ІФО 2.3.1]</div>
       </div>
-      <div class="display5 group2">
-        <div class="item" id="display322">розрізняє та формулює апаратні і програмні проблеми, що є очевидними, пропонує способи їх розв'язання, у разі потреби звертається за допомогою до інших осіб [6 ІФО 3.2.2]</div>
+    </td>
+    <td>
+      <div class="item group2" id="display2311"> складає список підзадач для розв’язання великої або складної задачі [6 ІФО 2.3.1-1]</div>
+      <div class="item group2" id="display2312"> визначає функціонал окремих частин проекту [6 ІФО 2.3.1-2]</div>
+      <div class="item group2" id="display2313"> складає проект з розв’язання окремих підзадач [6 ІФО 2.3.1-3]</div>
+      <div class="item group2" id="display2314"> узгоджує взаємодію окремих підзадач у модульному проекті [6 ІФО 2.3.1-4] </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="display15 group2">
+        <div class="item group2" id="display24">Створює та опрацьовує інформаційні продукти з використанням даних різних типів [ІФО 2.4]</div>
       </div>
+    </td>
+    <td>
+      <div class="display3 group2">
+        <div class="item group2" id="display241">оцінює власні можливості і доступні ресурси для створення інформаційних продуктів з метою розв'язання життєвих/навчальних проблем [6 ІФО 2.4.1]</div>
+      </div>
+      <div class="display3 group2">
+        <div class="item group2" id="display242">пояснює вибір програмних засобів для опрацювання даних різних типів (принаймні трьох) і створення відповідних інформаційних продуктів [6 ІФО 2.4.2]</div>
+      </div>
+      <div class="display3 group2">
+        <div class="item group2" id="display243">створює інформаційні продукти та оцінює їх якість за вказаними критеріями [6 ІФО 2.4.3]</div>
+      </div>
+    </td>
+    <td>
+      <div class="item group2" id="display2411"> розпізнає та реалізовує можливості для створення інформаційних продуктів у контексті розв’язання життєвої/навчальної проблеми [6 ІФО 2.4.1-1]</div>
+      <div class="item group2" id="display2421">наводить приклади різних програмних засобів для опрацювання даних, порівнює їх за наданими критеріями і пояснює вибір потрібних [6 ІФО 2.4.2-1]</div>
+      <div class="item group2" id="display2422"> використовує дані різних типів (принаймні трьох з наведених: текстові, графічні, числові, мультимедійні) для створення інформаційних продуктів [6 ІФО 2.4.2-2]</div>
+      <div class="item group2" id="display2431"> створює, редагує та форматує об’єкти текстового документа, готуючи його до друку [6 ІФО 2.4.3-1]</div>
+      <div class="item group2" id="display2432"> обирає і застосовує засоби для побудови малюнка в одному з графічних редакторів [6 ІФО 2.4.3-2]</div>
+      <div class="item group2" id="display2433"> використовує програмне забезпечення для простих розрахунків і візуалізації результатів [6 ІФО 2.4.3-3]</div>
+      <div class="item group2" id="display2434"> створює мультимедійні презентації
+        [6 ІФО 2.4.3-4]</div>
+      <div class="item group2" id="display2435"> дотримується критеріїв оформлення і якості інформаційних продуктів [6 ІФО 2.4.3-5]</div>
+      <div class="item group2" id="display2436"> описує власну діяльність і набутий досвід під час створення інформаційного продукту [6 ІФО 2.4.3-6]
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="display16 group2">
+        <div class="item group2" id="display25">Співпрацює в команді для створення інформаційного продукту [ІФО 2.5]</div>
+      </div>
+    </td>
+    <td>
+      <div class="display3 group2">
+        <div class="item group2" id="display251">складає план виконання своєї роботи із створення інформаційного продукту відповідно до ролі в групі [6 ІФО 2.5.1]</div>
+      </div>
+      <div class="display3 group2">
+        <div class="item group2" id="display252">пояснює роль членів групи і користь співробітництва для виконання спільного завдання із створення інформаційного продукту [6 ІФО 2.5.2]</div>
+      </div>
+      <div class="display3 group2">
+        <div class="item group2" id="display253">бере участь у спільному створенні інформаційного продукту, враховуючи власний і груповий емоційний стан [6 ІФО 2.5.3]</div>
+      </div>
+      <div class="display3 group2">
+        <div class="item group2" id="display254">коментує свою та чужу діяльність із створення інформаційного продукту, за потреби надає конструктивні відгуки [6 ІФО 2.5.4]</div>
+      </div>
+    </td>
+    <td>
+      <div class="item group2" id="display2511"> бере участь у спільному проекті (он-лайн та оф-лайн) із створення інформаційних продуктів для реалізації власних і суспільних інтересів [6 ІФО 2.5.1-1]</div>
+      <div class="item group2" id="display2512">планує роботу перед виконанням завдання і за потреби вносить корективи в план під час виконання завдання [6 ІФО 2.5.1-2]</div>
+      <div class="item group2" id="display2521"> пояснює, розподіляє і відповідально виконує ролі групової взаємодії під час розроблення проекту [6 ІФО 2.5.2-1]</div>
+      <div class="item group2" id="display2522"> пропонує і дотримується правил взаємодії і прийняття спільних рішень під час створення колективного проекту [6 ІФО 2.5.2-2]</div>
+      <div class="item group2" id="display2523"> наводить приклади переваги конструктивної співпраці [6 ІФО 2.5.2-3]</div>
+      <div class="item group2" id="display2531"> у разі потреби пропонує допомогу іншим особам [6 ІФО 2.5.3-1]</div>
+      <div class="item group2" id="display2532"> бере участь у представленні результатів групової роботи [6 ІФО 2.5.3-2]</div>
+      <div class="item group2" id="display2533"> описує вплив власних думок, емоцій і настрою на власну діяльність і результат роботи (власний і групи) [6 ІФО 2.5.3-3]</div>
+      <div class="item group2" id="display2541"> надає доброзичливі і конструктивні поради щодо вдосконалення процесу та/чи результату спільної роботи [6 ІФО 2.5.4-1]</div>
+      <div class="item group2" id="display2542"> описує власну діяльність як члена групи і набутий досвід [6 ІФО 2.5.4-2] </div>
+    </td>
+  </tr>
 
 
+  <tr>
+    <td colspan=3>
+      <div class="group3">
+        <h3>Робота у цифровому середовищі
+        </h3>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="display4 group3">
+        <div class="item group3" id="display31">Використовує широкий спектр цифрових пристроїв [ІФО 3.1]</div>
+      </div>
+    </td>
+    <td>
+      <div class="display4 group3">
+        <div class="item group3" id="display311">розуміє призначення, можливості та обмеження цифрових пристроїв різного типу, зумовлені їх складовими, використовує їх для власних потреб у навчанні і житті [6 ІФО 3.1.1]</div>
+      </div>
+      <div class="display4 group3">
+        <div class="item group3" id="display312">пояснює взаємозв'язок між апаратною і програмною складовими інформаційної системи [6 ІФО 3.1.2]</div>
+      </div>
+    </td>
+    <td>
+      <div class="item group3" id="display3111"> виділяє групи цифрових пристроїв за їх функціями і призначенням[6 ІФО 3.1.1-1]</div>
+      <div class="item group3" id="display3112">називає складові комп’ютера і розповідає про їх призначення, описуючи їх взаємодію, основні характеристики, можливості та обмеження[6 ІФО 3.1.1-2]</div>
+      <div class="item group3" id="display3113"> демонструє належний рівень навичок роботи з клавіатурою та іншими пристроями введення і виведення даних[6 ІФО 3.1.1-3]</div>
+      <div class="item group3" id="display3121"> описує взаємозв’язок програмного забезпечення комп’ютера з апаратною складовою[6 ІФО 3.1.2-1]</div>
+      <div class="item group3" id="display3122"> пояснює призначення операційної системи і прикладного програмного забезпечення[6 ІФО 3.1.2-2]</div>
+      <div class="item group3" id="display3123"> моделює роботу простої інформаційної системи[6 ІФО 3.1.2-3]</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="display5 group3">
+        <div class="item group3" id="display32">Організовує власне інформаційне середовище [ІФО 3.2]</div>
+      </div>
+    </td>
+    <td>
+      <div class="display5 group3">
+        <div class="item group3" id="display321">організовує власне інформаційне середовище на основі доступних пристроїв і технологій, налаштовує програмні та апаратні засоби залежно від власних потреб [6 ІФО 3.2.1]</div>
+      </div>
+      <div class="display5 group3">
+        <div class="item group3" id="display322">розрізняє та формулює апаратні і програмні проблеми, що є очевидними, пропонує способи їх розв'язання, у разі потреби звертається за допомогою до інших осіб [6 ІФО 3.2.2]</div>
+      </div>
+    </td>
+    <td>
+      <div class="item group3" id="display3211"> формулює власні потреби і вимоги до цифрових інструментів і можливих технологічних рішень[6 ІФО 3.2.1-1]</div>
+      <div class="item group3" id="display3212"> обирає, налаштовує залежно від особистих потреб і використовує програмне забезпечення з доступного переліку[6 ІФО 3.2.1-2]</div>
+      <div class="item group3" id="display3213"> розпізнає зміни інтерфейсу програмного середовища, оновлення цифрових пристроїв та адаптується до них[6 ІФО 3.2.1-3]</div>
+      <div class="item group3" id="display3214"> наводить приклади наслідків/ризиків встановлення і використання програмного забезпечення[6 ІФО 3.2.1-4]</div>
+      <div class="item group3" id="display3221">розрізняє і формулює прості апаратні і програмні проблеми у власному інформаційному середовищі, пропонує способи їх розв’язання, звертаючись у разі потреби за допомогою до інших осіб [6 ІФО 3.2.2-1]</div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="display6 group3">
+        <div class="item group3" id="display33">Використовує комунікаційні технології та мережі для власного розвитку, спілкування і співпраці [ІФО 3.3]</div>
+      </div>
+    </td>
+    <td>
+      <div class="display6 group3">
+        <div class="item group3" id="display331">використовує онлайн-сервіси та онлайн-ресурси для індивідуальної або групової діяльності і комунікації [6 ІФО 3.3.1]</div>
+      </div>
+    </td>
+    <td>
+      <div class="item group3" id="display3311">застосування і побудови локальних мереж та організації доступу до Інтернету[6 ІФО 3.3.1-1]</div>
+      <div class="item group3" id="display3312">наводить приклади онлайн-сервісів та їх можливостей[6 ІФО 3.3.1-2]</div>
+      <div class="item group3" id="display3313">обирає актуальні і безпечні засоби і способи комунікації для себе і пропонує їх іншим особам[6 ІФО 3.3.1-3]</div>
+      <div class="item group3" id="display3314">використовує онлайн-ресурси для доступу до інформації, спілкування, навчання, задоволення власних інтересів чи участі в суспільній діяльності[6 ІФО 3.3.1-4]</div>
+      <div class="item group3" id="display3315">пояснює переваги і недоліки цифрової комунікації[6 ІФО 3.3.1-5]</div>
+    </td>
+  </tr>
 
+
+  <tr>
+    <td colspan=3>
+      <div class="group4">
+        <h3>
+          Безпечна та відповідальна робота з інформаційними технологіями
+        </h3>
+      </div>
+    </td>
+  </tr>
+
+
+  <tr>
+    <td>
+      <div class="display18 group4">
+        <div class="item group4" id="display41">Обґрунтовує вплив технологій на навколишнє середовище і власний добробут, захищає себе і свій інформаційний простір [ІФО 4.1]</div>
+      </div>
+    </td>
+    <td>
+      <div class="display18 group4">
+        <div class="item group4" id="display411">описує вплив цифрових технологій на навколишнє середовище і добробут суспільства [6 ІФО 4.1.1]</div>
+      </div>
+      <div class="display18 group4">
+        <div class="item group4" id="display412">дотримується правил кібербезпеки [6 ІФО 4.1.2]</div>
+      </div>
+      <div class="display18 group4">
+        <div class="item group4" id="display413">розрізняє себе в реальному і віртуальному світі, передбачає власний "цифровий слід" [6 ІФО 4.1.3]</div>
+      </div>
+    </td>
+    <td>
+      <div class="item group4" id="display4111">наводить приклади переваг і небезпек використання цифрових технологій для навколишнього середовища і добробуту у знайомих ситуаціях[6 ІФО 4.1.1-1]</div>
+      <div class="item group4" id="display4112">розуміє важливість балансу між екранним часом і власним добробутом[6 ІФО 4.1.1-2]</div>
+      <div class="item group4" id="display4113">розрізняє інформаційне “сміття” цифрового і нецифрового формату[6 ІФО 4.1.1-3]</div>
+      <div class="item group4" id="display4121">наводить приклади і застосовує заходи безпеки та захисту особистого інформаційного простору, пристроїв і даних[6 ІФО 4.1.2-1]</div>
+      <div class="item group4" id="display4122">створює і використовує надійні паролі[6 ІФО 4.1.2-2]</div>
+      <div class="item group4" id="display4123">не розголошує конфіденційні дані про себе та інших осіб[6 ІФО 4.1.2-3]</div>
+      <div class="item group4" id="display4131">пояснює, що таке “цифровий слід” та онлайн-репутація, відповідально формує їх у себе[6 ІФО 4.1.3-1]</div>
+    </td>
+  </tr>
+
+
+  <tr>
+    <td>
+      <div class="display19 group4">
+        <div class="item group4" id="display42">Усвідомлено дотримується норм соціальної, міжкультурної і міжособистісної взаємодії [ІФО 4.2]</div>
+      </div>
     </td>
     <td>
       <div class="display19 group4">
-        <div class="item" id="display42">Усвідомлено дотримується норм соціальної, міжкультурної і міжособистісної взаємодії [ІФО 4.2]</div>
+        <div class="item group4" id="display421">дотримується правил етикету спілкування у цифрових мережах [6 ІФО 4.2.1]</div>
+      </div>
+      <div class="display19 group4">
+        <div class="item group4" id="display422">розширює спектр засобів і способів комунікації, які використовує, враховуючи потреби свої та інших осіб [6 ІФО 4.2.2]</div>
       </div>
     </td>
     <td>
-      <div class="display19 group4">
-        <div class="item" id="display421">дотримується правил етикету спілкування у цифрових мережах [6 ІФО 4.2.1]</div>
+      <div class="item group4" id="display4211"> пояснює правила етикету спілкування у цифрових мережах і дотримується їх [6 ІФО 4.2.1-1]</div>
+      <div class="item group4" id="display4212">розпізнає небезпечні віртуальні спільноти і не бере участі в них [6 ІФО 4.2.1-2]</div>
+      <div class="item group4" id="display4213"> розпізнає небезпечні/ конфліктні ситуації під час онлайн-спілкування (зокрема внаслідок негативних чи зневажливих дописів), знає, до кого звернутися за допомогою у разі їх виникнення 6 ІФО 4.2.1-3]</div>
+      <div class="item group4" id="display4221"> створює повідомлення на доступних ресурсах, додержуючи правил і враховуючи соціальні, культурні та інші особливості учасників онлайн-комунікації [6 ІФО 4.2.2-1]</div>
+      <div class="item group4" id="display4222"> наводить приклади підвищення доступності цифрових пристроїв для різних категорій користувачів і пропонує за потреби ці рішення [6 ІФО 4.2.2-2]</div>
+      <div class="item group4" id="display4223"> цікавиться новинками засобів і способів комунікації, розповідає про них [6 ІФО 4.2.2-3]
       </div>
-      <div class="display19 group4">
-        <div class="item" id="display422">розширює спектр засобів і способів комунікації, які використовує, враховуючи потреби свої та інших осіб [6 ІФО 4.2.2]</div>
-      </div>
-
     </td>
   </tr>
 
 
   <tr>
     <td>
-      <div class="display6 group2">
-        <div class="item" id="display33">Використовує комунікаційні технології та мережі для власного розвитку, спілкування і співпраці [ІФО 3.3]</div>
+      <div class="display20 group4">
+        <div class="item group4" id="display43">Усвідомлено дотримується норм правової взаємодії [ІФО 4.3]</div>
       </div>
-    </td>
-    <td>
-      <div class="display6 group2">
-        <div class="item" id="display331">використовує онлайн-сервіси та онлайн-ресурси для індивідуальної або групової діяльності і комунікації [6 ІФО 3.3.1]</div>
-      </div>
-
-
-
-
     </td>
     <td>
       <div class="display20 group4">
-        <div class="item" id="display43">Усвідомлено дотримується норм правової взаємодії [ІФО 4.3]</div>
+        <div class="item group4" id="display431">дотримується авторських прав і враховує різні типи дозволів на використання інформаційних ресурсів у власній і груповій роботі і творчості [6 ІФО 4.3.1]</div>
       </div>
     </td>
     <td>
-      <div class="display20 group4">
-        <div class="item" id="display431">дотримується авторських прав і враховує різні типи дозволів на використання інформаційних ресурсів у власній і груповій роботі і творчості [6 ІФО 4.3.1]</div>
-      </div>
-
-
-
-
-
+      <div class="item group4" id="display4311">пояснює важливість дотримання принципів академічної доброчесності та авторського права в інформаційній діяльності[6 ІФО 4.3.1-1]</div>
+      <div class="item group4" id="display4312">розрізняє різні типи дозволів на використання чужих інформаційних ресурсів і дотримується їх у власній чи груповій роботі[6 ІФО 4.3.1-2]</div>
+      <div class="item group4" id="display4313">зазначає джерела, використані у своїх роботах[6 ІФО 4.3.1-3]</div>
     </td>
   </tr>
 </table>
