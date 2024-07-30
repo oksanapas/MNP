@@ -109,6 +109,18 @@ body {font-family:Segoe UI;}
   border-radius:5px;
 }
 
+.button81 {
+  color: #733A6B; 
+  border: 1px solid #733A6B;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+
 .button9 {
   background-color: #7163B4; 
   border: none;
