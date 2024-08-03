@@ -1,0 +1,153 @@
+body {font-family:Segoe UI;}
+
+.intro {  
+	padding:10px;
+	margin:15px;
+	border-width: 1;
+	border-style: solid;
+	border-radius:5px;
+	}
+
+
+.tema {
+  font-size:large;
+  text-align:center;
+}
+.item{
+  padding:3px;
+  margin:1px;
+  font-size: 12px;
+}
+
+.group1 {
+  background-color: #F5EEF8;
+  border-color: #F5EEF8;
+  border-width: 0;
+  border-style: solid;
+}
+
+.group2 {
+  background-color: #DBF9D8;
+  border-color: #DBF9D8;
+  border-width: 0;
+  border-style: solid;
+}
+
+.group3 {
+  background-color: #DCF2FF;
+  border-color: #DCF2FF;
+  border-width: 0;
+  border-style: solid;
+}
+
+.group4 {
+  background-color: #FFEFCA;
+  border-color: #FFEFCA;
+  border-width: 0;
+  border-style: solid;
+}
+
+.button {
+  color: #0090A4; 
+  border: 1px solid #0090A4;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+.button5 {
+  background-color: #0090A4; 
+  color: white;
+  border: none;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+
+.button6 {
+  background-color: #1F78C1; 
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+.button7 {
+  background-color: #AE71A5; 
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+
+.button8 {
+  background-color: #733A6B; 
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+
+.button81 {
+  color: #733A6B; 
+  border: 1px solid #733A6B;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+
+}
+
+.button9 {
+  background-color: #7163B4; 
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+
+.reset {
+  background-color: #FF8366; 
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  margin:3px;
+  border-radius:5px;
+}
+
+td{vertical-align:top}
+th {position:sticky}
+.orients{font-style:italic}
