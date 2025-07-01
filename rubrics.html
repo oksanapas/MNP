@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Рубрика оцінювання</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    .group {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+    }
+    .group h2 {
+      margin-top: 0;
+    }
+    textarea {
+      width: 100%;
+      height: 60px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .level-select {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .level-select button {
+      padding: 5px 10px;
+      cursor: pointer;
+      border-radius: 5px;
+      border: 1px solid #666;
+      background-color: #f0f0f0;
+    }
+    .level-select button.active {
+      background-color: #007bff;
+      color: white;
+      font-weight: bold;
+    }
+    .description {
+      background: #f9f9f9;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Grading Tool</h1>
+
+  <div id="container"></div>
+
+  <script>
+    const groups = [
+      "Працює з інформацією, даними, моделями",
+      "Створює інформаційні продукти",
+      "Працює в цифровому середовищі",
+      "Усвідомлює вплив цифрових технологій на суспільство"
+    ];
+
+    // Placeholder level descriptors for each group (4 groups × 12 levels)
+    const levelDescriptors = [
+      [ // Group 1
+        "<input type="checkbox"> сприймає інформацію, отриману від учителя (інших осіб);
+<br><input type="checkbox"> намагається відповідати на прості запитання за змістом отриманої інформації, припускаючись помилок, що свідчать про нерозуміння ключових понять", "G1-L2 description", "G1-L3 description", "G1-L4 description", "G1-L5 description", "G1-L6 description",
+        "G1-L7 description", "G1-L8 description", "G1-L9 description", "G1-L10 description", "G1-L11 description", "G1-L12 description"
+      ],
+      [ // Group 2
+        "G2-L1 description", "G2-L2 description", "G2-L3 description", "G2-L4 description", "G2-L5 description", "G2-L6 description",
+        "G2-L7 description", "G2-L8 description", "G2-L9 description", "G2-L10 description", "G2-L11 description", "G2-L12 description"
+      ],
+      [ // Group 3
+        "G3-L1 description", "G3-L2 description", "G3-L3 description", "G3-L4 description", "G3-L5 description", "G3-L6 description",
+        "G3-L7 description", "G3-L8 description", "G3-L9 description", "G3-L10 description", "G3-L11 description", "G3-L12 description"
+      ],
+      [ // Group 4
+        "G4-L1 description", "G4-L2 description", "G4-L3 description", "G4-L4 description", "G4-L5 description", "G4-L6 description",
+        "G4-L7 description", "G4-L8 description", "G4-L9 description", "G4-L10 description", "G4-L11 description", "G4-L12 description"
+      ]
+    ];
+
+    const container = document.getElementById('container');
+
+    groups.forEach((group, index) => {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'group';
+
+      const title = document.createElement('h2');
+      title.textContent = `Група ${index + 1}: ${group}`;
+
+      const textareaPlaceholders = [
+  'Наприклад: визначає типи даних та використовує їх у простих завданнях.',
+  'Наприклад: створює презентації або текстові документи відповідно до заданої теми.',
+  'Наприклад: вправно використовує хмарні сервіси та зберігає дані.',
+  'Наприклад: пояснює позитивні й негативні наслідки використання цифрових технологій.'
+];
+
+const textarea = document.createElement('textarea');
+textarea.placeholder = textareaPlaceholders[index];
+
+      const levelDiv = document.createElement('div');
+      levelDiv.className = 'level-select';
+
+      const description = document.createElement('div');
+      description.className = 'description';
+      description.textContent = 'Оберіть рівень, щоб побачити опис.';
+
+      for (let level = 1; level <= 12; level++) {
+        const button = document.createElement('button');
+        button.textContent = level;
+        button.onclick = () => {
+          [...levelDiv.querySelectorAll('button')].forEach(btn => btn.classList.remove('active'));
+          button.classList.add('active');
+          description.textContent = levelDescriptors[index][level - 1];
+        };
+        levelDiv.appendChild(button);
+      }
+
+      groupDiv.appendChild(title);
+      groupDiv.appendChild(textarea);
+      groupDiv.appendChild(levelDiv);
+      groupDiv.appendChild(description);
+      container.appendChild(groupDiv);
+    });
+  </script>
+</body>
+</html>
