@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аркуші профілів для класу — інформатика (НУШ)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#20303C; --muted:#5E6E7A; --line:#E3E9ED; --paper:#F7F9FA;
+  --g1:#3B82C4; --g2:#4CAF7D; --g3:#DFA92E; --g4:#E07A4F;
+  --g1s:#EAF2FA; --g2s:#EAF6F0; --g3s:#FBF3DF; --g4s:#FBEDE6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;color:var(--ink);background:var(--paper)}
+
+/* ------- control panel (not printed) ------- */
+.panel{max-width:880px;margin:0 auto;padding:28px 16px}
+.panel h1{font-family:'Unbounded';font-weight:700;font-size:22px;margin-bottom:6px}
+.panel .sub{color:var(--muted);font-size:14px;margin-bottom:20px}
+.settings{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.settings label{font-size:12px;font-weight:700;color:var(--muted);display:block;margin-bottom:3px}
+.settings input{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:14px;background:#fff}
+textarea{
+  width:100%;min-height:170px;border:1px solid var(--line);border-radius:10px;background:#fff;
+  padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;resize:vertical
+}
+.hint{font-size:12px;color:var(--muted);margin:8px 0 14px;line-height:1.5}
+.btns{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+button.big{
+  border:0;cursor:pointer;font:inherit;font-weight:700;font-size:15px;border-radius:10px;padding:12px 22px;transition:.15s
+}
+#gen{background:var(--ink);color:#fff}
+#gen:hover{background:#31465A}
+#prn{background:#fff;color:var(--ink);border:1px solid var(--line);display:none}
+#prn:hover{background:var(--paper)}
+.err{color:#B3382C;font-size:13px;font-weight:600;margin-bottom:10px;white-space:pre-line}
+@media(max-width:640px){.settings{grid-template-columns:1fr}}
+
+/* ------- sheets ------- */
+.sheets{display:flex;flex-direction:column;align-items:center;gap:14px;padding:0 8px 40px}
+.sheet{
+  background:#fff;width:210mm;min-height:295mm;padding:13mm 14mm;
+  box-shadow:0 4px 18px rgba(32,48,60,.15);display:flex;flex-direction:column;gap:5mm
+}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:3mm}
+.sh-head .l .doc{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-transform:uppercase}
+.sh-head .l .nm{font-family:'Unbounded';font-weight:700;font-size:21px;margin-top:1mm}
+.sh-head .r{text-align:right;font-size:11px;color:var(--muted);line-height:1.5;padding-top:1mm}
+.sh-head .r b{color:var(--ink)}
+
+.sh-top{display:grid;grid-template-columns:62mm 1fr;gap:6mm;align-items:center}
+.sh-top svg{width:100%;height:auto}
+.sumbox{display:flex;flex-direction:column;gap:3mm}
+.semrow{display:flex;align-items:center;gap:4mm}
+.sembadge{
+  font-family:'Unbounded';font-weight:700;font-size:26px;color:#fff;background:var(--ink);
+  border-radius:12px;padding:3mm 5mm;min-width:20mm;text-align:center
+}
+.semrow .cap{font-size:12px;color:var(--muted);line-height:1.4}
+.semrow .cap b{color:var(--ink);font-size:13px}
+.sumtext{font-size:12px;line-height:1.55;background:var(--paper);border-radius:8px;padding:3mm 4mm}
+
+.gblock{border-left:4px solid var(--c);background:var(--cs);border-radius:8px;padding:3mm 4mm}
+.gb-head{display:flex;align-items:baseline;gap:3mm}
+.gb-head .t{font-weight:800;font-size:12.5px;color:var(--c);flex:1}
+.gb-head .sc{font-family:'Unbounded';font-weight:700;font-size:15px;color:var(--c)}
+.gb-head .lv{font-size:10px;color:var(--muted);white-space:nowrap}
+.gb-desc{font-size:11px;line-height:1.5;margin-top:1.2mm}
+.gb-next{font-size:10.5px;line-height:1.45;margin-top:1.6mm;padding-top:1.6mm;border-top:1px dashed rgba(32,48,60,.22)}
+.gb-next b{font-weight:800;color:var(--c);font-size:9.5px;letter-spacing:.03em}
+
+.sh-foot{margin-top:auto;display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);padding-top:2.5mm;font-size:9.5px;color:var(--muted)}
+.sh-foot .sig{text-align:right}
+.sh-foot .sig .ln{display:inline-block;width:44mm;border-bottom:1px solid var(--muted);margin-left:2mm}
+.sh-foot .sig .ln.sm{width:24mm}
+
+@media print{
+  body{background:#fff}
+  .panel{display:none}
+  .sheets{padding:0;gap:0;display:block}
+  .sheet{box-shadow:none;width:auto;min-height:auto;page-break-after:always}
+  .sheet:last-child{page-break-after:auto}
+  @page{size:A4 portrait;margin:0}
+}
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <h1>Аркуші профілів для класу</h1>
+  <p class="sub">Встав список з таблиці — отримай друкований аркуш на кожного учня: профіль за групами результатів, пояснення і наступні кроки.</p>
+
+  <div class="settings">
+    <div><label>Клас</label><input id="cls" placeholder="9-А" value=""></div>
+    <div><label>Період</label><input id="term" placeholder="ІІ семестр 2025/2026" value=""></div>
+    <div><label>Учитель (ПІБ)</label><input id="tchr" placeholder="Пасічник О. В." value=""></div>
+    <div><label>Посилання на критерії (в підвал аркуша)</label><input id="lnk" placeholder="oksanapas.github.io/MNP/grading.html" value=""></div>
+  </div>
+
+  <textarea id="data" placeholder="Іваненко Іван	9	10	9	9	9
+Петренко Петро	9	9	10	10	10
+Сидоренко Оля	6	3	5	4	5"></textarea>
+  <p class="hint">Формат: <b>Ім'я, ІФО1, ІФО2, ІФО3, ІФО4, Семестрова</b> — один учень на рядок. Роздільник: табуляція (просто скопіюй стовпці з Google Таблиць), крапка з комою або кома. Семестрову можна не вказувати — порахується як середнє. Дробові оцінки (9,5) допускаються.</p>
+
+  <div class="err" id="err"></div>
+  <div class="btns">
+    <button class="big" id="gen" onclick="generate()">Згенерувати аркуші</button>
+    <button class="big" id="prn" onclick="window.print()">Друк / зберегти PDF</button>
+  </div>
+</div>
+
+<div class="sheets" id="sheets"></div>
+
+<script>
+const GROUPS=[
+ {id:1,name:"Працювати з інформацією, даними, моделями",c:"var(--g1)",cs:"var(--g1s)",hex:"#3B82C4"},
+ {id:2,name:"Створювати інформаційні продукти",c:"var(--g2)",cs:"var(--g2s)",hex:"#4CAF7D"},
+ {id:3,name:"Працювати з цифровими інструментами",c:"var(--g3)",cs:"var(--g3s)",hex:"#DFA92E"},
+ {id:4,name:"Діяти безпечно та відповідально",c:"var(--g4)",cs:"var(--g4s)",hex:"#E07A4F"}
+];
+const LEVELS=["початковий","середній","достатній","високий"];
+const bandOf=s=>s<=3?0:s<=6?1:s<=9?2:3;
+
+/* Короткі описи рівнів — по 4 смуги на групу (для компактного аркуша) */
+const DESC={
+1:["Орієнтується в новій інформації з допомогою вчителя; ключові поняття ще закріплюються.",
+   "Розуміє і використовує пояснене на уроці; знаходить відповіді в матеріалі, ставить запитання.",
+   "Самостійно шукає інформацію, порівнює джерела, подає дані наочно, аргументує свою думку.",
+   "Критично оцінює інформацію: узагальнює з різних джерел, досліджує дані й моделі, обґрунтовує позицію."],
+2:["Виконує прості завдання за зразком з допомогою вчителя; у групі поки тримається осторонь.",
+   "Впорається з типовим завданням за інструкцією; у групі виконує свою частину роботи.",
+   "Береться за дослідницькі завдання, розв'язує стандартні проблеми; у команді працює активно.",
+   "Створює власні проєкти, пропонує різні способи розв'язання; вміє організувати роботу групи."],
+3:["Користується програмами за зразком і з підказками; впевненість — в окремих знайомих ситуаціях.",
+   "Виконує типові дії у знайомих програмах за інструкцією; навички потребують закріплення.",
+   "Впевнено користується цифровими інструментами у типових ситуаціях — навички стабільні.",
+   "Вільно почувається в цифровому середовищі: освоює нові програми, переносить навички на нове."],
+4:["Дотримується правил безпеки, коли нагадують; потрібен зовнішній контроль.",
+   "У знайомих ситуаціях дотримується правил безпеки самостійно.",
+   "Діє безпечно й відповідально: розуміє, навіщо правила, помічає ризики.",
+   "Свідомо діє безпечно навіть у нових ситуаціях, зменшує ризики, пояснює правила іншим."]
+};
+
+/* Поради «як рухатись далі» — по кожному балу (з дельти дескрипторів) */
+const NEXT={
+1:{1:"Слухати уважно і перепитувати незрозуміле. Після уроку відповісти на одне просте запитання — і перевірити себе за джерелом.",
+ 2:"Переказувати почуте чи прочитане своїми словами за зразком. Позначати місця з помилками і повертатися до них із запитанням.",
+ 3:"Після роботи з матеріалом формулювати 2–3 головні думки. Шукати відповіді на прості запитання самостійно в тексті.",
+ 4:"Не лише знаходити інформацію, а й використовувати її в завданні. Ставити власне запитання: «а що, якщо…?»",
+ 5:"Тренувати точні уточнювальні запитання: не «я не зрозумів», а «що означає X у цьому місці?»",
+ 6:"Шукати потрібне самостійно в кількох джерелах. Спробувати перетворити текст у таблицю чи схему за зразком.",
+ 7:"Порівнювати інформацію з двох джерел: що збігається, що ні. До своєї думки додавати «тому що…» і приклад.",
+ 8:"Обирати найкращий спосіб показати дані (таблиця? діаграма? модель?) і пояснювати вибір. Розвивати ідеї однокласників.",
+ 9:"Робити узагальнення з кількох джерел. Наприкінці роботи аналізувати: які мої дії спрацювали, а які ні.",
+ 10:"Оцінювати надійність джерел за критеріями: автор, дані, підтвердження. Формулювати і захищати власну позицію.",
+ 11:"Оцінювати інформацію за власними критеріями. Планувати свій навчальний поступ: що вивчити наступним і навіщо.",
+ 12:"Рівень освоєно! Тримати планку на складнішому матеріалі — і допомагати іншим перевіряти інформацію."},
+2:{1:"Довести до кінця одне просте завдання за зразком. Головна перемога зараз — завершена робота.",
+ 2:"Виконувати завдання за зразком, дедалі менше потребуючи нагадувань. Проговорити наперед послідовність кроків.",
+ 3:"Працювати за покроковою інструкцією самостійніше. Просити допомогу конкретно: «не розумію крок 3».",
+ 4:"Виконувати типове завдання, самому відповідаючи на навідні запитання. У групі взяти свою чітку частину роботи.",
+ 5:"Працювати за алгоритмом без супроводу, звертаючись лише для перевірки результату. Свою частину в групі — без нагадувань.",
+ 6:"Братися за завдання, де частину рішення треба знайти самому. Виконувати свою роль у групі, вчасно просити чи пропонувати допомогу.",
+ 7:"Виконати міні-дослідження за узгодженим планом. Впізнавати типову проблему і застосовувати відомий спосіб.",
+ 8:"Самостійно помічати, у чому саме проблема. У групі діяти активно: пропонувати, а не лише виконувати.",
+ 9:"Порівнювати кілька способів розв'язання і свідомо обирати. Пробувати нетипові завдання без готового шаблону.",
+ 10:"Виконати творче завдання від ідеї до продукту. Запропонувати власний спосіб розв'язання. Взяти організаційну роль у групі.",
+ 11:"Розв'язати одну задачу двома способами і порівняти. Спланувати групову роботу: хто, що, до коли.",
+ 12:"Рівень освоєно! Братися за нестандартні задачі, аргументуючи вибір способу. Ініціювати власні проєкти."},
+3:{1:"Повторювати прості дії у програмі за зразком — до впевненості без підказки на кожному кроці.",
+ 2:"Виконувати знайомі дії, підглядаючи у зразок дедалі рідше. Регулярність важливіша за складність.",
+ 3:"Проходити послідовність дій за інструкцією від початку до кінця. Загубився — крок назад, а не кидати.",
+ 4:"Практикувати знайомі операції регулярно — до стабільності. Перед здачею перевіряти результат самостійно.",
+ 5:"Працювати за алгоритмом, самому контролюючи кожен крок. Помітив помилку — спершу спробувати виправити самому.",
+ 6:"Шукати потрібні функції самостійно: меню, довідка, пошук. «Не знаю де» — привід дослідити.",
+ 7:"Закріпити навички до стабільності: у типових ситуаціях має виходити щоразу. Досліджувати можливості програм.",
+ 8:"Досліджувати програму глибше за мінімум: які ще можливості в ній є? Знайомі задачі — впевнено і без підказок.",
+ 9:"Для однієї задачі спробувати різні інструменти й порівняти. Проблему розв'язувати кількома способами.",
+ 10:"Переносити навички на незнайомі програми: орієнтуватися за аналогією. Нове середовище — тренажер, не бар'єр.",
+ 11:"Розв'язувати задачі різними інструментами і свідомо обирати оптимальний, пояснюючи вибір.",
+ 12:"Рівень освоєно! Освоювати нові технології першим і допомагати іншим — навчаючи, ростеш сам."},
+4:{1:"Вивчити базові правила безпеки (паролі, незнайомці, особисті дані) і застосовувати їх у знайомих ситуаціях.",
+ 2:"Дотримуватися правил у знайомих ситуаціях без нагадування. Скласти свій список «мої правила онлайн».",
+ 3:"Розширити правила на всі типові ситуації: ігри, месенджери, соцмережі. Згадувати про них до дії.",
+ 4:"Дотримуватися правил без нагадувань. Звичка: перш ніж натиснути чи переслати — секунда на «чи безпечно це?»",
+ 5:"Додати відповідальну взаємодію: як писати коментарі, що можна пересилати, як реагувати на образливе.",
+ 6:"Розібратися, навіщо кожне правило, і вміти пояснити своїми словами. Правило, яке розумієш, не забувається.",
+ 7:"Помічати небезпеки заздалегідь: підозрілі посилання, дивні запити — бачити їх до кліку.",
+ 8:"Знати план дій, якщо щось сталося: зламали акаунт, витекли дані. Кому сказати, що змінити.",
+ 9:"Від реагування — до запобігання: розпізнавати ризиковані ситуації і не потрапляти в них.",
+ 10:"Активно зменшувати ризики: налаштування приватності, двофакторний вхід, чистка старих акаунтів.",
+ 11:"Пояснювати правила безпеки іншим — родині, молодшим. Хто може навчити — володіє по-справжньому.",
+ 12:"Рівень освоєно! Бути прикладом цифрової культури і слідкувати за новими загрозами."}
+};
+
+function parseNum(x){
+  const v=parseFloat(String(x).replace(",",".").trim());
+  return isNaN(v)?null:v;
+}
+
+function parse(){
+  const lines=document.getElementById("data").value.split("\n").map(l=>l.trim()).filter(Boolean);
+  const out=[],errs=[];
+  lines.forEach((ln,i)=>{
+    const parts=ln.split(/\t|;|,(?=\s*\d)/).map(p=>p.trim()).filter(p=>p!=="");
+    if(parts.length<5){errs.push(`Рядок ${i+1}: замало даних (треба ім'я + 4 оцінки)`);return}
+    const name=parts[0];
+    const g=[1,2,3,4].map(k=>parseNum(parts[k]));
+    if(g.some(v=>v===null||v<1||v>12)){errs.push(`Рядок ${i+1} (${name}): оцінки мають бути числами від 1 до 12`);return}
+    let sem=parts[5]!==undefined?parseNum(parts[5]):null;
+    if(sem===null)sem=Math.round(g.reduce((a,b)=>a+b,0)/4*10)/10;
+    out.push({name,g,sem});
+  });
+  return {out,errs};
+}
+
+function radar(vals){
+  const cx=130,cy=105,R=72;
+  const pt=(i,r)=>{const a=-Math.PI/2+i*Math.PI/2;return[cx+r*Math.cos(a),cy+r*Math.sin(a)]};
+  let s=`<svg viewBox="-38 0 336 214" xmlns="http://www.w3.org/2000/svg">`;
+  [3,6,9,12].forEach(v=>{
+    s+=`<polygon points="${[0,1,2,3].map(i=>pt(i,R*v/12).join(",")).join(" ")}" fill="none" stroke="#E3E9ED" stroke-width="1"/>`;
+  });
+  for(let i=0;i<4;i++){const[x,y]=pt(i,R);s+=`<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="#E3E9ED"/>`}
+  const vp=vals.map((v,i)=>pt(i,R*v/12));
+  s+=`<polygon points="${vp.map(p=>p.join(",")).join(" ")}" fill="#3B82C41F" stroke="#3B82C4" stroke-width="2" stroke-linejoin="round"/>`;
+  vp.forEach((p,i)=>{s+=`<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="${GROUPS[i].hex}" stroke="#fff" stroke-width="1.5"/>`});
+  const L=[
+    ["Інформація, дані, моделі",cx,16,"middle",1],
+    ["Інформаційні",cx+R+7,cy-2,"start",2],["продукти",cx+R+7,cy+9,"start",2],
+    ["Цифрові інструменти",cx,cy+R+16,"middle",3],
+    ["Безпека і",cx-R-7,cy-2,"end",4],["відповідальність",cx-R-7,cy+9,"end",4]
+  ];
+  L.forEach(l=>{s+=`<text x="${l[1]}" y="${l[2]}" text-anchor="${l[3]}" font-size="9.5" font-weight="700" fill="${GROUPS[l[4]-1].hex}" font-family="Inter,sans-serif">${l[0]}</text>`});
+  vals.forEach((v,i)=>{
+    const[x,y]=pt(i,R*v/12);
+    const off=[[11,-5],[-9,13],[-11,13],[9,-6]][i];
+    s+=`<text x="${x+off[0]}" y="${y+off[1]}" text-anchor="middle" font-size="11" font-weight="800" fill="${GROUPS[i].hex}" font-family="Inter,sans-serif">${fmtN(v)}</text>`;
+  });
+  return s+"</svg>";
+}
+
+const fmtN=v=>String(Math.round(v*10)/10).replace(".",",");
+
+function summary(st){
+  const v=st.g,max=Math.max(...v),min=Math.min(...v);
+  const maxN=GROUPS.filter((g,i)=>v[i]===max).map(g=>g.name.toLowerCase());
+  const minN=GROUPS.filter((g,i)=>v[i]===min).map(g=>g.name.toLowerCase());
+  if(st.sem<4){
+    return `Семестрова поки невисока — але це точка старту, а не стеля: базовий матеріал реально надолужити. `+
+      (max-min>1?`Опора вже є — ${maxN.join(" та ")}: звідси найлегше починати. `:"")+
+      `Головне зараз — рухатися малими кроками: одне невелике завершене завдання за раз (у кожному блоці нижче є конкретний перший крок) і не зволікати зі зверненням по допомогу — це прискорює шлях.`;
+  }
+  if(st.sem>=10.5){
+    return `Результат високого рівня — шкільна програма тут уже не межа, а трамплін: власні проєкти, конкурси та олімпіади, менторство для однокласників. `+
+      (max-min>1?`Особливо сильна сторона — ${maxN.join(" та ")}: саме тут найбільший потенціал для розвитку за межами програми.`:`Усі чотири напрями однаково сильні — можна вільно обирати, куди інвестувати цей потенціал.`);
+  }
+  if(max-min<=1)return "Профіль рівний: усі чотири напрями розвинені збалансовано — можна обирати, що цікавіше поглиблювати.";
+  return `Найсильніша сторона — ${maxN.join(" та ")}. Точка зростання — ${minN.join(" та ")}: невеликі зусилля тут дадуть найпомітніший результат.`;
+}
+
+function generate(){
+  const {out,errs}=parse();
+  document.getElementById("err").textContent=errs.join("\n");
+  const cls=document.getElementById("cls").value.trim();
+  const term=document.getElementById("term").value.trim();
+  const tchr=document.getElementById("tchr").value.trim();
+  const lnk=document.getElementById("lnk").value.trim();
+  const cont=document.getElementById("sheets");
+  cont.innerHTML="";
+  if(!out.length){document.getElementById("prn").style.display="none";return}
+
+  out.forEach(st=>{
+    const sec=document.createElement("section");
+    sec.className="sheet";
+    const blocks=GROUPS.map((g,i)=>{
+      const s=st.g[i],b=bandOf(s),isInt=Number.isInteger(s);
+      const adv=isInt?NEXT[g.id][s]:NEXT[g.id][Math.round(s)];
+      return `<div class="gblock" style="--c:${g.c};--cs:${g.cs}">
+        <div class="gb-head"><span class="t">${g.name}</span><span class="lv">${LEVELS[b]} рівень</span><span class="sc">${fmtN(s)}</span></div>
+        <div class="gb-desc">${DESC[g.id][b]}</div>
+        <div class="gb-next"><b>ЯК РУХАТИСЬ ДАЛІ:</b> ${adv}</div>
+      </div>`;
+    }).join("");
+    sec.innerHTML=`
+      <div class="sh-head">
+        <div class="l"><div class="doc">Профіль навчальних досягнень · Інформатика</div><div class="nm">${st.name}</div></div>
+        <div class="r">${cls?`<b>${cls}</b><br>`:""}${term?term+"<br>":""}Групи результатів ІФО1–ІФО4 (НУШ)</div>
+      </div>
+      <div class="sh-top">
+        ${radar(st.g)}
+        <div class="sumbox">
+          <div class="semrow">
+            <div class="sembadge">${fmtN(st.sem)}</div>
+            <div class="cap"><b>Семестрова оцінка</b><br>складається з чотирьох груп результатів — профіль ліворуч показує внесок кожної</div>
+          </div>
+          <div class="sumtext">${summary(st)}</div>
+        </div>
+      </div>
+      ${blocks}
+      <div class="sh-foot">
+        <div>${lnk?`Докладні критерії оцінювання: ${lnk}`:""}</div>
+        <div class="sig">${tchr?`Учитель: <b>${tchr}</b>&nbsp;&nbsp;`:"Учитель <span class=\"ln\"></span>&nbsp;&nbsp;"}Підпис <span class="ln sm"></span></div>
+      </div>`;
+    cont.appendChild(sec);
+  });
+  document.getElementById("prn").style.display="inline-block";
+  cont.scrollIntoView({behavior:"smooth"});
+}
+</script>
+</body>
+</html>
