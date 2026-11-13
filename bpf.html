@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Бюро перевірки фактів</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;700&family=Unbounded:wght@500;800&display=swap" rel="stylesheet">
+<style>
+/* Ідея: робочий стіл бюро перевірки. Картки-справи, на які з розмаху ставлять штамп-вердикт. */
+:root{
+  --bg:#E6ECEE; --paper:#FBFCFA; --ink:#1B2140; --muted:#5A6283; --line:#C9D2DA;
+  --blue:#2446D8; --red:#D2342F; --violet:#7F36C9; --amber:#B26A00; --hl:#FFD84D;
+  --display:"Unbounded","Arial Black",system-ui,sans-serif;
+  --body:"Golos Text","Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12162B; --paper:#1D2342; --ink:#EEF1FA; --muted:#A4ACCB; --line:#39416A;
+    --blue:#8EA4FF; --red:#FF7B73; --violet:#C79BFF; --amber:#FFC069; --hl:#FFD84D; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12162B; --paper:#1D2342; --ink:#EEF1FA; --muted:#A4ACCB; --line:#39416A;
+  --blue:#8EA4FF; --red:#FF7B73; --violet:#C79BFF; --amber:#FFC069; --hl:#FFD84D; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);line-height:1.5}
+.wrap{max-width:820px;margin:0 auto;padding:20px 16px 64px;display:flex;flex-direction:column;gap:20px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.15}
+h1{font-size:clamp(1.5rem,5vw,2.3rem);font-weight:800}
+h2{font-size:clamp(1.15rem,3.6vw,1.5rem);font-weight:800}
+h3{font-size:.85rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+p{margin:0}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--hl);outline-offset:2px}
+mark{background:var(--hl);color:#1B2140;padding:0 .15em;border-radius:3px}
+
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-family:var(--display);font-weight:800;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase}
+.brand b{background:var(--ink);color:var(--bg);padding:.2em .5em;margin-right:.4em}
+.score{font-family:var(--display);font-size:.8rem;font-variant-numeric:tabular-nums}
+nav.steps{display:flex;gap:6px;flex-wrap:wrap}
+nav.steps button{flex:1 1 90px;border:2px solid var(--line);background:transparent;border-radius:8px;padding:6px 8px;font-size:.72rem;cursor:pointer;text-align:left;color:var(--muted)}
+nav.steps button b{display:block;font-family:var(--display);font-size:.68rem;color:inherit}
+nav.steps button[aria-current="true"]{border-color:var(--ink);color:var(--ink);background:var(--paper)}
+nav.steps button.done b::after{content:" ✓";color:var(--blue)}
+
+section.stage{display:none;flex-direction:column;gap:16px}
+section.stage.on{display:flex}
+.lead{font-size:1.05rem;max-width:62ch}
+.case{position:relative;background:var(--paper);border:2px solid var(--ink);border-radius:6px;padding:22px 20px;box-shadow:6px 6px 0 var(--line);display:flex;flex-direction:column;gap:14px}
+.case .no{font-family:var(--display);font-size:.68rem;color:var(--muted);letter-spacing:.06em}
+.claim{font-size:clamp(1.2rem,4vw,1.6rem);font-weight:700;line-height:1.3;padding-right:0;min-height:3.2em}
+.why{border-left:4px solid var(--hl);padding-left:12px;max-width:60ch}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:2px solid var(--ink);background:var(--paper);border-radius:8px;padding:.6em 1.1em;font-weight:700;cursor:pointer;box-shadow:3px 3px 0 var(--ink);transition:transform .08s,box-shadow .08s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--ink)}
+.btn:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--ink)}
+.btn.big{flex:1 1 180px;font-family:var(--display);font-size:1rem;padding:.9em 1em}
+.btn.a{background:var(--blue);color:var(--paper)} .btn.b{background:var(--violet);color:var(--paper)} .btn.r{background:var(--red);color:var(--paper)}
+.btn.go{background:var(--ink);color:var(--bg)}
+.btn.ghost{box-shadow:none;border-color:var(--line);font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:2px solid var(--line);background:transparent;border-radius:999px;padding:.3em .9em;cursor:pointer;font-size:.9rem}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--bg);font-weight:700}
+.stamp{position:absolute;right:14px;top:10px;font-family:var(--display);font-weight:800;font-size:clamp(.9rem,3.4vw,1.3rem);letter-spacing:.06em;border:4px double currentColor;border-radius:6px;padding:.25em .6em;transform:rotate(-8deg);background:color-mix(in srgb,var(--paper) 85%,transparent);animation:slam .32s cubic-bezier(.2,1.6,.4,1)}
+.stamp.blue{color:var(--blue)} .stamp.red{color:var(--red)} .stamp.violet{color:var(--violet)} .stamp.amber{color:var(--amber)}
+@keyframes slam{from{transform:rotate(-8deg) scale(2.6);opacity:0}to{transform:rotate(-8deg) scale(1);opacity:1}}
+.verdict{font-weight:700}
+.verdict.ok{color:var(--blue)} .verdict.no{color:var(--red)} .verdict.hm{color:var(--amber)}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);transition:width .3s}
+.rules{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.rule{background:var(--paper);border:2px solid var(--line);border-radius:6px;padding:14px}
+.rule b{font-family:var(--display);font-size:.9rem;display:block;margin-bottom:4px}
+label.f{display:flex;flex-direction:column;gap:4px;font-weight:500;font-size:.9rem}
+input[type=text],textarea{background:var(--paper);border:2px solid var(--line);border-radius:6px;padding:.55em .7em;width:100%}
+input[type=text]:focus,textarea:focus{border-color:var(--ink);outline:none}
+textarea{min-height:4.5em;resize:vertical}
+
+/* Намальований сайт: це картинка сайту, тому кольори сталі в обох темах */
+.browser{border:2px solid #1B2140;border-radius:8px;overflow:hidden;background:#fff;color:#222;font-family:Georgia,"Times New Roman",serif;box-shadow:6px 6px 0 var(--line)}
+.browser button{all:unset;display:block;cursor:pointer;box-sizing:border-box;width:100%;border:2px dashed transparent;border-radius:4px;padding:4px 8px}
+.browser button:hover{border-color:#bbb}
+.browser button:focus-visible{outline:3px solid #2446D8}
+.browser button.hit{border-color:#D2342F;background:#FFECEB}
+.browser button.hit::after{content:" ⚑ " attr(data-n);color:#D2342F;font:700 .8rem var(--body)}
+.browser button.fine{border-color:#7a9;}
+.bbar{background:#DDE1E8;padding:6px 8px;display:flex;gap:8px;align-items:center;font-family:var(--body);font-size:.8rem}
+.bbar .dots{letter-spacing:2px;color:#99a}
+.bbar .url{background:#fff;border-radius:999px;flex:1;padding:0}
+.bbar .url button{padding:3px 12px;overflow-wrap:anywhere}
+.site{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.site .menu{font:.8rem var(--body);color:#555}
+.site .ttl{font-size:clamp(1.1rem,4vw,1.5rem);font-weight:700;color:#B00;line-height:1.2}
+.site .meta{font:.8rem var(--body);color:#666}
+.site .pic{background:linear-gradient(135deg,#6b3f1d,#3b220f);color:#f3d9b0;text-align:center;padding:22px 8px;font:.85rem var(--body)}
+.site .banner{background:#FFE600;border:3px solid #f00;text-align:center;font:800 .95rem var(--body);color:#c00}
+.site .share{background:#1877f2;color:#fff;font:700 .85rem var(--body);text-align:center}
+.site .foot{font:.75rem var(--body);color:#888;border-top:1px solid #ddd}
+ol.notes{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:6px}
+.q{display:flex;flex-direction:column;gap:6px}
+.q>b{font-size:.95rem}
+.meter{display:flex;flex-direction:column;gap:6px;background:var(--paper);border:2px solid var(--ink);border-radius:6px;padding:14px}
+.symbols{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.symbols button{font-family:var(--display);font-size:clamp(1.8rem,9vw,3rem);padding:.4em 0}
+.duel{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.duel button{min-height:7em;font-size:1.05rem;text-align:left;font-weight:500}
+.scale{display:flex;flex-direction:column;gap:6px}
+.scale .btn{text-align:left;display:flex;justify-content:space-between;gap:12px;padding:.5em .9em;box-shadow:2px 2px 0 var(--ink)}
+.scale .btn span{font-variant-numeric:tabular-nums;font-weight:500;opacity:.85}
+.scale .t2,.scale .f2{opacity:.88}.scale .t1,.scale .f1{opacity:.74}
+.post{border:2px solid #1B2140;border-radius:8px;overflow:hidden;background:#fff;color:#222;box-shadow:6px 6px 0 var(--line)}
+.post .cap{padding:8px 12px;font-size:.9rem}.post .cap b{color:#B00}
+.post svg{display:block;width:100%;height:auto}
+.post svg [data-flag],.post svg [data-ok]{cursor:pointer;outline:none}
+.post svg .mk{display:none;fill:none;stroke:#D2342F;stroke-width:4;stroke-dasharray:8 5}
+.post svg .hit .mk{display:block}
+.post svg [tabindex]:focus-visible .hz{stroke:#2446D8;stroke-width:3}
+.post svg .hz{fill:transparent}
+pre.report{white-space:pre-wrap;background:var(--paper);border:2px solid var(--line);border-radius:6px;padding:14px;margin:0;font:0.85rem/1.5 ui-monospace,Consolas,monospace;overflow-x:auto}
+.rank{font-family:var(--display);font-weight:800;font-size:clamp(1.4rem,6vw,2.2rem);color:var(--blue);border:5px double currentColor;border-radius:8px;padding:.3em .6em;transform:rotate(-3deg);align-self:flex-start}
+.small{font-size:.85rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){.stamp{animation:none}.btn,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><b>БПФ</b>Бюро перевірки фактів</div>
+    <div class="score">Бали: <span id="total">0</span></div>
+  </header>
+  <nav class="steps" id="nav" aria-label="Завдання"></nav>
+
+  <!-- 0 -->
+  <section class="stage" id="s0">
+    <h1>Тебе прийнято на стажування в Бюро перевірки фактів</h1>
+    <p class="lead">В інтернеті правда і вигадки лежать поруч і виглядають однаково. Агенти Бюро вміють їх розрізняти. Пройди шість справ і отримай звання.</p>
+    <div class="rules">
+      <div class="rule"><b>Хто це каже?</b>Є автор, якого можна назвати на ім'я?</div>
+      <div class="rule"><b>Звідки знає?</b>Є джерело, дослідження, свідок?</div>
+      <div class="rule"><b>Як перевірити?</b>Де ще про це написано: в енциклопедії, підручнику, на іншому сайті?</div>
+    </div>
+    <label class="f" for="name">Прізвище та ім'я агента
+      <input type="text" id="name" autocomplete="off" placeholder="Наприклад: Коваль Марта">
+    </label>
+    <div class="row"><button class="btn go" data-go="1">Почати першу справу</button></div>
+  </section>
+
+  <!-- 1 -->
+  <section class="stage" id="s1">
+    <h3>Справа 1</h3><h2>Факт чи судження?</h2>
+    <p class="lead"><b>Факт</b> можна перевірити. <b>Судження</b> — це чиясь думка або оцінка: з нею можна погодитись або посперечатись. Постав штамп на кожну картку.</p>
+    <div id="m1-deck"></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="stage" id="s2">
+    <h3>Справа 2</h3><h2>Правда чи фейк? Зроби ставку</h2>
+    <p class="lead">Те, що звучить як факт, не завжди правда. Обери на шкалі, наскільки ти впевнений у відповіді. Що більша впевненість, то більше балів за влучання і то більше втрат за помилку. «Не знаю» нічого не коштує: чесний агент знає, коли він не знає.</p>
+    <div id="m2-deck"></div>
+  </section>
+
+  <!-- 3 -->
+  <section class="stage" id="s3">
+    <h3>Справа 3</h3><h2>Обшук підозрілого сайту</h2>
+    <p class="lead">Перед тобою вигаданий сайт. На ньому сховано <b>8 ознак</b>, що йому не варто довіряти. Натискай на все, що здається підозрілим.</p>
+    <div class="browser" id="mock">
+      <div class="bbar"><span class="dots">●●●</span><div class="url"><button data-flag="Адреса дивна: довга, з купою гучних слів і без замочка (http, а не https).">⚠ http://super-pravda-novyny-top1.xyz/shok/12345</button></div></div>
+      <div class="site">
+        <button class="menu" data-ok="Меню як меню. Тут нічого підозрілого.">Головна · Новини · Здоров'я · Зірки · Призи</button>
+        <button class="ttl" data-flag="Заголовок кричить: «ШОК», великі літери, купа знаків оклику. Так чіпляють увагу, а не розповідають правду.">ШОК!!! УЧЕНІ ПРИХОВУЮТЬ: шоколад робить розумнішим на 200%!!!</button>
+        <button class="meta" data-flag="Автора немає. «Адмін» — це не ім'я. Хто відповідає за ці слова?">Автор: адмін</button>
+        <button class="meta" data-flag="Новина дуже стара — 2009 рік. Інформація могла давно застаріти.">Опубліковано: 3 березня 2009 року</button>
+        <button class="pic" data-ok="Просто картинка з шоколадом. Сама по собі вона нічого не доводить, але й не підозріла.">[ фото плитки шоколаду ]</button>
+        <button data-flag="«Усі знають», «один чоловік розповів» — жодного джерела, яке можна перевірити.">Усі давно знають, що шоколад корисний. Один чоловік розповів, що його син з'їв 10 плиток і одразу став відмінником.</button>
+        <button class="banner" data-flag="«Ви мільйонний відвідувач!» — реклама-пастка. Справжні призи так не роздають.">🎁 ВИ 1 000 000-й ВІДВІДУВАЧ! Натисніть і заберіть телефон!</button>
+        <button class="share" data-flag="Тебе квапять: «негайно», «поки не видалили». Хто квапить, той не хоче, щоб ти встиг подумати.">Негайно поділись із 10 друзями, поки це не видалили!</button>
+        <button class="foot" data-flag="Немає контактів. З чесним сайтом можна зв'язатися: є адреса, пошта, назва організації.">© Усі права захищені. Контакти: немає</button>
+      </div>
+    </div>
+    <p class="verdict" id="m3-msg" aria-live="polite">Знайдено: 0 з 8</p>
+    <ol class="notes" id="m3-notes"></ol>
+
+    <div class="case">
+      <span class="no">СПРАВЖНЄ ЗАВДАННЯ</span>
+      <p>Тепер перевір справжній сайт. Відкрий його в сусідній вкладці й дай відповіді.</p>
+      <div class="row"><a class="btn" id="site-link" href="https://ua.pistacja.tv/" target="_blank" rel="noopener">Відкрити сайт ↗</a></div>
+      <label class="f" for="site-url">Адреса сайту, який ти перевіряєш
+        <input type="text" id="site-url" autocomplete="off" placeholder="https://">
+      </label>
+      <div id="site-qs" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div class="meter">
+        <b>Шкала довіри: <span id="trust-n">0</span> з 10 — <span id="trust-w">ще немає відповідей</span></b>
+        <div class="bar"><i id="trust-bar" style="width:0"></i></div>
+      </div>
+      <div class="q"><b>А яка твоя власна оцінка сайту?</b>
+        <div class="chips" id="own-rate" role="group" aria-label="Оцінка від 1 до 10"></div>
+        <p class="small" id="rate-note"></p>
+      </div>
+    </div>
+    <div class="row"><button class="btn go" data-go="4">До справи 4</button></div>
+  </section>
+
+  <!-- 4 -->
+  <section class="stage" id="s4">
+    <h3>Справа 4</h3><h2>Фотоекспертиза</h2>
+    <p class="lead">Картинки теж бувають фейками: їх домальовують, склеюють або створюють штучним інтелектом. На цьому «фото» сховано <b>6 помилок</b>, які видають підробку. Натискай на все дивне.</p>
+    <div class="post">
+      <p class="cap"><b>НЕЙМОВІРНО!</b> Учень сфотографував свою школу зранку. Поширте всім!</p>
+      <svg id="photo" viewBox="0 0 600 360" role="group" aria-label="Намальоване фото шкільного подвір'я">
+        <defs><g id="cl"><ellipse cx="0" cy="0" rx="34" ry="14"/><ellipse cx="-18" cy="-10" rx="18" ry="12"/><ellipse cx="12" cy="-14" rx="22" ry="15"/></g></defs>
+        <rect width="600" height="232" fill="#BFE3F5"/><rect y="232" width="600" height="128" fill="#CFC8B8"/>
+        <g data-ok="Сонце як сонце. Але запам'ятай, де воно: тіні мають падати в протилежний бік." tabindex="0" role="button" aria-label="Сонце"><circle cx="60" cy="50" r="28" fill="#FFD23F"/><circle class="hz" cx="60" cy="50" r="36"/></g>
+        <g data-flag="Дві хмари абсолютно однакові. Так буває, коли шматок картинки скопіювали і вставили ще раз." tabindex="0" role="button" aria-label="Дві хмари">
+          <use href="#cl" x="215" y="52" fill="#fff"/><use href="#cl" x="345" y="66" fill="#fff"/><rect class="hz" x="170" y="20" width="235" height="66"/><ellipse class="mk" cx="282" cy="52" rx="118" ry="40"/></g>
+        <g data-ok="Ця хмара звичайна." tabindex="0" role="button" aria-label="Хмара праворуч"><ellipse cx="520" cy="44" rx="40" ry="12" fill="#fff"/><ellipse cx="505" cy="36" rx="20" ry="11" fill="#fff"/><rect class="hz" x="475" y="22" width="90" height="38"/></g>
+        <!-- школа -->
+        <rect x="180" y="118" width="230" height="116" fill="#E9BC72"/><polygon points="170,118 295,84 420,118" fill="#A6492F"/>
+        <g fill="#7FB6D9" stroke="#fff" stroke-width="3"><rect x="198" y="168" width="34" height="34"/><rect x="246" y="168" width="34" height="34"/><rect x="358" y="168" width="34" height="34"/></g>
+        <rect x="300" y="176" width="40" height="58" fill="#6B4226"/>
+        <g data-flag="Літери на вивісці переплутані. Штучний інтелект часто малює написи з помилками." tabindex="0" role="button" aria-label="Вивіска">
+          <rect x="222" y="126" width="146" height="30" fill="#fff" stroke="#1B2140" stroke-width="2"/><text x="295" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="20" fill="#1B2140">ШКЛОАА №7З</text><rect class="hz" x="216" y="120" width="158" height="42"/><ellipse class="mk" cx="295" cy="141" rx="88" ry="26"/></g>
+        <!-- дерево і його тінь -->
+        <g data-flag="Тінь від дерева падає в бік сонця. Так не буває: тінь завжди лягає від світла. Порівняй із тінню ліхтаря." tabindex="0" role="button" aria-label="Тінь дерева">
+          <polygon points="104,236 118,236 46,268 22,262" fill="#000" opacity=".3"/><rect class="hz" x="14" y="232" width="110" height="42"/><ellipse class="mk" cx="68" cy="252" rx="62" ry="24"/></g>
+        <g data-ok="Саме дерево звичайне. А що з його тінню?" tabindex="0" role="button" aria-label="Дерево"><rect x="105" y="160" width="12" height="78" fill="#6B4226"/><circle cx="111" cy="138" r="38" fill="#3E9B4F"/><circle class="hz" cx="111" cy="138" r="40"/></g>
+        <!-- ліхтар -->
+        <g data-ok="Тінь ліхтаря падає від сонця. Тут усе правильно." tabindex="0" role="button" aria-label="Ліхтар"><polygon points="466,236 474,236 548,262 536,268" fill="#000" opacity=".3"/><rect x="467" y="120" width="6" height="118" fill="#333B55"/><rect x="456" y="110" width="28" height="12" rx="4" fill="#333B55"/><rect class="hz" x="452" y="106" width="100" height="166"/></g>
+        <!-- калюжа -->
+        <g data-flag="У калюжі відбивається дерево, хоча поруч стоїть ліхтар. Відображення має показувати те, що є насправді." tabindex="0" role="button" aria-label="Калюжа">
+          <ellipse cx="470" cy="312" rx="72" ry="24" fill="#8FB8D8"/><rect x="466" y="294" width="8" height="16" fill="#6B4226" opacity=".7"/><circle cx="470" cy="318" r="13" fill="#3E9B4F" opacity=".7"/><ellipse class="mk" cx="470" cy="312" rx="82" ry="32"/></g>
+        <!-- учень -->
+        <rect x="286" y="318" width="10" height="30" fill="#1B2140"/><rect x="304" y="318" width="10" height="30" fill="#1B2140"/>
+        <rect x="282" y="258" width="36" height="64" rx="8" fill="#D2342F"/><circle cx="300" cy="240" r="17" fill="#F2C9A0"/><path d="M293 244q7 6 14 0" stroke="#1B2140" stroke-width="2" fill="none"/><circle cx="294" cy="237" r="2"/><circle cx="306" cy="237" r="2"/>
+        <line x1="316" y1="270" x2="352" y2="236" stroke="#D2342F" stroke-width="10" stroke-linecap="round"/>
+        <g data-flag="На руці шість пальців. Руки — улюблене місце помилок штучного інтелекту. Завжди рахуй пальці." tabindex="0" role="button" aria-label="Рука">
+          <g stroke="#F2C9A0" stroke-width="5" stroke-linecap="round"><line x1="350" y1="226" x2="336" y2="216"/><line x1="353" y1="222" x2="344" y2="204"/><line x1="357" y1="220" x2="354" y2="200"/><line x1="361" y1="220" x2="364" y2="200"/><line x1="365" y1="222" x2="374" y2="205"/><line x1="368" y1="226" x2="382" y2="216"/></g>
+          <circle cx="359" cy="230" r="11" fill="#F2C9A0"/><circle class="hz" cx="359" cy="218" r="30"/><circle class="mk" cx="359" cy="216" r="32"/></g>
+        <!-- пес -->
+        <g data-flag="У пса п'ять лап. Зайві або зниклі кінцівки — часта ознака згенерованої картинки." tabindex="0" role="button" aria-label="Пес">
+          <g fill="#8A5A33"><rect x="160" y="308" width="6" height="24"/><rect x="172" y="308" width="6" height="24"/><rect x="185" y="308" width="6" height="24"/><rect x="198" y="308" width="6" height="24"/><rect x="210" y="308" width="6" height="24"/><ellipse cx="188" cy="302" rx="32" ry="14"/><circle cx="224" cy="290" r="12"/><polygon points="218,282 216,268 226,280"/><path d="M157 300q-14-6-10-20" stroke="#8A5A33" stroke-width="5" fill="none" stroke-linecap="round"/></g><circle cx="228" cy="288" r="2"/>
+          <rect class="hz" x="140" y="266" width="100" height="70"/><ellipse class="mk" cx="190" cy="304" rx="56" ry="38"/></g>
+      </svg>
+    </div>
+    <p class="verdict" id="pic-msg" aria-live="polite">Знайдено: 0 з 6</p>
+    <ol class="notes" id="pic-notes"></ol>
+    <div class="rules">
+      <div class="rule"><b>1. Придивись</b>Пальці, написи, тіні, відображення, однакові шматки.</div>
+      <div class="rule"><b>2. Знайди джерело</b>Хто і коли опублікував картинку вперше?</div>
+      <div class="rule"><b>3. Шукай за зображенням</b>Google Об'єктив або TinEye покажуть, де ще є це фото.</div>
+    </div>
+    <div class="case"><span class="no">ДВА ЗАПИТАННЯ ЕКСПЕРТОВІ</span><div id="pic-qs" style="display:flex;flex-direction:column;gap:16px"></div></div>
+    <div class="row"><button class="btn go" data-go="5">До справи 5</button></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="stage" id="s5">
+    <h3>Справа 5</h3><h2>Таємниче слово «октоторп»</h2>
+    <p class="lead">Агент не соромиться чогось не знати. Він шукає. Відкрий пошук у новій вкладці, з'ясуй, що таке октоторп, і обери його серед підозрюваних.</p>
+    <div class="case" id="m4-case">
+      <div class="symbols" id="m4-sym"></div>
+      <p class="why" id="m4-why" hidden></p>
+      <label class="f" for="m4-src">Де знайдено відповідь? Запиши назву сайту
+        <input type="text" id="m4-src" autocomplete="off" placeholder="Наприклад: Вікіпедія">
+      </label>
+    </div>
+    <div class="row"><button class="btn go" data-go="6">До справи 6</button></div>
+  </section>
+
+  <!-- 5 -->
+  <section class="stage" id="s6">
+    <h3>Справа 6</h3><h2>Правда і фейк власноруч</h2>
+    <p class="lead">Знайди в інтернеті одну правдиву цікавинку і вигадай одну неправдиву, але схожу на правду. Учителька перегляне обидві у твоєму звіті.</p>
+    <div class="case" id="m5-write">
+      <label class="f" for="m5-t">Правдива цікавинка<textarea id="m5-t"></textarea></label>
+      <label class="f" for="m5-src">Де ти це перевірив чи перевірила?<input type="text" id="m5-src" autocomplete="off"></label>
+      <label class="f" for="m5-f">Фейк, який ти вигадав чи вигадала<textarea id="m5-f"></textarea></label>
+    </div>
+    <div class="row"><button class="btn go" data-go="7">Отримати звання</button></div>
+  </section>
+
+  <!-- 6 -->
+  <section class="stage" id="s7">
+    <h3>Звіт агента</h3><h2 id="fin-name">Стажування завершено</h2>
+    <div class="rank" id="rank">Стажер</div>
+    <p class="lead" id="fin-text"></p>
+    <pre class="report" id="report"></pre>
+    <div class="row">
+      <button class="btn go" id="copy">Скопіювати звіт</button>
+      <button class="btn ghost" id="reset">Почати все спочатку</button>
+      <span class="small" id="copy-msg" aria-live="polite"></span>
+    </div>
+  </section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const KEY='buro-faktiv-v2';
+const STEPS=['Вступ','Факт чи судження','Правда чи фейк','Обшук сайту','Фотоекспертиза','Октоторп','Правда і фейк власноруч','Звіт'];
+
+const DECKS={
+ m1:{labels:['Факт','Судження'],cls:['a','b'],stamps:['ФАКТ','СУДЖЕННЯ'],colors:['blue','violet'],items:[
+  {t:'Україна проголосила незалежність у 1991 році.',a:0,why:'Це можна перевірити в підручнику історії чи енциклопедії.'},
+  {t:'Львів — [найкраще] місто в Україні.',a:1,why:'«Найкраще» — це оцінка. Хтось скаже те саме про Одесу чи Харків, і теж матиме право на свою думку.'},
+  {t:'Земля — третя планета від Сонця.',a:0,why:'Порядок планет виміряли астрономи. Перевірити можна в будь-якому атласі.'},
+  {t:'Шоколад — [найсмачніша] їжа у світі.',a:1,why:'Смак у кожного свій. Слова «найсмачніший», «найкращий», «найгірший» майже завжди видають судження.'},
+  {t:'У лютому може бути 28 або 29 днів.',a:0,why:'Відкрий календар і полічи.'},
+  {t:'[Усім] потрібен найкращий друг.',a:1,why:'Слово «усім» підозріле. Автор не питав усіх людей на світі, це його думка.'},
+  {t:'Повітря складається з азоту, кисню, вуглекислого та інших газів.',a:0,why:'Склад повітря вимірюють приладами. Це факт із підручника природознавства.'},
+  {t:'Цьогорічне літо було [жахливо] спекотним.',a:1,why:'«Жахливо» — це відчуття. А от «Середня температура липня була +21 °C» — уже твердження, яке можна перевірити в метеорологів.'},
+  {t:'Пінгвіни не вміють літати.',a:0,why:'Це можна спостерігати й перевірити в енциклопедії про тварин.'},
+  {t:'Комп\'ютерні ігри — [марна трата часу].',a:1,why:'Це оцінка. Хтось вважає ігри відпочинком, хтось — професією.'},
+  {t:'Вода замерзає при 0 °C.',a:0,why:'Постав склянку води в морозилку з термометром і перевір сам.'},
+  {t:'Понеділок — [найгірший] день тижня.',a:1,why:'А хтось у понеділок має день народження. Це думка, а не факт.'},
+  {t:'[Учені довели], що інформатика — [найцікавіший] урок.',a:1,why:'Пастка! «Учені довели» звучить як факт. Але які вчені? Де дослідження? А «найцікавіший» у кожного свій. Судження часто маскують під факти саме так.'}
+ ]},
+ m2:{bet:true,labels:['Правда','Фейк'],cls:['a','r'],stamps:['ПРАВДА','ФЕЙК'],colors:['blue','red'],items:[
+  {t:'На Місяці лежать три м\'ячі для гольфу.',a:1,why:'М\'ячі там справді є, але два. Їх у 1971 році залишив астронавт Алан Шепард. Фейк часто ховається в одній маленькій деталі.'},
+  {t:'Пінгвін — це птах.',a:0,why:'Має пір\'я, дзьоб і відкладає яйця. Просто його крила пристосовані для плавання.'},
+  {t:'Ніагарський водоспад повністю замерз у 2017 році.',a:1,why:'У сильні морози краї водоспаду вкриваються льодом, і на фото здається, ніби він застиг. Але під льодом вода тече далі. Фото — ще не доказ.'},
+  {t:'Кавун — це ягода.',a:0,why:'Для ботаніків плід кавуна — особливий різновид ягоди. Звучить дивно, але перевір в енциклопедії.'},
+  {t:'Одна батарейка забруднює 400 літрів води або 20 квадратних метрів ґрунту.',a:2,why:'Пастка для всіх! Цю цифру повторюють сотні сайтів, але не пишуть, хто і як її виміряв. Батарейки справді шкідливі для природи, та саме це число лишається неперевіреним. Чесна відповідь агента: «Не знаю, доки не знайду джерело».'},
+  {t:'Банан росте на пальмі.',a:1,why:'Бананова рослина — це гігантська трава. У неї немає дерев\'яного стовбура.'},
+  {t:'На Марсі є хмари.',a:0,why:'Їх фотографували марсоходи. Знімки можна знайти на сайтах космічних агентств.'},
+  {t:'Найпопулярніше слово у світі — «Hello».',a:1,why:'В англійських текстах найчастіше трапляється слово «the», а найвідомішим у світі зазвичай називають «OK». Коли бачиш «най-», питай: а хто рахував?'},
+  {t:'Австралія має найдовшу берегову лінію у світі.',a:1,why:'Найдовша берегова лінія в Канади. Відкрий карту: скільки там островів і заток!'}
+ ]}
+};
+const SCALE=[['Точно правда',0,3],['Майже напевно правда',0,2],['Мабуть, правда',0,1],['Не знаю',-1,0],['Мабуть, фейк',1,1],['Майже напевно фейк',1,2],['Точно фейк',1,3]];
+const PIC_Q=[
+ ['У класний чат надіслали фото акули, яка пливе затопленою вулицею міста. Що зробиш першим?',['Перешлю друзям, це ж сенсація','Перевірю пошуком за зображенням, де ще є це фото','Повірю: фото не може брехати'],1,'Пошук за зображенням показує, де і коли картинка з\'явилася вперше. Часто цього досить, щоб викрити фейк.'],
+ ['Фото справжнє, але підпис під ним розповідає про зовсім іншу подію. Це обман?',['Ні, фото ж справжнє','Так, це теж обман'],1,'Часто обманюють саме так: беруть старе справжнє фото і підписують його як свіжу новину. Тому перевіряй і картинку, і підпис.']
+];
+const SITE_Q=[
+ ['Хто автор сайту?',['Не вдалося знайти','Є назва організації','Є імена авторів і контакти']],
+ ['Коли оновлювали матеріали?',['Не вказано','Дуже давно','Нещодавно']],
+ ['Чи зрозуміло все написано?',['Нічого не зрозуміло','Досить зрозуміло','Усе чудово зрозуміло']],
+ ['Чи заважає реклама?',['Так, її повно','Трохи є','Реклами немає']],
+ ['Чи корисний сайт для навчання?',['Ні','Можливо','Так, заходитиму ще']]
+];
+const SYMS=['@','&','#','~'];
+
+const fresh=()=>({step:0,name:'',m1:{i:0,score:0,ans:null},m2:{i:0,score:0,ans:null,bet:1},
+ m3:{found:[],url:'',qs:[null,null,null,null,null],rate:null},pic:{found:[],q:[null,null]},m4:{pick:null,tries:0,src:''},m5:{t:'',f:'',src:'',res:null}});
+let S=fresh();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const fmt=(t,on)=>on?t.replace(/\[(.+?)\]/g,'<mark>$1</mark>'):t.replace(/[\[\]]/g,'');
+
+const picScore=()=>S.pic.found.length+S.pic.q.filter((v,i)=>v===PIC_Q[i][2]).length;
+function total(){return S.m1.score+S.m2.score+S.m3.found.length+picScore()+(S.m4.pick==='#'?(S.m4.tries<=1?2:1):0)+m5Score()}
+function m5Score(){return ['t','src','f'].filter(k=>S.m5[k].trim()).length}
+function doneStep(n){return [S.name,S.m1.i>=DECKS.m1.items.length,S.m2.i>=DECKS.m2.items.length,S.m3.found.length>=8&&S.m3.qs.every(x=>x!=null),S.pic.found.length>=6&&S.pic.q.every(x=>x!=null),S.m4.pick==='#',!!(S.m5.t.trim()&&S.m5.f.trim()),false][n]}
+
+function renderNav(){
+ $('#nav').innerHTML=STEPS.map((s,i)=>`<button data-go="${i}" aria-current="${i===S.step}" class="${doneStep(i)?'done':''}"><b>${i===0?'Старт':i===7?'Фініш':'Справа '+i}</b>${s}</button>`).join('');
+ $('#total').textContent=total();
+}
+function go(n){S.step=n;$$('section.stage').forEach((el,i)=>el.classList.toggle('on',i===n));
+ if(n===1)deck('m1');if(n===2)deck('m2');if(n===7)report();renderNav();save();window.scrollTo(0,0)}
+
+function deck(k){
+ const c=DECKS[k],st=S[k],root=$('#'+k+'-deck'),N=c.items.length;
+ if(st.i>=N){const max=c.bet?(N-1)*3+2:N;
+  root.innerHTML=`<div class="case"><span class="no">СПРАВУ ЗАКРИТО</span><p class="claim">Твій результат: ${st.score} з ${max} балів</p>
+   <p class="why">${k==='m1'?'Запам\'ятай слова-підказки: «найкращий», «найгірший», «усі», «завжди», «жахливо». Вони видають судження.':'Помітив? Упевненість і правота — різні речі. Найбільше балів втрачає той, хто «точно знає» і не перевіряє.'}</p>
+   <div class="row"><button class="btn go" data-go="${k==='m1'?2:3}">До наступної справи</button><button class="btn ghost" data-again="${k}">Пройти ще раз</button></div></div>`;return}
+ const it=c.items[st.i],an=st.ans;
+ let h=`<div class="case"><span class="no">КАРТКА ${st.i+1} З ${N}</span><div class="bar"><i style="width:${st.i/N*100}%"></i></div><p class="claim">${fmt(it.t,!!an)}</p>`;
+ if(!an){
+  if(c.bet)h+=`<div class="scale" role="group" aria-label="Шкала впевненості">${SCALE.map(([l,p,v])=>`<button class="btn ${p<0?'':p?'r f'+v:'a t'+v}" data-pick="${p}" data-bet="${v}">${l}<span>${v?'+'+v+' або −'+v:'0'}</span></button>`).join('')}</div>`;
+  else h+=`<div class="row"><button class="btn big ${c.cls[0]}" data-pick="0">${c.labels[0]}</button><button class="btn big ${c.cls[1]}" data-pick="1">${c.labels[1]}</button></div>`;
+ }else{
+  const trap=it.a===2;
+  h+=`<span class="stamp ${trap?'amber':c.colors[it.a]}">${trap?'НЕ ПЕРЕВІРЕНО':c.stamps[it.a]}</span>
+   <p class="verdict ${trap||an.p<0?'hm':an.ok?'ok':'no'}">${trap?(an.p<0?'Саме так! Чесне «не знаю» тут найкраща відповідь. +2':'Ні правда, ні фейк. Ставка повертається.'):an.p<0?'Чесно. Балів немає, але й втрат теж. Відповідь: '+c.labels[it.a].toLowerCase()+'.':an.ok?'Влучно! +'+an.d:'Не цього разу. '+(c.bet?'−'+(-an.d)+'. ':'')+'Правильна відповідь: '+c.labels[it.a].toLowerCase()+'.'}</p>
+   <p class="why">${it.why}</p><div class="row"><button class="btn go" data-next="${k}">${st.i+1<N?'Наступна картка':'Закрити справу'}</button></div>`;
+ }
+ root.innerHTML=h+'</div>';root.dataset.k=k;
+}
+document.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.go!=null)return go(+b.dataset.go);
+ const dk=b.closest('[data-k]')?.dataset.k;
+ if(b.dataset.pick!=null&&dk){const c=DECKS[dk],st=S[dk],it=c.items[st.i],p=+b.dataset.pick;
+  const bet=+b.dataset.bet||0,ok=it.a===p,d=it.a===2?(p<0?2:0):c.bet?(ok?bet:-bet):(ok?1:0);
+  st.ans={p,ok,d};st.score+=d;deck(dk);renderNav();save();$('#'+dk+'-deck [data-next]')?.focus();return}
+ if(b.dataset.next){const st=S[b.dataset.next];st.i++;st.ans=null;deck(b.dataset.next);renderNav();save();return}
+ if(b.dataset.again){const k=b.dataset.again;S[k]={...fresh()[k]};deck(k);renderNav();save();return}
+});
+
+/* Справа 3 */
+function m3(){
+ const flags=$$('#mock [data-flag]');
+ flags.forEach((b,i)=>{const n=S.m3.found.indexOf(i);b.classList.toggle('hit',n>=0);if(n>=0)b.dataset.n=n+1});
+ $('#m3-notes').innerHTML=S.m3.found.map(i=>`<li>${flags[i].dataset.flag}</li>`).join('');
+ const f=S.m3.found.length;
+ if(!$('#m3-msg').dataset.tmp)$('#m3-msg').textContent=f>=8?'Усі 8 ознак знайдено. Такому сайту довіряти не варто.':`Знайдено: ${f} з 8`;
+ $('#site-url').value=S.m3.url;
+ $('#site-qs').innerHTML=SITE_Q.map(([q,o],i)=>`<div class="q"><b>${q}</b><div class="chips" role="group">${o.map((x,j)=>`<button class="chip" data-q="${i}" data-v="${j}" aria-pressed="${S.m3.qs[i]===j}">${x}</button>`).join('')}</div></div>`).join('');
+ const ans=S.m3.qs.filter(x=>x!=null),t=ans.reduce((a,b)=>a+b,0);
+ $('#trust-n').textContent=t;$('#trust-bar').style.width=t*10+'%';
+ $('#trust-w').textContent=!ans.length?'ще немає відповідей':ans.length<5?'дай відповіді на всі запитання':t>=8?'сайту можна довіряти':t>=5?'користуйся обережно, перевіряй':'краще пошукати інше джерело';
+ $('#own-rate').innerHTML=Array.from({length:10},(_,i)=>`<button class="chip" data-rate="${i+1}" aria-pressed="${S.m3.rate===i+1}">${i+1}</button>`).join('');
+ const r=S.m3.rate;
+ $('#rate-note').textContent=r==null||ans.length<5?'':Math.abs(r-t)>=4?`Твоя оцінка ${r}, а шкала довіри показує ${t}. Подумай, чому вони такі різні. Гарний на вигляд сайт не завжди надійний, і навпаки.`:'Твоя оцінка близька до шкали довіри.';
+}
+$('#s3').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ const flags=$$('#mock [data-flag]'),msg=$('#m3-msg');delete msg.dataset.tmp;
+ if(b.dataset.flag){const i=flags.indexOf(b);if(!S.m3.found.includes(i))S.m3.found.push(i)}
+ else if(b.dataset.ok){msg.dataset.tmp=1;msg.textContent=b.dataset.ok}
+ else if(b.dataset.q){S.m3.qs[+b.dataset.q]=+b.dataset.v}
+ else if(b.dataset.rate){S.m3.rate=+b.dataset.rate}
+ else return;
+ m3();renderNav();save();
+});
+$('#site-url').addEventListener('input',e=>{S.m3.url=e.target.value;save()});
+
+/* Справа 4: фото */
+function pic(){
+ const flags=$$('#photo [data-flag]');
+ flags.forEach((g,i)=>g.classList.toggle('hit',S.pic.found.includes(i)));
+ $('#pic-notes').innerHTML=S.pic.found.map(i=>`<li>${flags[i].dataset.flag}</li>`).join('');
+ const f=S.pic.found.length,msg=$('#pic-msg');
+ if(!msg.dataset.tmp)msg.textContent=f>=6?'Усі 6 помилок знайдено. Це підробка!':`Знайдено: ${f} з 6`;
+ $('#pic-qs').innerHTML=PIC_Q.map(([q,o,a,why],i)=>{const v=S.pic.q[i];return `<div class="q"><b>${q}</b><div class="chips" role="group">${o.map((x,j)=>`<button class="chip" data-pq="${i}" data-v="${j}" aria-pressed="${v===j}" ${v!=null?'disabled':''}>${x}</button>`).join('')}</div>${v==null?'':`<p class="verdict ${v===a?'ok':'no'}">${v===a?'Правильно! +1':'Ні. Правильна відповідь: «'+o[a]+'».'}</p><p class="why">${why}</p>`}</div>`}).join('');
+}
+function picHit(t){
+ const g=t.closest('#photo [data-flag],#photo [data-ok]'),msg=$('#pic-msg');
+ if(g){delete msg.dataset.tmp;
+  if(g.dataset.flag){const i=$$('#photo [data-flag]').indexOf(g);if(!S.pic.found.includes(i))S.pic.found.push(i)}
+  else{msg.dataset.tmp=1;msg.textContent=g.dataset.ok}}
+ else{const b=t.closest('[data-pq]');if(!b)return;S.pic.q[+b.dataset.pq]=+b.dataset.v}
+ pic();renderNav();save();
+}
+$('#s4').addEventListener('click',e=>picHit(e.target));
+$('#photo').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();picHit(e.target)}});
+
+/* Справа 5 */
+function m4(){
+ $('#m4-sym').innerHTML=SYMS.map(s=>`<button class="btn" data-sym="${s}" aria-label="Символ ${s}">${s}</button>`).join('');
+ const w=$('#m4-why'),p=S.m4.pick;w.hidden=!p;
+ if(p==='#')w.innerHTML='<b>Так, це #.</b> Октоторп ще називають «решітка» або «хештег». Назва натякає на вісім кінчиків: «окто» означає вісім.';
+ else if(p)w.innerHTML=`<b>${p} — не октоторп.</b> Не вгадуй, а пошукай: так роблять агенти.`;
+ $$('#m4-case .stamp').forEach(x=>x.remove());
+ if(p==='#')$('#m4-case').insertAdjacentHTML('beforeend','<span class="stamp blue">ЗНАЙДЕНО</span>');
+ $('#m4-src').value=S.m4.src;
+}
+$('#m4-sym').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||S.m4.pick==='#')return;S.m4.pick=b.dataset.sym;S.m4.tries++;m4();renderNav();save()});
+$('#m4-src').addEventListener('input',e=>{S.m4.src=e.target.value;save()});
+
+/* Справа 6 */
+function m5(){['t','f','src'].forEach(k=>$('#m5-'+k).value=S.m5[k])}
+['t','f','src'].forEach(k=>$('#m5-'+k).addEventListener('input',e=>{S.m5[k]=e.target.value;renderNav();save()}));
+
+/* Звіт */
+function report(){
+ const t=total(),max=60,grade=Math.min(12,Math.max(1,Math.round(t/5))),p=t/max;
+ const rank=p>=.8?'Головний фактчекер':p>=.6?'Старший агент':p>=.35?'Агент':'Стажер';
+ $('#rank').textContent=rank;$('#fin-name').textContent=S.name?S.name+', стажування завершено':'Стажування завершено';
+ $('#fin-text').textContent=`Набрано ${t} з ${max} балів. Попередня оцінка: ${grade} з 12. Скопіюй звіт і здай учительці.`;
+ const q=SITE_Q.map(([q,o],i)=>`  ${q} ${S.m3.qs[i]==null?'—':o[S.m3.qs[i]]}`).join('\n');
+ const trust=S.m3.qs.reduce((a,b)=>a+(b||0),0);
+ $('#report').textContent=
+`БЮРО ПЕРЕВІРКИ ФАКТІВ. ЗВІТ
+Агент: ${S.name||'—'}
+Звання: ${rank}
+Бали: ${t} з ${max}
+Попередня оцінка: ${grade} з 12 (бали поділено на 5)
+
+1. Факт чи судження: ${S.m1.score} з 13
+2. Правда чи фейк: ${S.m2.score} з 26
+3. Обшук сайту: знайдено ознак ${S.m3.found.length} з 8
+   Перевірений сайт: ${S.m3.url||'—'}
+${q}
+   Шкала довіри: ${trust} з 10. Власна оцінка: ${S.m3.rate??'—'} з 10
+4. Фотоекспертиза: ${picScore()} з 8
+5. Октоторп: ${S.m4.pick==='#'?'знайдено, спроб: '+S.m4.tries:'не знайдено'}. Джерело: ${S.m4.src||'—'}
+6. Правда і фейк власноруч: ${m5Score()} з 3
+   Правдива цікавинка: ${S.m5.t||'—'}
+   Де перевірено: ${S.m5.src||'—'}
+   Фейк: ${S.m5.f||'—'}`;
+}
+$('#copy').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('#report').textContent);$('#copy-msg').textContent='Скопійовано'}
+ catch(e){$('#copy-msg').textContent='Не вдалося. Виділи текст звіту і скопіюй вручну.'}});
+$('#reset').addEventListener('click',()=>{S=fresh();boot()});
+$('#name').addEventListener('input',e=>{S.name=e.target.value;renderNav();save()});
+
+function boot(){$('#name').value=S.name;m3();pic();m4();m5();go(S.step)}
+function start(d){
+ let st=d&&d.m1?d:null;
+ if(!st){try{st=JSON.parse(localStorage.getItem(KEY))}catch(e){}}
+ if(st&&st.m1&&st.pic)S=Object.assign(fresh(),st);
+ boot();
+}
+window.claude?.hot?.snapshot?.(()=>S);
+window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+</script>
+</body>
+</html>
