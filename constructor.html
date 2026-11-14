@@ -192,6 +192,12 @@ table.prog{border-collapse:collapse;width:100%;min-width:860px;table-layout:fixe
 .prog td{vertical-align:top;border:1px solid var(--line);padding:8px 10px}
 .prog th:nth-child(1){width:36%}.prog th:nth-child(2){width:30%}
 .prog .rn{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.uxitem{border:1.5px solid #c62828;background:#fdecea;border-radius:6px;padding:6px 8px;margin-bottom:8px;font-size:13.5px}
+.uxhd{color:#b71c1c;font-weight:600;font-size:12px;margin-bottom:4px}
+.uxitem textarea.uxta{width:100%;min-height:44px;border:1px solid #e3a9a4;border-radius:4px;background:var(--panel);color:var(--ink);font:inherit;padding:4px 6px;resize:vertical}
+.uxbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.uxbtns select{max-width:100%;flex:1 1 180px}
+.uxn{color:#c62828;font-weight:600}.stat.uxs{background:#fdecea;color:#b71c1c;margin-left:3px}
+@media (prefers-color-scheme:dark){ .uxitem{background:#3a1d1d;border-color:#e57373} .uxhd,.uxn{color:#ef9a9a} .stat.uxs{background:#3a1d1d;color:#ef9a9a} }
 .ocitem{border-left:3px solid var(--gc);padding:2px 0 2px 8px;margin-bottom:8px;font-size:13.5px}
 .ocitem .code{font-weight:600;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;align-items:center}
 .ocitem .ocact{display:flex;gap:2px;align-items:center}
@@ -486,7 +492,9 @@ function migrate(){ if((S.v||1) < 2){
   for(const o of S.outcomes) if(std.has(o.c)) o.t = std.get(o.c);
   if(SEED && /Вступ до робототехніки/.test(S.title||"")) S.title = SEED.title;
   S.v = STATE_V; cleanAssign();
-} }
+}
+  if(!S.actFmt){ for(const rows of Object.values(S.rows||{})) for(const r of rows) if(r.act) r.act=fmtAct(r.act); S.actFmt=1; }
+}
 
 let saveTimer;
 function save(){
@@ -757,7 +765,7 @@ function renderStep2(){
   if(!T.length){ main.innerHTML=`<section class="panel"><div class="empty"><h2>Спершу визначте теми</h2><p class="muted">На кроці 1 додайте теми й доберіть до них орієнтири, тоді тут з’явиться таблиця для кожної теми.</p><button class="btn primary" data-goto="1">До кроку 1</button></div></section>`; return; }
   if(!topicById(S.ui.t2)) S.ui.t2 = T[0].id;
   const side = `<aside class="panel side"><h2 style="margin-bottom:6px">Теми</h2><div class="tlist">${S.modules.map(m=>`<div class="mt">${esc(m.name)}</div>${m.topics.map(t=>{const tt=topicById(t.id); const st=topicStatus(t.id); const cls = st.n===0?"":(st.filled===st.withOc&&st.unpl===0&&st.withOc?"done":(st.filled?"part":""));
-    return `<button data-t2="${t.id}" aria-current="${t.id===S.ui.t2}"><span class="num">${tt.num}</span><span>${esc(t.name)}</span><span class="stat ${cls}" title="Заповнено рядків / усього">${st.n? `${st.filled}/${st.withOc}` : "0 ор."}</span></button>`;}).join("")}`).join("")}</div>
+    return `<button data-t2="${t.id}" aria-current="${t.id===S.ui.t2}"><span class="num">${tt.num}</span><span>${esc(t.name)}</span><span class="stat ${cls}" title="Заповнено рядків / усього">${st.n? `${st.filled}/${st.withOc}` : "0 ор."}</span>${uxCount(t.id)?`<span class="stat uxs" title="Результати, що не відповідають орієнтирам стандарту">${uxCount(t.id)}</span>`:""}</button>`;}).join("")}`).join("")}</div>
     <p class="tiny muted" style="margin-top:12px">Рядок вважається заповненим, коли в ньому є орієнтири, зміст і види діяльності.</p></aside>`;
   main.innerHTML = `<div class="layout">${side}<section class="panel" id="t2panel">${topicPanelHTML(S.ui.t2)}</section></div>`;
   autosizeAll();
@@ -765,9 +773,9 @@ function renderStep2(){
 function topicPanelHTML(tid){
   const t = topicById(tid); const unpl = ensureRows(tid); const rows=S.rows[tid]; const n=topicOutcomes(tid).length;
   const rowOpts = (cur) => rows.map((r,i)=>`<option value="${r.id}" ${r.id===cur?"selected":""}>у рядок ${i+1}</option>`).join("") + `<option value="__new">в окремий рядок</option>`;
-  let html = `<div class="thead"><div><h2>${t.num} ${esc(t.name)}</h2><div class="tiny muted">${esc(t.m.name)} · орієнтирів у темі: ${n}</div></div>
+  let html = `<div class="thead"><div><h2>${t.num} ${esc(t.name)}</h2><div class="tiny muted">${esc(t.m.name)} · орієнтирів у темі: ${n}${uxCount(tid)?` · <span class="uxn">результатів, що не відповідають стандарту: ${uxCount(tid)}</span>`:""}</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-goto="1" data-pickfrom="${tid}">Змінити добір орієнтирів</button><button class="btn small" data-ref-open="1">Довідники</button></div></div>`;
-  if(!n){ return html + `<div class="empty"><p class="muted">До цієї теми ще не добрано жодного орієнтира. Поверніться на крок 1 і позначте їх у стовпці теми.</p></div>`; }
+  if(!n && !uxCount(tid)){ return html + `<div class="empty"><p class="muted">До цієї теми ще не добрано жодного орієнтира. Поверніться на крок 1 і позначте їх у стовпці теми.</p></div>`; }
   html += `<div class="twrap"><table class="prog"><thead><tr><th>Очікувані результати навчання<div class="thsub">Взято з матриці кроку 1. Формулювання можна уточнити для цієї теми (✎), орієнтири — перенести між рядками.</div></th><th>Пропонований зміст<div class="thsub">Підказки — з базових знань Державного стандарту; дописуйте й уточнюйте власні формулювання.</div></th><th>Види навчальної діяльності<div class="thsub">Підказки з довідника — лише пропозиції; пишіть і власні, у довільному формулюванні, по одному в рядку.</div></th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{
     const A = rowAlign(r);
@@ -775,7 +783,8 @@ function topicPanelHTML(tid){
       <td class="oc"><div class="rn"><span>Рядок ${i+1}</span><span>
         ${i>0?`<button class="btn small ghost" data-merge="${r.id}" title="Перенести орієнтири цього рядка до попереднього">↑ об’єднати</button>`:""}
         <button class="btn small ghost danger" data-rdel="${r.id}" data-confirm="Видалити?">Видалити</button></span></div>
-        ${r.oc.length ? r.oc.map(c=>`<div class="ocitem" data-oc="${esc(c)}" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${esc(c)}</span><span class="ocact"><button class="ib" data-ocedit-open="${esc(c)}" title="Уточнити формулювання для цієї теми">✎</button><select data-move="${esc(c)}" data-from="${r.id}" aria-label="Перемістити">${rowOpts(r.id)}<option value="__out">прибрати з таблиці</option></select></span></div>${ocTextHTML(tid,c)}${ocStatusHTML(r,c,A)||'<div class="ocst"></div>'}</div>`).join("") : `<div class="tiny muted">Порожній рядок: перемістіть сюди орієнтири з інших рядків.</div>`}
+        ${r.oc.length ? r.oc.map(c=>`<div class="ocitem" data-oc="${esc(c)}" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${esc(c)}</span><span class="ocact"><button class="ib" data-ocedit-open="${esc(c)}" title="Уточнити формулювання для цієї теми">✎</button><select data-move="${esc(c)}" data-from="${r.id}" aria-label="Перемістити">${rowOpts(r.id)}<option value="__out">прибрати з таблиці</option></select></span></div>${ocTextHTML(tid,c)}${ocStatusHTML(r,c,A)||'<div class="ocst"></div>'}</div>`).join("") : (r.ux?.length?"":`<div class="tiny muted">Порожній рядок: перемістіть сюди орієнтири з інших рядків.</div>`)}
+        ${(r.ux||[]).map(u=>uxHTML(tid,r,u)).join("")}
       </td>
       <td><textarea data-f="content" data-r="${r.id}" placeholder="Поняття, факти, інструменти, з якими працюють учні">${esc(r.content)}</textarea>
         <div class="ksuggs">${knSuggHTML(r)}</div></td>
@@ -792,6 +801,33 @@ function topicPanelHTML(tid){
     <button class="btn small ghost danger" data-regroup="1" data-confirm="Натисніть ще раз: увесь текст теми буде видалено" title="Видаляє зміст і види діяльності цієї теми; орієнтири знову розкладаються по рядках за групами результатів (ГР)">Очистити таблицю теми</button></div>`;
   return html;
 }
+/* results from an imported programme that match no outcome of the standard */
+function uxGuess(tid, text){
+  const bg=bigrams(text), inT=new Set(topicOutcomes(tid).map(o=>o.c));
+  return S.outcomes.map(o=>({c:o.c, s:dice(bg,bigrams(o.t))+(inT.has(o.c)?0.05:0)})).filter(x=>x.s>=0.42).sort((a,b)=>b.s-a.s).slice(0,2);
+}
+function uxHTML(tid, r, u){
+  const inT=topicOutcomes(tid).map(o=>o.c), inTs=new Set(inT);
+  const opt=c=>`<option value="${esc(c)}">${esc(c)} — ${esc(short(ocText(c),70))}</option>`;
+  const g=uxGuess(tid,u.t);
+  return `<div class="uxitem"><div class="uxhd">Не відповідає орієнтирам стандарту</div>
+    <textarea class="uxta" data-uxtext="${u.id}" data-ur="${r.id}" rows="2" aria-label="Результат з імпортованої програми">${esc(u.t)}</textarea>
+    ${g.length?`<div class="sugg"><span class="lab">Схоже на:</span>${g.map(x=>`<button class="schip" data-uxmap="${esc(x.c)}" data-ux="${u.id}" data-ur="${r.id}" title="${esc(ocText(x.c))}">[${esc(x.c)}] ${esc(short(ocText(x.c),56))}</button>`).join("")}</div>`:""}
+    <div class="uxbtns"><select data-uxsel="${u.id}" data-ur="${r.id}" aria-label="Встановити відповідність орієнтиру"><option value="">Відповідає орієнтиру…</option>
+        ${inT.length?`<optgroup label="Орієнтири теми">${inT.map(opt).join("")}</optgroup>`:""}
+        <optgroup label="Інші орієнтири">${S.outcomes.filter(o=>!inTs.has(o.c)).map(o=>opt(o.c)).join("")}</optgroup></select>
+      <button class="btn small" data-uxact="${u.id}" data-ur="${r.id}" title="Найчастіше такий «результат» описує діяльність учнів">→ у види діяльності</button>
+      <button class="btn small ghost danger" data-uxdel="${u.id}" data-ur="${r.id}" data-confirm="Видалити?">Видалити</button></div></div>`;
+}
+function uxResolve(rid, uid_, code){
+  const r=findRow(rid); if(!r) return; const u=(r.ux||[]).find(x=>x.id===uid_); if(!u) return; const tid=S.ui.t2;
+  if(code){ const a=S.assign[code]=S.assign[code]||[]; if(!a.includes(tid)) a.push(tid);
+    for(const o of S.rows[tid]) if(o!==r) o.oc=o.oc.filter(c=>c!==code);
+    if(!r.oc.includes(code)) r.oc.push(code); }
+  r.ux=r.ux.filter(x=>x!==u); save(); render();
+  if(code) toast(`Позначено орієнтир ${code}`);
+}
+const uxCount = tid => (S.rows[tid]||[]).reduce((s,r)=>s+(r.ux?.length||0),0);
 function topicAlign(tid){
   ensureRows(tid); let tot=0, none=0, low=0, unl=0;
   for(const r of S.rows[tid]){ if(!r.oc.length) continue; const A=rowAlign(r); for(const c of r.oc){ tot++; if(!A.per[c].n) none++; else if(A.per[c].low) low++; } unl += A.L.filter(x=>!x.codes.length).length; }
@@ -813,7 +849,7 @@ function alignMatrixHTML(tid){
   return h;
 }
 function rerenderTopicPanel(){ const p=$("#t2panel"); if(p){ const y=window.scrollY, tw=p.querySelector(".twrap"), x=tw?tw.scrollLeft:0; p.style.minHeight=p.offsetHeight+"px"; p.innerHTML=topicPanelHTML(S.ui.t2); autosizeAll(); const tw2=p.querySelector(".twrap"); if(tw2) tw2.scrollLeft=x; p.style.minHeight=""; window.scrollTo(0,y); } const side=document.querySelector(`.tlist button[data-t2="${S.ui.t2}"] .stat`); if(side){ const st=topicStatus(S.ui.t2); side.textContent = st.n?`${st.filled}/${st.withOc}`:"0 ор."; side.className="stat "+(st.n===0?"":(st.filled===st.withOc&&st.unpl===0&&st.withOc?"done":(st.filled?"part":""))); } }
-function autosize(ta){ ta.style.height="auto"; ta.style.height=Math.max(110, ta.scrollHeight+2)+"px"; }
+function autosize(ta){ ta.style.height="auto"; ta.style.height=Math.max(ta.classList.contains("uxta")?44:110, ta.scrollHeight+2)+"px"; }
 function autosizeAll(){ document.querySelectorAll(".prog textarea").forEach(autosize); }
 /* ---------- alignment: activity ↔ outcome, 4 levels ---------- */
 const LEVELS = ["","Відтворення","Розуміння","Застосування і створення","Аналіз і оцінювання"];
@@ -844,7 +880,6 @@ function linksOf(r, line){ r.links = r.links || {}; const v=r.links[lkey(line)];
 function setLinks(r, line, codes){ r.links = r.links || {}; r.links[lkey(line)] = [...new Set(codes)]; }
 function rowAlign(r){
   const L = actLines(r).map(t=>({t, lv:actLevel(t), codes:linksOf(r,t)}));
-  if(r.oc.length===1) for(const x of L) if(!(r.links||{})[lkey(x.t)]) x.codes=[r.oc[0]];
   const per = {}; for(const c of r.oc){ const acts=L.filter(x=>x.codes.includes(c)); const ol=outLevel(c); const maxA=Math.max(0,...acts.map(x=>x.lv)); per[c]={n:acts.length, ol, low: acts.length>0 && ol>0 && maxA>0 && maxA<ol, maxA}; }
   return {L, per};
 }
@@ -859,7 +894,7 @@ const lkWords = t => [...new Set((norm(t).match(/[a-zа-яіїєґ’]{4,}/g)||[
 let LK_DF=null, LK_N=0;
 function lkDF(){ if(LK_DF && LK_N===S.outcomes.length) return LK_DF; LK_DF=new Map(); LK_N=S.outcomes.length; for(const o of S.outcomes) for(const w of lkWords(o.t)) LK_DF.set(w,(LK_DF.get(w)||0)+1); return LK_DF; }
 function linkHints(r){
-  const out=new Map(); if(r.oc.length<2) return out;
+  const out=new Map(); if(!r.oc.length) return out;
   const df=lkDF(); const lim=Math.max(3, LK_N*0.08);           // words found in more than ~8% of outcomes are too general
   const oW=new Map(r.oc.map(c=>[c, new Set(lkWords(ocText(c)).filter(w=>(df.get(w)||0)<=lim))]));
   actLines(r).forEach((t,i)=>{ const aw=lkWords(t); const hit=new Map();
@@ -899,9 +934,17 @@ function appendField(rid, f, text){
   save();
 }
 const cap = t => t ? t[0].toUpperCase()+t.slice(1) : t;
+// every activity: on its own line, starts with a capital letter, ends with a full stop
+function fmtActLine(l){
+  l=l.trim().replace(/^[-–—•·*▪◦]\s*/,"").replace(/[\s;,:]+$/,"").trim(); if(!l) return "";
+  l=l.charAt(0).toLocaleUpperCase("uk")+l.slice(1);
+  if(!/[.!?…]$/.test(l)) l+=".";
+  return l;
+}
+function fmtAct(t){ return String(t||"").split("\n").map(fmtActLine).filter(Boolean).join("\n"); }
 function appendAct(rid, text){
   const r = findRow(rid); if(!r) return;
-  r.act = (r.act.trim() ? r.act.replace(/\s+$/,"")+"\n" : "") + text;
+  r.act = fmtAct((r.act.trim() ? r.act.replace(/\s+$/,"")+"\n" : "") + text);
   save();
 }
 
@@ -1088,11 +1131,11 @@ function renderStep3(){
     html += `<h2>${esc(m.name)}</h2>`;
     html += `<table><thead><tr><th style="width:38%">Очікувані результати навчання</th><th>Пропонований зміст</th><th>Види навчальної діяльності</th></tr></thead><tbody>`;
     for(const t0 of m.topics){
-      const t=topicById(t0.id); ensureRows(t.id); const rows=S.rows[t.id].filter(r=>r.oc.length);
+      const t=topicById(t0.id); ensureRows(t.id); const rows=S.rows[t.id].filter(r=>r.oc.length||r.ux?.length);
       html += `<tr class="ttopic"><td colspan="3">Тема ${t.num}. ${esc(t.name)}</td></tr>`;
       if(!rows.length){ html+=`<tr><td colspan="3" class="e">До теми ще не добрано орієнтирів.</td></tr>`; continue; }
       for(const r of rows){ total++; const ce=!r.content.trim(), ae=!r.act.trim(); if(ce||ae) empty++;
-        html += `<tr><td>${r.oc.map(c=>`<p>${esc(ocTT(t.id,c))} [${esc(c)}]</p>`).join("")}</td>
+        html += `<tr><td>${r.oc.map(c=>`<p>${esc(ocTT(t.id,c))} [${esc(c)}]</p>`).join("")}${(r.ux||[]).map(u=>`<p style="color:#c62828">${esc(u.t)} [не відповідає стандарту]</p>`).join("")}</td>
           <td class="${ce?"e":""}">${ce?"не заповнено":lines(r.content).map(l=>`<p>${esc(l)}</p>`).join("")}</td>
           <td class="${ae?"e":""}">${ae?"не заповнено":lines(r.act).map(l=>`<p>${esc(l)}</p>`).join("")}</td></tr>`; }
     }
@@ -1288,6 +1331,27 @@ function docxProgramme(items){
 function bigrams(s){ s=norm(s).replace(/[^a-zа-яіїєґ’0-9 ]/g,"").replace(/\s+/g," "); const m=new Map(); for(let i=0;i<s.length-1;i++){ const g=s.slice(i,i+2); m.set(g,(m.get(g)||0)+1); } return m; }
 function dice(a,b){ let i=0,ta=0,tb=0; for(const v of a.values()) ta+=v; for(const v of b.values()) tb+=v; for(const [g,v] of a){ const w=b.get(g); if(w) i+=Math.min(v,w); } return 2*i/((ta+tb)||1); }
 const ANY_CODE = /(\d{1,2})\s*([А-ЯІЇЄҐ]{2,5})\s*(\d+)\s*\.\s*(\d+)\s*(?:\.\s*(\d+)\s*([-–.])|([-–]))\s*(\d+)(\s*П(?![а-яіїєґ]))?/g;
+const UX_SKIP = /^(змістова лінія|група (вмінь|результатів)|загальн\w* результат|конкретн\w* результат|очікуван\w* результат|учень|учениця|учні|результати навчання)/i;
+function uxLines(a, KOR_RE, known){   // statements without an index in a cell that has indices elsewhere
+  const spans=[]; let m;
+  const re1=new RegExp(ANY_CODE.source,"g"); while((m=re1.exec(a))){ const p=parseCode(m[0].replace(/\s+/g," ")); spans.push([m.index, m.index+m[0].length, p?known.get(p.code):null]); }
+  const re2=new RegExp(KOR_RE.source,"g"); while((m=re2.exec(a))) if(!spans.some(x=>m.index>=x[0]&&m.index<x[1])) spans.push([m.index, m.index+m[0].length, null]);
+  spans.sort((x,y)=>x[0]-y[0]);
+  const cand=[]; const ok=l=>{ l=l.replace(/^[\]\s;,.•·\-–—*]+/,"").replace(/[\[\s;,]+$/,"").trim(); if(l.length>=15 && !UX_SKIP.test(l) && !/:$/.test(l)) cand.push(l); };
+  const glue=L=>{ if(L.length) joinLines(L.join("\n")).split("\n").forEach(ok); };
+  const lines=sg=>sg.split("\n").map(x=>x.trim()).filter(x=>x.replace(/[\[\]\s;,.()]/g,"").length);
+  // how many lines next to an index make up its formulation: the best match with the standard text
+  const take=(L,std,fromEnd)=>{ if(!std||L.length<2) return Math.min(1,L.length); const g=bigrams(std); let best=1,bs=-1;
+    for(let k=1;k<=L.length;k++){ const part=fromEnd?L.slice(-k):L.slice(0,k); const sc=dice(bigrams(part.join(" ")),g); if(sc>bs+0.02){ bs=sc; best=k; } } return best; };
+  if(!spans.length){ glue(lines(a)); return cand; }
+  const codeFirst = a.slice(0, spans[0][0]).replace(/[\s\[\]()]/g,"")==="";
+  const segs=[]; let prev=0; for(const [b,e] of spans){ segs.push(a.slice(prev,b)); prev=e; } segs.push(a.slice(prev));
+  segs.forEach((sg,i)=>{ const L=lines(sg.replace(/^[\]\s)]+/,""));
+    if(codeFirst){ if(i===0) return; const k=take(L, spans[i-1][2], false); glue(L.slice(k)); }
+    else if(i<segs.length-1){ const k=take(L, spans[i][2], true); glue(L.slice(0, L.length-k)); }
+    else glue(L); });
+  return cand;
+}
 function analyseDocx(prog, matchSet, field, extra){
   const other = field==="other";
   const extraList = (extra||[]).map(o=>[o.c,o.t]);
@@ -1303,7 +1367,7 @@ function analyseDocx(prog, matchSet, field, extra){
   const set = useFuzzy ? (other ? extraList : (STD.sets[matchSet]||[])) : [];
   const setBg = set.map(([c,t])=>[c,bigrams(t)]);
   const unmatched=[]; const texts=new Map(); let nRows=0, nOc=0;
-  for(const m of prog.mods) for(const t of m.topics){ t.out=[]; for(const [a,b,c] of t.rows){ nRows++; const codes=[];
+  for(const m of prog.mods) for(const t of m.topics){ t.out=[]; for(const [a,b,c] of t.rows){ nRows++; const codes=[], ux=[];
       if(!useFuzzy){
         ANY_CODE.lastIndex=0; let mm, prev=0; while((mm=ANY_CODE.exec(a))){ const p=parseCode(mm[0].replace(/\s+/g," ")); if(!p){ prev=ANY_CODE.lastIndex; continue; } codes.push(p.code);   // an index may be broken over two lines
             if(!known.has(p.code) && !texts.has(p.code)){ const tx=a.slice(prev,mm.index).split("\n").filter(Boolean).pop()?.replace(/[\[\s;,.]+$/,"").replace(/^[\]\s;,.]+/,"").trim(); if(tx) texts.set(p.code,tx); }
@@ -1311,12 +1375,13 @@ function analyseDocx(prog, matchSet, field, extra){
         const rest=a.replace(new RegExp(ANY_CODE.source,"g")," "); KOR_RE.lastIndex=0; let km;
         while((km=KOR_RE.exec(rest))){ const kr=`${km[1]} ${km[2]} ${km[3]}.${km[4]}.${km[5]}`; const list=korIndex.get(kr); korSubj.add(km[2]); korCyc.add(+km[1]);
           if(list && list.length){ codes.push(...list); korHits.set(kr,list.length); } else korUnknown.add(kr); }
+        for(const l of uxLines(a, KOR_RE, known)){ ux.push(l); unmatched.push(l); }
       } else if(setBg.length){
         for(const line of joinLines(a).split("\n")){ if(/^(змістова лінія|група вмінь)/i.test(line) || line.length<15) continue;
           const bg=bigrams(line); let best=null, bs=0; for(const [code,g] of setBg){ const s=dice(bg,g); if(s>bs){ bs=s; best=code; } }
-          if(bs>=0.78) codes.push(best); else unmatched.push(line); }
+          if(bs>=0.78) codes.push(best); else { unmatched.push(line); ux.push(line); } }
       }
-      const uniq=[...new Set(codes)]; nOc+=uniq.length; t.out.push({oc:uniq, content:joinLines(b), act:joinLines(c)}); } }
+      const uniq=[...new Set(codes)]; nOc+=uniq.length; t.out.push({oc:uniq, ux, content:joinLines(b), act:joinLines(c)}); } }
   const used=new Set(prog.mods.flatMap(m=>m.topics.flatMap(t=>t.out.flatMap(r=>r.oc))));
   const outcomes=[]; const sets=new Set();
   if(other){ for(const [c,t] of extraList) outcomes.push({c,t}); }
@@ -1335,7 +1400,8 @@ function buildProject(prog, an, title){
     for(const t of m.topics){ const T={id:uid("t"), name:t.name}; M.topics.push(T); const seenOc=new Set(); const rows=[];
       for(const r of t.out){ const oc=r.oc.filter(c=>valid.has(c) && !seenOc.has(c)); oc.forEach(c=>seenOc.add(c));
         for(const c of oc){ (P.assign[c]=P.assign[c]||[]); if(!P.assign[c].includes(T.id)) P.assign[c].push(T.id); }
-        if(oc.length||r.content||r.act) rows.push({id:uid("r"), oc, content:r.content, act:r.act, links:{}}); }
+        const ux=(r.ux||[]).map(t=>({id:uid("u"), t}));
+        if(oc.length||ux.length||r.content||r.act) rows.push({id:uid("r"), oc, ux, content:r.content, act:fmtAct(r.act), links:{}}); }
       P.rows[T.id]=rows; } }
   return P;
 }
@@ -1397,7 +1463,7 @@ function showDocxDialog(){
       </div>
       ${an.useFuzzy?`<div class="res">У програмі немає індексів орієнтирів, тому формулювання зіставляються ${other?"зі списком орієнтирів галузі":"зі стандартом"} за схожістю.
           ${!other?`<div style="margin-top:6px"><label for="dxSet">Зіставляти з орієнтирами:</label> <select id="dxSet">${STD_SETS.map(([k,lab,pref])=>`<option value="${k}" ${k===DOCX.matchSet?"selected":""}>${esc(lab)} (${pref})</option>`).join("")}</select></div>`:""}
-          ${other && !extraN ? `<div style="margin-top:6px">Щоб зіставити, завантажте список орієнтирів галузі.</div>` : `<div style="margin-top:6px">Зіставлено орієнтирів у рядках: <b>${an.nOc}</b>; не вдалося зіставити: <b>${an.unmatched.length}</b>.</div>`}
+          ${other && !extraN ? `<div style="margin-top:6px">Щоб зіставити, завантажте список орієнтирів галузі.</div>` : `<div style="margin-top:6px">Зіставлено орієнтирів у рядках: <b>${an.nOc}</b>; не вдалося зіставити: <b>${an.unmatched.length}</b>${an.unmatched.length?` — їх збережено й позначено червоним на кроці 2`:""}.</div>`}
           ${an.unmatched.length?`<details style="margin-top:4px"><summary>Показати незіставлені формулювання</summary><ul>${an.unmatched.map(u=>`<li>${esc(u)}</li>`).join("")}</ul></details>`:""}</div>`
         :`<div class="res">Орієнтирів у рядках таблиць: <b>${an.nOc}</b>.
           ${!other && an.sets.length?` Список орієнтирів проєкту — зі стандарту інформатичної галузі: ${an.sets.map(k=>esc(STD_SETS.find(x=>x[0]===k)[1])).join(", ")}.`:""}
@@ -1405,10 +1471,12 @@ function showDocxDialog(){
           ${an.fromText?`<div style="margin-top:4px">Формулювань, узятих з тексту програми (індексів немає у ${other?"завантаженому списку":"вбудованому стандарті"}): ${an.fromText}.</div>`:""}
           ${an.korHits.size?`<div style="margin-top:4px">Індексів конкретних результатів без номера орієнтира: ${an.korHits.size} — для кожного позначено всі його орієнтири (${[...an.korHits.values()].reduce((a,b)=>a+b,0)}).</div>`:""}
           ${an.korUnknown.length?`<div style="margin-top:4px">Не знайдено орієнтирів для результатів: ${esc(an.korUnknown.join(", "))}${other&&!extraN?" — завантажте список орієнтирів галузі":""}.</div>`:""}
+          ${an.unmatched.length?`<div style="margin-top:4px;color:#c62828">Результатів без відповідного орієнтира стандарту: <b>${an.unmatched.length}</b> — їх збережено й позначено червоним на кроці 2: там можна встановити відповідність орієнтиру, переформулювати або перенести у види діяльності.</div>
+            <details style="margin-top:4px"><summary>Показати</summary><ul>${an.unmatched.map(u=>`<li>${esc(u)}</li>`).join("")}</ul></details>`:""}
           ${an.missing.length?`<div style="margin-top:4px">Не знайдено формулювань для індексів: ${esc(an.missing.join(", "))}.</div>`:""}</div>`}
       <p class="tiny muted" style="margin:0">Імпорт відкриє програму як новий проєкт замість поточного. Якщо поточну роботу ще не збережено у файл, спершу збережіть її: «Проєкт» → «Зберегти файл проєкту». Зв’язки видів діяльності з орієнтирами та планування оцінювання після імпорту розставляє автор.</p>
     </div>
-    <div class="mft"><button class="btn" data-mclose="1">Скасувати</button><button class="btn primary" id="dxGo" ${an.nOc?"":"disabled"}>Імпортувати як новий проєкт</button></div>
+    <div class="mft"><button class="btn" data-mclose="1">Скасувати</button><button class="btn primary" id="dxGo" ${an.nOc||an.unmatched.length?"":"disabled"}>Імпортувати як новий проєкт</button></div>
   </div></div>`;
 }
 /* ---------- loading outcomes ---------- */
@@ -1582,7 +1650,7 @@ function exportXLSX(){
   XLSX.utils.book_append_sheet(wb, ws1, "Розподіл за темами");
   // sheet 2: content and activities
   const aoa2=[["Модуль","Тема","Очікувані результати навчання","Пропонований зміст","Види навчальної діяльності"]];
-  for(const t of T){ ensureRows(t.id); for(const r of S.rows[t.id].filter(r=>r.oc.length)) aoa2.push([t.m.name, `${t.num} ${t.name}`, r.oc.map(c=>`${ocTT(t.id,c)} [${c}]`).join("\n"), r.content, r.act]); }
+  for(const t of T){ ensureRows(t.id); for(const r of S.rows[t.id].filter(r=>r.oc.length||r.ux?.length)) aoa2.push([t.m.name, `${t.num} ${t.name}`, [...r.oc.map(c=>`${ocTT(t.id,c)} [${c}]`), ...(r.ux||[]).map(u=>`${u.t} [не відповідає стандарту]`)].join("\n"), r.content, r.act]); }
   const ws2=XLSX.utils.aoa_to_sheet(aoa2); ws2["!cols"]=[{wch:18},{wch:30},{wch:70},{wch:50},{wch:50}];
   XLSX.utils.book_append_sheet(wb, ws2, "Зміст і діяльність");
   // sheet 3: coverage
@@ -1613,10 +1681,10 @@ async function exportDOCX(){
     children.push(new D.Paragraph({children:[R(m.name,{bold:true,size:26})], spacing:{before:240,after:120}}));
     const trows=[new D.TableRow({tableHeader:true, children:["Очікувані результати навчання","Пропонований зміст","Види навчальної діяльності"].map((h,i)=>cell([P([R(h,{bold:true})])],i,true))})];
     for(const t0 of m.topics){
-      const t=topicById(t0.id); ensureRows(t.id); const rows=S.rows[t.id].filter(r=>r.oc.length);
+      const t=topicById(t0.id); ensureRows(t.id); const rows=S.rows[t.id].filter(r=>r.oc.length||r.ux?.length);
       trows.push(new D.TableRow({cantSplit:true, children:[new D.TableCell({columnSpan:3, children:[P([R(`Тема ${t.num}. ${t.name}`,{bold:true})])], shading:{fill:"F1F2EE",type:D.ShadingType.CLEAR,color:"auto"}, margins:{top:60,bottom:60,left:100,right:100}})]}));
       if(!rows.length){ trows.push(new D.TableRow({children:[new D.TableCell({columnSpan:3, children:[P([R("До теми ще не добрано орієнтирів.",{italics:true})])], margins:{top:60,bottom:60,left:100,right:100}})]})); continue; }
-      for(const r of rows) trows.push(new D.TableRow({children:[ cell(r.oc.map(c=>P([R(`${ocTT(t.id,c)} [${c}]`)])),0), txtCell(r.content,1), txtCell(r.act,2) ]}));
+      for(const r of rows) trows.push(new D.TableRow({children:[ cell([...r.oc.map(c=>P([R(`${ocTT(t.id,c)} [${c}]`)])), ...(r.ux||[]).map(u=>P([R(`${u.t} [не відповідає стандарту]`,{color:"C62828"})]))],0), txtCell(r.content,1), txtCell(r.act,2) ]}));
     }
     children.push(new D.Table({rows:trows, width:{size:14570,type:D.WidthType.DXA}, columnWidths:W}));
   }
@@ -1710,6 +1778,9 @@ document.addEventListener("click", async e=>{
   if(c("[data-ref-open]")){ openRef(null); return; }
   if((b=c("[data-rdel]"))){ if(!armed(b)) return; S.rows[S.ui.t2]=S.rows[S.ui.t2].filter(r=>r.id!==b.dataset.rdel); save(); rerenderTopicPanel(); return; }
   if((b=c("[data-merge]"))){ const rows=S.rows[S.ui.t2]; const i=rows.findIndex(r=>r.id===b.dataset.merge); if(i>0){ const r=rows[i], p=rows[i-1]; p.oc=p.oc.concat(r.oc); if(r.content.trim()) p.content=(p.content.trim()?p.content.replace(/\s+$/,"")+"\n":"")+r.content; if(r.act.trim()) p.act=(p.act.trim()?p.act.replace(/\s+$/,"")+"\n":"")+r.act; p.links=Object.assign({}, r.links||{}, p.links||{}); rows.splice(i,1); save(); rerenderTopicPanel(); } return; }
+  if((b=c("[data-uxmap]"))){ uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxmap); return; }
+  if((b=c("[data-uxact]"))){ const r=findRow(b.dataset.ur), u=r?.ux?.find(x=>x.id===b.dataset.uxact); if(u){ r.act=fmtAct((r.act.trim()?r.act.replace(/\s+$/,"")+"\n":"")+u.t); uxResolve(r.id,u.id,null); toast("Перенесено у види діяльності — за потреби переформулюйте як дію учнів"); } return; }
+  if((b=c("[data-uxdel]"))){ if(!armed(b)) return; uxResolve(b.dataset.ur, b.dataset.uxdel, null); return; }
   if(c("[data-radd]")){ S.rows[S.ui.t2].push({id:uid("r"),oc:[],content:"",act:""}); save(); rerenderTopicPanel(); return; }
   if((b=c("[data-regroup]"))){ if(!armed(b)) return; delete S.rows[S.ui.t2]; save(); rerenderTopicPanel(); return; }
   // step 3
@@ -1737,6 +1808,7 @@ document.addEventListener("change", e=>{
   if(t.id==="activeSel"){ S.ui.active=t.value; save(); render(); return; }
   if(t.id==="fSel"){ S.ui.filter=t.value; save(); render(); return; }
   if(t.id==="gSel"){ S.ui.group=t.value; save(); render(); return; }
+  if(t.matches("[data-uxsel]")){ if(t.value) uxResolve(t.dataset.ur, t.dataset.uxsel, t.value); return; }
   if(t.matches("[data-move]")){
     const code=t.dataset.move, from=t.dataset.from, to=t.value; if(!to) return;
     const rows=S.rows[S.ui.t2];
@@ -1756,7 +1828,7 @@ document.addEventListener("change", e=>{
   if(t.id==="dxSubj"){ DOCX.subj=t.value; showDocxDialog(); return; }
   if(t.id==="dxCyc"){ DOCX.cycles=[t.value]; showDocxDialog(); return; }
   if(t.id==="dxStdFile"){ const f=t.files[0]; if(f) parseOutcomeFile(f).then(r=>{ if(!r.out.length){ toast("У файлі не знайдено орієнтирів з індексами."); return; } DOCX.extra=sortOutcomes(r.out.map(o=>({c:o.c,t:o.t}))); showDocxDialog(); toast(`Завантажено орієнтирів галузі: ${r.out.length}`); }).catch(e=>toast("Не вдалося прочитати файл: "+e.message)); return; }
-  if(t.id==="fileJson"){ const f=t.files[0]; if(!f) return; f.text().then(txt=>{ const d=JSON.parse(txt); if(!Array.isArray(d.outcomes)||!Array.isArray(d.modules)) throw new Error("це не файл проєкту"); S=Object.assign(blankState(), d); S.ui=blankState().ui; S.ui.active=allTopics()[0]?.id||null; cleanAssign(); save(); render(); applyDir(); toast("Проєкт відкрито"); }).catch(err=>toast("Не вдалося відкрити: "+err.message)); t.value=""; return; }
+  if(t.id==="fileJson"){ const f=t.files[0]; if(!f) return; f.text().then(txt=>{ const d=JSON.parse(txt); if(!Array.isArray(d.outcomes)||!Array.isArray(d.modules)) throw new Error("це не файл проєкту"); S=Object.assign(blankState(), d); S.ui=blankState().ui; S.ui.active=allTopics()[0]?.id||null; delete S.actFmt; migrate(); cleanAssign(); save(); render(); applyDir(); toast("Проєкт відкрито"); }).catch(err=>toast("Не вдалося відкрити: "+err.message)); t.value=""; return; }
 });
 let qTimer;
 document.addEventListener("input", e=>{
@@ -1767,12 +1839,14 @@ document.addEventListener("input", e=>{
   if(t.matches("[data-mname]")){ S.modules.find(m=>m.id===t.dataset.mname).name=t.value; save(); return; }
   if(t.matches("[data-tname]")){ for(const m of S.modules){ const x=m.topics.find(x=>x.id===t.dataset.tname); if(x) x.name=t.value; } const th=document.querySelector(`th[data-th="${t.dataset.tname}"]`); if(th){ const tt=topicById(t.dataset.tname); th.title=tt.num+" "+tt.name; th.innerHTML=`<div><b>${tt.num}</b> ${esc(tt.name)}</div>`; } save(); return; }
   if(t.id==="q"){ S.ui.q=t.value; clearTimeout(qTimer); qTimer=setTimeout(()=>{ const pos=t.selectionStart; render(); const q=$("#q"); q.focus(); q.setSelectionRange(pos,pos); }, 250); return; }
+  if(t.matches("[data-uxtext]")){ const u=findRow(t.dataset.ur)?.ux?.find(x=>x.id===t.dataset.uxtext); if(u){ u.t=t.value; save(); } autosize(t); return; }
   if(t.matches(".prog textarea")){ const r=findRow(t.dataset.r); if(r){
       if(t.dataset.f==="act"){ const o=lines(r.act), n=lines(t.value); if(o.length===n.length){ r.links=r.links||{}; o.forEach((ol,i)=>{ if(ol!==n[i] && r.links[lkey(ol)] && !r.links[lkey(n[i])]) r.links[lkey(n[i])]=r.links[lkey(ol)]; }); } }
       r[t.dataset.f]=t.value; save(); } autosize(t); return; }
   if(t.id==="refq"){ refState.q=t.value; const pos=t.selectionStart; renderRef(); const q=$("#refq"); q.focus(); q.setSelectionRange(pos,pos); return; }
 });
-document.addEventListener("focusout", e=>{ if(e.target.matches(".prog textarea")){ refreshRow(e.target.dataset.r); const m=document.querySelector(".amx"); if(m && e.target.dataset.f==="act"){ const o=m.open; m.outerHTML=alignMatrixHTML(S.ui.t2); const m2=document.querySelector(".amx"); if(m2) m2.open=o; } } });
+document.addEventListener("focusout", e=>{ if(e.target.matches('.prog textarea[data-f="act"]')){ const r=findRow(e.target.dataset.r); if(r){ const f=fmtAct(r.act); if(f!==r.act){ r.act=f; e.target.value=f; save(); } } }
+  if(e.target.matches(".prog textarea[data-f]")){ refreshRow(e.target.dataset.r); const m=document.querySelector(".amx"); if(m && e.target.dataset.f==="act"){ const o=m.open; m.outerHTML=alignMatrixHTML(S.ui.t2); const m2=document.querySelector(".amx"); if(m2) m2.open=o; } } });
 document.addEventListener("toggle", e=>{ if(e.target.matches?.(".amx")){ S.ui.amx=e.target.open; } if(e.target.matches?.(".acovbox")){ S.ui.covOpen=e.target.open; save(); const h=e.target.querySelector(".sumhint"); if(h) h.textContent=e.target.open?"сховати таблицю":"показати таблицю"; } }, true);
 function rerenderSugg(rid){ const r=findRow(rid); const box=document.querySelector(`tr[data-row="${rid}"] .suggs`); if(r&&box) box.innerHTML=suggHTML(r); const kb=document.querySelector(`tr[data-row="${rid}"] .ksuggs`); if(r&&kb) kb.innerHTML=knSuggHTML(r); }
 document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ if(refState.open) closeRef(); else $("#modalHost").innerHTML=""; } });
