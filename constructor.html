@@ -383,7 +383,7 @@ table.am{border-collapse:collapse;margin-top:10px;font-size:12.5px}
         <div class="pop">
           <button data-act="xlsx">Таблиця Excel (.xlsx): розподіл і зміст</button>
           <button data-act="docx">Документ Word (.docx): таблиці за темами</button>
-          <div class="note" id="dlNote" hidden>Завантаження файлів працює на сторінці артефакту в claude.ai.</div>
+          <div class="note" id="dlNote" hidden>Якщо файл не завантажується, відкрийте конструктор на окремій сторінці артефакту в claude.ai.</div>
         </div>
       </details>
     </div>
@@ -1627,11 +1627,22 @@ async function readFile(file){
 
 /* ---------- downloads & export ---------- */
 let DL=null;
-(async()=>{ try{ DL = await window.claude?.use?.("downloads"); }catch(e){ DL=null; } if(!DL) $("#dlNote").hidden=false; })();
+(async()=>{ try{ DL = await window.claude?.use?.("downloads"); }catch(e){ DL=null; } if(!DL && window.claude) $("#dlNote").hidden=false; })();
 async function saveFile(filename, data){
-  if(!DL){ toast("Завантаження доступне на сторінці артефакту в claude.ai."); return; }
-  try{ await DL.save({filename, data}); }
-  catch(e){ if(e && e.code!=="declined") toast("Не вдалося зберегти файл: "+(e.message||e.code||e)); }
+  if(!DL){ try{ DL = await window.claude?.use?.("downloads"); }catch(e){ DL=null; } }
+  if(DL){ try{ await DL.save({filename, data}); return; }
+    catch(e){ if(e && e.code==="declined") return; } }
+  // fallback where the platform save is not available: an ordinary browser download
+  try{ const blob = data instanceof Blob ? data : new Blob([data], {type: typeof data==="string" ? "application/json;charset=utf-8" : "application/octet-stream"});
+    const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url), 4000); }catch(e){}
+  if(typeof data==="string" && window.claude) showCopyFallback(filename, data);   // inside claude.ai the browser download may be blocked
+}
+function showCopyFallback(filename, text){
+  $("#modalHost").innerHTML = `<div class="modal" role="dialog" aria-label="Збереження файлу"><div class="mbox">
+    <div class="mhd"><h2>Збереження «${esc(filename)}»</h2><button class="btn small" data-mclose="1">Закрити</button></div>
+    <div class="mbd"><p style="margin:0">Якщо файл не завантажився (у цьому перегляді браузер може блокувати завантаження), скопіюйте вміст і збережіть його в текстовому редакторі як файл <b>${esc(filename)}</b>. Відкрити його потім можна через «Проєкт» → «Відкрити файл проєкту».</p>
+      <textarea id="cpText" readonly style="width:100%;height:180px;font:12px ui-monospace,Menlo,Consolas,monospace;border:1px solid var(--line);border-radius:6px;padding:6px">${esc(text)}</textarea></div>
+    <div class="mft"><button class="btn" data-mclose="1">Закрити</button><button class="btn primary" id="cpBtn">Копіювати вміст</button></div></div></div>`;
 }
 const fname = ext => (S.title||"програма").replace(/[\\/:*?"<>|]+/g,"").trim().slice(0,80)+"."+ext;
 function exportJSON(){ const {ui,...rest}=S; saveFile(fname("json"), JSON.stringify({...rest, ui:{step:1,view:"matrix"}}, null, 1)); }
@@ -1792,6 +1803,7 @@ document.addEventListener("click", async e=>{
   if((b=c("[data-reftab]"))){ refState.tab=b.dataset.reftab; refState.q=""; renderRef(); return; }
   // modal
   if(c("[data-mclose]")){ $("#modalHost").innerHTML=""; return; }
+  if(c("#cpBtn")){ const ta=$("#cpText"); ta.select(); (navigator.clipboard?.writeText(ta.value)||Promise.reject()).then(()=>toast("Скопійовано"),()=>{ try{ document.execCommand("copy"); toast("Скопійовано"); }catch(e){ toast("Виділіть текст і натисніть Ctrl+C"); } }); return; }
   if(c("#dxStdParse")){ const r=parseText($("#dxStdText").value); if(!r.out.length){ toast("У тексті не знайдено орієнтирів з індексами."); return; } DOCX.extra=sortOutcomes(r.out.map(o=>({c:o.c,t:o.t}))); showDocxDialog(); toast(`Завантажено орієнтирів галузі: ${r.out.length}`); return; }
   if(c("#dxGo")){ const P=buildProject(DOCX.prog, DOCX.an, $("#dxTitle").value.trim()); S=P; S.ui=blankState().ui; S.ui.active=allTopics()[0]?.id||null; applyDir(); cleanAssign(); save(); $("#modalHost").innerHTML=""; render();
     toast(`Імпортовано: ${S.modules.length} мод., ${allTopics().length} тем`); return; }
