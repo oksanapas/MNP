@@ -192,12 +192,11 @@ table.prog{border-collapse:collapse;width:100%;min-width:860px;table-layout:fixe
 .prog td{vertical-align:top;border:1px solid var(--line);padding:8px 10px}
 .prog th:nth-child(1){width:36%}.prog th:nth-child(2){width:30%}
 .prog .rn{font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.uxitem{border:1.5px solid #c62828;background:#fdecea;border-radius:6px;padding:6px 8px;margin-bottom:8px;font-size:13.5px}
-.uxhd{color:#b71c1c;font-weight:600;font-size:12px;margin-bottom:4px}
-.uxitem textarea.uxta{width:100%;min-height:44px;border:1px solid #e3a9a4;border-radius:4px;background:var(--panel);color:var(--ink);font:inherit;padding:4px 6px;resize:vertical}
+.uxitem{border:1px dashed var(--line);background:var(--soft);border-radius:6px;padding:6px 8px;margin-bottom:8px;font-size:13.5px}
+.uxhd{color:var(--muted);font-weight:600;font-size:12px;margin-bottom:4px}
+.uxitem textarea.uxta{width:100%;min-height:44px;border:1px solid var(--line);border-radius:4px;background:var(--panel);color:var(--ink);font:inherit;padding:4px 6px;resize:vertical}
 .uxbtns{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.uxbtns select{max-width:100%;flex:1 1 180px}
-.uxn{color:#c62828;font-weight:600}.stat.uxs{background:#fdecea;color:#b71c1c;margin-left:3px}
-@media (prefers-color-scheme:dark){ .uxitem{background:#3a1d1d;border-color:#e57373} .uxhd,.uxn{color:#ef9a9a} .stat.uxs{background:#3a1d1d;color:#ef9a9a} }
+.uxn{color:var(--muted);font-weight:600}.stat.uxs{background:var(--soft);color:var(--muted);margin-left:3px}
 .ocitem{border-left:3px solid var(--gc);padding:2px 0 2px 8px;margin-bottom:8px;font-size:13.5px}
 .ocitem .code{font-weight:600;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:6px;align-items:center}
 .ocitem .ocact{display:flex;gap:2px;align-items:center}
@@ -304,6 +303,9 @@ table.am{border-collapse:collapse;margin-top:10px;font-size:12.5px}
 .frcomp{border-collapse:collapse;width:100%;margin-top:4px}
 .frcomp th,.frcomp td{border:1px solid var(--line);padding:5px 6px;vertical-align:top;text-align:left;font-size:13.5px}
 .frcomp th{background:var(--soft)}
+.prop{margin:4px 0 2px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.prop .lab{font-size:12px;color:var(--muted);width:100%}
+.prop .propbtns{display:flex;gap:6px;flex-wrap:wrap;width:100%}
 .grsum th.grf{text-align:center;border-left:2px solid var(--line)}
 .grsum .grfirst{border-left:2px solid var(--line)}
 .kpcell{display:flex;flex-direction:column;gap:3px}
@@ -478,8 +480,11 @@ const $ = (s, r=document) => r.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const uid = p => p + Math.random().toString(36).slice(2, 9);
 const CODE_RE = /^\s*(\d{1,2})\s*([А-ЯІЇЄҐA-Z]{2,5})\s*(\d+)\s*\.\s*(\d+)\s*(?:\.\s*(\d+)\s*([-–—.])|([-–—]))\s*(\d+)(\s*П(?![а-яіїєґ]))?/u;
+const KOR_CODE_RE = /^\s*(\d{1,2})\s*([А-ЯІЇЄҐA-Z]{2,5})\s*(\d+)\s*\.\s*(\d+)\s*\.\s*(\d+)(?!\s*[-–—.]\s*\d)(\s*П(?![а-яіїєґ]))?/u;
 function parseCode(s){
-  const m = String(s).match(CODE_RE); if(!m) return null;
+  const m = String(s).match(CODE_RE);
+  if(!m){ const k=String(s).match(KOR_CODE_RE); if(!k) return null; const adv=!!k[6], mid=`${k[3]}.${k[4]}.${k[5]}`;
+    return {code:`${k[1]} ${k[2]} ${mid}${adv?" П":""}`, len:k[0].length, cyc:+k[1], subj:k[2], g:+k[3], lvl: adv?"П":(+k[1]===12?"О":""), kor:`${k[1]} ${k[2]} ${mid}`, p:[+k[3],+k[4],+k[5],0], isKor:true}; }
   const three = m[5]!==undefined, dot = three && m[6]===".", adv = !!m[9];
   let mid = three ? `${m[3]}.${m[4]}.${m[5]}` : `${m[3]}.${m[4]}`;
   // 10–12 ІФО: indices as in the Standard (PDF, 2024): «12 ІФО 1.1.1-1» (not «1.1.1.1»), 2.4.5 → 2.4.4
@@ -831,7 +836,7 @@ function renderStep2(){
   if(!T.length){ main.innerHTML=`<section class="panel"><div class="empty"><h2>Спершу визначте теми</h2><p class="muted">На кроці 1 додайте теми й доберіть до них орієнтири, тоді тут з’явиться таблиця для кожної теми.</p><button class="btn primary" data-goto="1">До кроку 1</button></div></section>`; return; }
   if(!topicById(S.ui.t2)) S.ui.t2 = T[0].id;
   const side = `<aside class="panel side"><h2 style="margin-bottom:6px">Теми</h2><div class="tlist">${S.modules.map(m=>`<div class="mt">${esc(m.name)}</div>${m.topics.map(t=>{const tt=topicById(t.id); const st=topicStatus(t.id); const cls = st.n===0?"":(st.filled===st.withOc&&st.unpl===0&&st.withOc?"done":(st.filled?"part":""));
-    return `<button data-t2="${t.id}" aria-current="${t.id===S.ui.t2}"><span class="num">${tt.num}</span><span>${esc(t.name)}</span><span class="stat ${cls}" title="Заповнено рядків / усього">${st.n? `${st.filled}/${st.withOc}` : "0 ор."}</span>${uxCount(t.id)?`<span class="stat uxs" title="Результати, що не відповідають орієнтирам стандарту">${uxCount(t.id)}</span>`:""}</button>`;}).join("")}`).join("")}</div>
+    return `<button data-t2="${t.id}" aria-current="${t.id===S.ui.t2}"><span class="num">${tt.num}</span><span>${esc(t.name)}</span><span class="stat ${cls}" title="Заповнено рядків / усього">${st.n? `${st.filled}/${st.withOc}` : "0 ор."}</span>${uxCount(t.id)?`<span class="stat uxs" title="Результати без індексу (текст автора)">${uxCount(t.id)}</span>`:""}</button>`;}).join("")}`).join("")}</div>
     <p class="tiny muted" style="margin-top:12px">Рядок вважається заповненим, коли в ньому є орієнтири, зміст і види діяльності.</p></aside>`;
   main.innerHTML = `<div class="layout">${side}<section class="panel" id="t2panel">${topicPanelHTML(S.ui.t2)}</section></div>`;
   autosizeAll();
@@ -839,8 +844,8 @@ function renderStep2(){
 function topicPanelHTML(tid){
   const t = topicById(tid); const unpl = ensureRows(tid); const rows=S.rows[tid]; const n=topicOutcomes(tid).length;
   const rowOpts = (cur) => rows.map((r,i)=>`<option value="${r.id}" ${r.id===cur?"selected":""}>у рядок ${i+1}</option>`).join("") + `<option value="__new">в окремий рядок</option>`;
-  let html = `<div class="thead"><div><h2>${t.num} ${esc(t.name)}</h2><div class="tiny muted">${esc(t.m.name)} · орієнтирів у темі: ${n}${uxCount(tid)?` · <span class="uxn">результатів, що не відповідають стандарту: ${uxCount(tid)}</span>`:""}</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-goto="1" data-pickfrom="${tid}">Змінити добір орієнтирів</button><button class="btn small" data-ref-open="1">Довідники</button></div></div>`;
+  let html = `<div class="thead"><div><h2>${t.num} ${esc(t.name)}</h2><div class="tiny muted">${esc(t.m.name)} · орієнтирів у темі: ${n}${uxCount(tid)?` · <span class="uxn">результатів без індексу: ${uxCount(tid)}</span>`:""}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">${propCount(tid)||S.ui.propose?`<button class="btn small ${S.ui.propose?"primary":""}" data-propose="1" title="Для результатів автора без індексу орієнтира — пропозиції орієнтирів стандарту; результати автора залишаються, доки ви їх не заміните">${S.ui.propose?"Сховати пропозиції":"Запропонувати результати навчання з індексами"}</button>`:""}<button class="btn small" data-goto="1" data-pickfrom="${tid}">Змінити добір орієнтирів</button><button class="btn small" data-ref-open="1">Довідники</button></div></div>`;
   if(!n && !uxCount(tid)){ return html + `<div class="empty"><p class="muted">До цієї теми ще не добрано жодного орієнтира. Поверніться на крок 1 і позначте їх у стовпці теми.</p></div>`; }
   html += `<div class="twrap"><table class="prog"><thead><tr><th>Очікувані результати навчання<div class="thsub">Взято з матриці кроку 1. Формулювання можна уточнити для цієї теми (✎). Усі орієнтири теми стоять в одному рядку; за потреби їх можна впорядкувати, наприклад за групами результатів: у меню біля коду орієнтира оберіть «в окремий рядок» або інший рядок. Кожен рядок матиме власний зміст і види діяльності.</div></th><th>Пропонований зміст<div class="thsub">Підказки — з базових знань Державного стандарту; дописуйте й уточнюйте власні формулювання.</div></th><th>Види навчальної діяльності<div class="thsub">Підказки з довідника — лише пропозиції; пишіть і власні, у довільному формулюванні, по одному в рядку.</div></th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{
@@ -849,7 +854,7 @@ function topicPanelHTML(tid){
       <td class="oc"><div class="rn"><span>Рядок ${i+1}</span><span>
         ${i>0?`<button class="btn small ghost" data-merge="${r.id}" title="Перенести орієнтири цього рядка до попереднього">↑ об’єднати</button>`:""}
         <button class="btn small ghost danger" data-rdel="${r.id}" data-confirm="Видалити?">Видалити</button></span></div>
-        ${r.oc.length ? r.oc.map(c=>`<div class="ocitem" data-oc="${esc(c)}" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${esc(c)}</span><span class="ocact"><button class="ib" data-ocedit-open="${esc(c)}" title="Уточнити формулювання для цієї теми">✎</button><select data-move="${esc(c)}" data-from="${r.id}" aria-label="Перемістити">${rowOpts(r.id)}<option value="__out">прибрати з таблиці</option></select></span></div>${ocTextHTML(tid,c)}${ocStatusHTML(r,c,A)||'<div class="ocst"></div>'}</div>`).join("") : (r.ux?.length?"":`<div class="tiny muted">Порожній рядок: перемістіть сюди орієнтири з інших рядків.</div>`)}
+        ${r.oc.length ? r.oc.map(c=>`<div class="ocitem" data-oc="${esc(c)}" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${esc(c)}</span><span class="ocact"><button class="ib" data-ocedit-open="${esc(c)}" title="Уточнити формулювання для цієї теми">✎</button><select data-move="${esc(c)}" data-from="${r.id}" aria-label="Перемістити">${rowOpts(r.id)}<option value="__out">прибрати з таблиці</option></select></span></div>${ocTextHTML(tid,c)}${ocStatusHTML(r,c,A)||'<div class="ocst"></div>'}${S.ui.propose?korPropHTML(tid,r,c):""}</div>`).join("") : (r.ux?.length?"":`<div class="tiny muted">Порожній рядок: перемістіть сюди орієнтири з інших рядків.</div>`)}
         ${(r.ux||[]).map(u=>uxHTML(tid,r,u)).join("")}
       </td>
       <td><textarea data-f="content" data-r="${r.id}" placeholder="Поняття, факти, інструменти, з якими працюють учні">${esc(r.content)}</textarea>
@@ -875,10 +880,10 @@ function uxGuess(tid, text){
 function uxHTML(tid, r, u){
   const inT=topicOutcomes(tid).map(o=>o.c), inTs=new Set(inT);
   const opt=c=>`<option value="${esc(c)}">${esc(c)} — ${esc(short(ocText(c),70))}</option>`;
-  const g=uxGuess(tid,u.t);
-  return `<div class="uxitem"><div class="uxhd">Не відповідає орієнтирам стандарту</div>
+  const g=S.ui.propose ? stdGuess(tid,u.t) : uxGuess(tid,u.t);
+  return `<div class="uxitem"><div class="uxhd">Результат без індексу (текст автора)</div>
     <textarea class="uxta" data-uxtext="${u.id}" data-ur="${r.id}" rows="2" aria-label="Результат з імпортованої програми">${esc(u.t)}</textarea>
-    ${g.length?`<div class="sugg"><span class="lab">Схоже на:</span>${g.map(x=>`<button class="schip" data-uxmap="${esc(x.c)}" data-ux="${u.id}" data-ur="${r.id}" title="${esc(ocText(x.c))}">[${esc(x.c)}] ${esc(short(ocText(x.c),56))}</button>`).join("")}</div>`:""}
+    ${g.length?`<div class="sugg"><span class="lab">${S.ui.propose?"Орієнтири стандарту, схожі за змістом:":"Схоже на:"}</span>${g.map(x=>`<button class="schip" ${S.ui.propose?`data-uxstd="${esc(x.c)}"`:`data-uxmap="${esc(x.c)}"`} data-ux="${u.id}" data-ur="${r.id}" title="${esc(S.ui.propose?x.t:ocText(x.c))}">[${esc(x.c)}] ${esc(short(S.ui.propose?x.t:ocText(x.c),56))}</button>`).join("")}</div>`:(S.ui.propose?`<div class="tiny muted">Схожих орієнтирів у стандарті не знайдено.</div>`:"")}
     <div class="uxbtns"><select data-uxsel="${u.id}" data-ur="${r.id}" aria-label="Встановити відповідність орієнтиру"><option value="">Відповідає орієнтиру…</option>
         ${inT.length?`<optgroup label="Орієнтири теми">${inT.map(opt).join("")}</optgroup>`:""}
         <optgroup label="Інші орієнтири">${S.outcomes.filter(o=>!inTs.has(o.c)).map(o=>opt(o.c)).join("")}</optgroup></select>
@@ -893,6 +898,29 @@ function uxResolve(rid, uid_, code){
   r.ux=r.ux.filter(x=>x!==u); save(); render();
   if(code) toast(`Позначено орієнтир ${code}`);
 }
+/* proposals of outcomes with indices for the author's own results (imported from Word): on request only */
+const STD_ALL = () => STD_ALL.m || (STD_ALL.m = new Map([...(STD?Object.values(STD.sets).flat():[]), ...(ALLSTD?Object.values(ALLSTD.sets).flat():[])]));
+const stdText = c => STD_ALL().get(c) || "";
+function stdSetsFor(codes){ const keys=new Set();
+  for(const c of codes){ const p=parseCode(c); if(!p) continue; const cy = p.cyc===12 ? (p.lvl==="П"?"12п":"12о") : String(p.cyc);
+    if(p.subj==="ІФО"){ if(STD?.sets[cy]) keys.add("I:"+cy); } else { const k=cy+" "+p.subj; if(ALLSTD?.sets[k]) keys.add("A:"+k); } }
+  return [...keys].flatMap(k=>k[0]==="I" ? STD.sets[k.slice(2)] : ALLSTD.sets[k.slice(2)]); }
+function korOrients(kor){ if(!korOrients.m){ const m=korOrients.m=new Map(); for(const c of STD_ALL().keys()){ const p=parseCode(c); if(!p||p.isKor) continue; const k=p.kor+(p.lvl==="П"?" П":""); if(!m.has(k)) m.set(k,[]); m.get(k).push(c); } } return korOrients.m.get(kor)||[]; }
+function stdGuess(tid, text){ let pool=stdSetsFor(S.outcomes.map(o=>o.c)); if(!pool.length) pool=[...STD_ALL().entries()];
+  const bg=bigrams(text), have=new Set(topicOutcomes(tid).map(o=>o.c));
+  return pool.filter(([c])=>!have.has(c)).map(([c,t])=>({c,t,s:dice(bg,bigrams(t))})).filter(x=>x.s>=0.42).sort((a,b)=>b.s-a.s).slice(0,3); }
+function addStdOutcome(tid, rid, code, after){
+  if(!S.outcomes.some(o=>o.c===code)){ S.outcomes.push({c:code, t:stdText(code)}); S.outcomes=sortOutcomes(S.outcomes); }
+  const a=S.assign[code]=S.assign[code]||[]; if(!a.includes(tid)) a.push(tid);
+  const rows=S.rows[tid]||[]; for(const o of rows) if(o.id!==rid) o.oc=o.oc.filter(c=>c!==code);
+  const r=rows.find(x=>x.id===rid); if(r && !r.oc.includes(code)){ let i=after ? r.oc.indexOf(after) : -1; if(i>=0){ while(i+1<r.oc.length && parseCode(r.oc[i+1])?.kor===parseCode(after)?.kor && !parseCode(r.oc[i+1])?.isKor) i++; r.oc.splice(i+1,0,code); } else r.oc.push(code); }
+  if(S.rowsOut?.[tid]) S.rowsOut[tid]=S.rowsOut[tid].filter(c=>c!==code); }
+function korPropHTML(tid, r, c){ const p=parseCode(c); if(!p?.isKor) return "";
+  const have=new Set(topicOutcomes(tid).map(o=>o.c)); const L=korOrients(c).filter(x=>!have.has(x));
+  if(!L.length) return `<div class="prop tiny muted">Пропозиції: орієнтирів цього результату в стандарті ${korOrients(c).length?"вже додано до теми":"не знайдено"}.</div>`;
+  return `<div class="prop"><span class="lab">Орієнтири стандарту для ${esc(c)}:</span>${L.map(x=>`<button class="schip" data-stdadd="${esc(x)}" data-after="${esc(c)}" data-r="${r.id}" title="${esc(stdText(x))}">+ [${esc(shortCode(x))}] ${esc(short(stdText(x),60))}</button>`).join("")}
+    <span class="propbtns"><button class="btn small ghost" data-stdall="${esc(c)}" data-r="${r.id}">Додати всі</button><button class="btn small ghost" data-stdrep="${esc(c)}" data-r="${r.id}" title="Додати всі орієнтири й прибрати з таблиці результат автора ${esc(c)}">Замінити ними результат автора</button></span></div>`; }
+const propCount = tid => (S.rows[tid]||[]).reduce((n,r)=>n+(r.ux?.length||0)+r.oc.filter(c=>parseCode(c)?.isKor).length,0);
 const uxCount = tid => (S.rows[tid]||[]).reduce((s,r)=>s+(r.ux?.length||0),0);
 function topicAlign(tid){
   ensureRows(tid); let tot=0, none=0, low=0, unl=0;
@@ -1748,7 +1776,7 @@ function renderStep3(){
       html += `<tr class="ttopic"><td colspan="3">Тема ${t.num}. ${esc(t.name)}</td></tr>`;
       if(!rows.length){ html+=`<tr><td colspan="3" class="e">До теми ще не добрано орієнтирів.</td></tr>`; continue; }
       for(const r of rows){ total++; const ce=!r.content.trim(), ae=!r.act.trim(); if(ce||ae) empty++;
-        html += `<tr><td>${r.oc.map(c=>`<p>${esc(ocTT(t.id,c))} [${esc(c)}]</p>`).join("")}${(r.ux||[]).map(u=>`<p style="color:#c62828">${esc(u.t)} [не відповідає стандарту]</p>`).join("")}</td>
+        html += `<tr><td>${r.oc.map(c=>`<p>${esc(ocTT(t.id,c))} [${esc(c)}]</p>`).join("")}${(r.ux||[]).map(u=>`<p>${esc(u.t)}</p>`).join("")}</td>
           <td class="${ce?"e":""}">${ce?"не заповнено":lines(r.content).map(l=>`<p>${esc(l)}</p>`).join("")}</td>
           <td class="${ae?"e":""}">${ae?"не заповнено":lines(r.act).map(l=>`<p>${esc(l)}</p>`).join("")}</td></tr>`; }
     }
@@ -1896,11 +1924,29 @@ function headerMap(row){
   if(res<0 || (cont<0 && act<0)) return null;
   return {res, cont, act, topic:find(/^тем|назва теми|^розділ|^модуль/), n:row.length};
 }
+/* modules and topics of an imported programme:
+   only modules → they become topics (grouped by class headings, if any); modules and topics → both; only topics → topics */
+function shapeModules(mods){
+  let grade=null; const seq=[];
+  for(const m of mods){ if(m.grade && !m.topics.length){ grade=m.name; continue; } if(m.topics.length) seq.push({m, grade: m.grade ? null : grade}); }
+  const anyReal = seq.some(x=>x.m.topics.some(t=>!t.synth));
+  const out=[];
+  if(!anyReal){   // only modules: every module is a topic
+    for(const {m,grade:g} of seq){ const box = g || "Зміст програми"; let M=out.find(x=>x.name===box); if(!M){ M={name:box, topics:[]}; out.push(M); }
+      M.topics.push({name:m.name, rows:m.topics.flatMap(t=>t.rows)}); }
+    return out; }
+  for(const {m,grade:g} of seq){
+    let name=m.name; const T=m.topics.map(t=>({name:t.name, rows:t.rows, synth:t.synth}));
+    const sp=name.match(/^(.*?[^\d\s])\.?\s+(\d+\.\d+\.?\s+\S.*)$/);   // «Модуль 3. Турбота про здоров’я. 3.1. Психоемоційне здоров’я.»
+    T.forEach((t,i)=>{ if(t.synth){ if(i===0 && sp){ name=sp[1]; t.name=sp[2].replace(/[\s.]+$/,""); } else t.name=m.name.replace(/[\s.]+$/,""); } });
+    out.push({name: g && !/клас/i.test(name) ? `${g}. ${name}` : name, topics:T.map(t=>({name:t.name, rows:t.rows}))}); }
+  return out;
+}
 function docxProgramme(items){
   const mods=[]; let mod=null, topic=null, started=false, ended=false, lastNum=0, title="", cmap=null;
   let pendMod=null, pendTopic=null;   // headings seen just before the programme tables start
-  const newModule = name => { mod={name, topics:[]}; mods.push(mod); topic=null; };
-  const newTopic = name => { if(!mod) newModule(pendMod||"Модуль 1"); topic={name:cleanTopic(name), rows:[]}; mod.topics.push(topic); };
+  const newModule = name => { mod={name, topics:[], grade:/^\d{1,2} клас$/.test(name)}; mods.push(mod); topic=null; };
+  const newTopic = (name, synth) => { if(!mod) newModule(pendMod||"Модуль 1"); topic={name:cleanTopic(name), rows:[], synth:!!synth}; mod.topics.push(topic); };
   const moduleName = t => { const m=t.match(/(\d{1,2})\s*[-–]?\s*(?:й\s*)?клас/i); if(m){ lastNum=+m[1]; return `${m[1]} клас`; } return t.replace(/^[IVXІ]+\.\s*/,""); };
   for(const it of items){
     if(it.k==="p"){
@@ -1940,7 +1986,7 @@ function docxProgramme(items){
       if(map.topic>=0 && cells[map.topic] && (!topic || cleanTopic(cells[map.topic])!==topic.name)) newTopic(cells[map.topic].split("\n")[0]);
       const a=cells[map.res]||"", b=map.cont>=0?(cells[map.cont]||""):"", c=map.act>=0?(cells[map.act]||""):"";
       if(!a && !b && !c){ first=false; continue; }
-      if(!topic) newTopic(pendTopic||"Тема без назви");
+      if(!topic) pendTopic ? newTopic(pendTopic) : newTopic("Тема", true);
       const cont = first && topic.rows.length && ([a,b,c].some(startsCont) || (!b && !c));
       if(cont){ const pr=topic.rows[topic.rows.length-1]; [a,b,c].forEach((x,i)=>{ if(x) pr[i]=(pr[i]+(startsCont(x)?" ":"\n")+x).trim(); }); }
       else topic.rows.push([a,b,c]);
@@ -1948,7 +1994,7 @@ function docxProgramme(items){
     }
   }
   mods.forEach(m=>m.topics=m.topics.filter(t=>t.rows.length));
-  return {title, mods:mods.filter(m=>m.topics.length)};
+  return {title, mods:shapeModules(mods)};
 }
 /* similarity of two wordings (character bigrams) for programmes without indices */
 function bigrams(s){ s=norm(s).replace(/[^a-zа-яіїєґ’0-9 ]/g,"").replace(/\s+/g," "); const m=new Map(); for(let i=0;i<s.length-1;i++){ const g=s.slice(i,i+2); m.set(g,(m.get(g)||0)+1); } return m; }
@@ -1975,46 +2021,38 @@ function uxLines(a, KOR_RE, known){   // statements without an index in a cell t
     else glue(L); });
   return cand;
 }
-function analyseDocx(prog, matchSet, field, extra){
-  const other = field==="other";
-  const extraList = (extra||[]).map(o=>[o.c,o.t]);
-  const known=new Map(other ? extraList : (STD?Object.values(STD.sets).flat():[]));
-  const KOR_RE=/(\d{1,2})\s*([А-ЯІЇЄҐ]{2,5})\s*(\d+)\s*\.\s*(\d+)\s*\.\s*(\d+)(?!\s*[-–.]\s*\d)/g;   // a concrete result without the outcome number
-  let codesFound=0, usesP=false; for(const m of prog.mods) for(const t of m.topics) for(const r of t.rows){ ANY_CODE.lastIndex=0; KOR_RE.lastIndex=0; if(ANY_CODE.test(r[0]) || KOR_RE.test(r[0])) codesFound++; if(/\d\s*П\s*\]/.test(r[0])) usesP=true; }
-  // all outcomes of a concrete result (for 12 ІФО — the level the programme uses)
-  const korIndex=new Map(); const addKor=c=>{ const kr=korOf(c); if(!kr) return; if(!korIndex.has(kr)) korIndex.set(kr,[]); korIndex.get(kr).push(c); };
-  if(other) extraList.forEach(([c])=>addKor(c));
-  else if(STD) for(const [k,list] of Object.entries(STD.sets)){ if(k==="12п" && !usesP) continue; if(k==="12о" && usesP) continue; list.forEach(([c])=>addKor(c)); }
-  const korHits=new Map(), korUnknown=new Set(), korSubj=new Set(), korCyc=new Set();
-  const useFuzzy = codesFound===0;
-  const set = useFuzzy ? (other ? extraList : (STD.sets[matchSet]||[])) : [];
-  const setBg = set.map(([c,t])=>[c,bigrams(t)]);
-  const unmatched=[]; const texts=new Map(); let nRows=0, nOc=0;
-  for(const m of prog.mods) for(const t of m.topics){ t.out=[]; for(const [a,b,c] of t.rows){ nRows++; const codes=[], ux=[];
-      if(!useFuzzy){
-        ANY_CODE.lastIndex=0; let mm, prev=0; while((mm=ANY_CODE.exec(a))){ const p=parseCode(mm[0].replace(/\s+/g," ")); if(!p){ prev=ANY_CODE.lastIndex; continue; } codes.push(p.code);   // an index may be broken over two lines
-            if(!known.has(p.code) && !texts.has(p.code)){ const tx=a.slice(prev,mm.index).split("\n").filter(Boolean).pop()?.replace(/[\[\s;,.]+$/,"").replace(/^[\]\s;,.]+/,"").trim(); if(tx) texts.set(p.code,tx); }
-            prev=ANY_CODE.lastIndex; }
-        const rest=a.replace(new RegExp(ANY_CODE.source,"g")," "); KOR_RE.lastIndex=0; let km;
-        while((km=KOR_RE.exec(rest))){ const kr=`${km[1]} ${km[2]} ${km[3]}.${km[4]}.${km[5]}`; const list=korIndex.get(kr); korSubj.add(km[2]); korCyc.add(+km[1]);
-          if(list && list.length){ codes.push(...list); korHits.set(kr,list.length); } else korUnknown.add(kr); }
-        for(const l of uxLines(a, KOR_RE, known)){ ux.push(l); unmatched.push(l); }
-      } else if(setBg.length){
-        for(const line of joinLines(a).split("\n")){ if(/^(змістова лінія|група вмінь)/i.test(line) || line.length<15) continue;
-          const bg=bigrams(line); let best=null, bs=0; for(const [code,g] of setBg){ const s=dice(bg,g); if(s>bs){ bs=s; best=code; } }
-          if(bs>=0.78) codes.push(best); else { unmatched.push(line); ux.push(line); } }
+function analyseDocx(prog){
+  const known=new Map([...(STD?Object.values(STD.sets).flat():[]), ...(ALLSTD?Object.values(ALLSTD.sets).flat():[])]);
+  const IDX=/(\d{1,2})\s*([А-ЯІЇЄҐ]{2,5})\s*(\d+)\s*\.\s*(\d+)(?:\s*\.\s*(\d+))?(?:\s*[-–—.]\s*(\d+))?(\s*П(?![а-яіїєґ]))?/g;
+  const clean = t => t.replace(/\s*\n\s*/g," ").replace(/^(?:учень|учениця|учні|здобувач\S*)[^:]{0,40}:\s*/i,"").replace(/^[\]\)\s;,.•·\-–—*●▪]+/,"").replace(/[\[\(\s;,•·●▪]+$/,"").replace(/\s+/g," ").trim();
+  const paras = t => t.split("\n").map(clean).filter(x=>x.replace(/[^А-ЯІЇЄҐа-яіїєґA-Za-z]/g,"").length>=3 && !UX_SKIP.test(x));
+  const first=new Map(); let nRows=0, nIdx=0, nKor=0, nUx=0; const unmatched=[]; const variants=new Set();
+  for(const m of prog.mods) for(const t of m.topics){ t.out=[];
+    for(const [a,b,c] of t.rows){ nRows++; const spans=[]; IDX.lastIndex=0; let mm;
+      while((mm=IDX.exec(a))){ const pc=parseCode(mm[0].replace(/\s+/g," ")); if(pc) spans.push({s:mm.index, e:IDX.lastIndex, c:pc.code, kor:!!pc.isKor}); }
+      const items=[], ux=[];
+      if(!spans.length) paras(a).forEach(x=>ux.push(x));
+      else if(!clean(a.slice(0,spans[0].s))){   // the index stands before its wording
+        let pend=[];
+        spans.forEach((sp,i)=>{ pend.push(sp); const tx=clean(a.slice(sp.e, i+1<spans.length?spans[i+1].s:a.length)); if(tx){ pend.forEach(x=>items.push({c:x.c, kor:x.kor, t:tx})); pend=[]; } });
+        pend.forEach(x=>items.push({c:x.c, kor:x.kor, t:""}));
+      } else {                                    // the wording, then its index
+        let prev=0, last="";
+        for(const sp of spans){ let tx=clean(a.slice(prev, sp.s)); if(tx) last=tx; else tx=last; items.push({c:sp.c, kor:sp.kor, t:tx}); prev=sp.e; }
+        paras(a.slice(prev)).forEach(x=>ux.push(x));
       }
-      const uniq=[...new Set(codes)]; nOc+=uniq.length; t.out.push({oc:uniq, ux, content:joinLines(b), act:joinLines(c)}); } }
+      const texts={}; const oc=[];
+      for(const it of items){ if(!oc.includes(it.c)){ oc.push(it.c); it.kor?nKor++:nIdx++; }
+        const tx = it.t || first.get(it.c) || known.get(it.c) || "";
+        if(!first.has(it.c) && tx) first.set(it.c, tx);
+        if(tx) texts[it.c]=tx; }
+      ux.forEach(x=>{ unmatched.push(x); nUx++; });
+      t.out.push({oc, ux, texts, content:joinLines(b), act:joinLines(c)}); } }
   const used=new Set(prog.mods.flatMap(m=>m.topics.flatMap(t=>t.out.flatMap(r=>r.oc))));
-  const outcomes=[]; const sets=new Set();
-  if(other){ for(const [c,t] of extraList) outcomes.push({c,t}); }
-  else { for(const c of used){ const p=parseCode(c); if(!p||p.subj!=="ІФО") continue; const k = p.cyc===12 ? (p.lvl==="П"?"12п":"12о") : String(p.cyc); if(STD.sets[k]) sets.add(k); }
-         for(const k of sets) for(const [c,t] of STD.sets[k]) outcomes.push({c,t}); }
-  const have=new Set(outcomes.map(o=>o.c)); const missing=[]; let fromText=0;
-  for(const c of used) if(!have.has(c)){ const t=known.get(c)||texts.get(c); if(t){ outcomes.push({c,t}); have.add(c); fromText++; } else missing.push(c); }
-  const subjects=[...new Set([...[...used].map(c=>parseCode(c)?.subj), ...korSubj].filter(Boolean))];
-  const cycles=[...new Set([...[...used].map(c=>parseCode(c)?.cyc), ...korCyc].filter(Boolean))];
-  return {useFuzzy, nRows, nOc, unmatched, outcomes:sortOutcomes(outcomes), missing, sets:[...sets], korHits, korUnknown:[...korUnknown], fromText, subjects, cycles, usesP};
+  const outcomes=[...used].map(c=>({c, t:first.get(c)||known.get(c)||""}));
+  for(const m of prog.mods) for(const t of m.topics) for(const r of t.out) for(const [c,tx] of Object.entries(r.texts)) if(tx!==first.get(c)) variants.add(c);
+  return {nRows, nOc:used.size, nIdx, nKor, nUx, unmatched, variants:[...variants], outcomes:sortOutcomes(outcomes),
+    subjects:[...new Set([...used].map(c=>parseCode(c)?.subj).filter(Boolean))], cycles:[...new Set([...used].map(c=>parseCode(c)?.cyc).filter(Boolean))]};
 }
 function buildProject(prog, an, title){
   const P=blankState(); P.title=title||prog.title||"Імпортована програма"; P.outcomes=an.outcomes; P.modules=[]; P.assign={}; P.rows={};
@@ -2022,6 +2060,7 @@ function buildProject(prog, an, title){
   for(const m of prog.mods){ const M={id:uid("m"), name:m.name, topics:[]}; P.modules.push(M);
     for(const t of m.topics){ const T={id:uid("t"), name:t.name}; M.topics.push(T); const seenOc=new Set(); const rows=[];
       for(const r of t.out){ const oc=r.oc.filter(c=>valid.has(c) && !seenOc.has(c)); oc.forEach(c=>seenOc.add(c));
+        for(const [c,tx] of Object.entries(r.texts||{})){ const base=an.outcomes.find(o=>o.c===c)?.t; if(tx && tx!==base){ P.ocEdit=P.ocEdit||{}; (P.ocEdit[T.id]=P.ocEdit[T.id]||{})[c]=tx; } }
         for(const c of oc){ (P.assign[c]=P.assign[c]||[]); if(!P.assign[c].includes(T.id)) P.assign[c].push(T.id); }
         const ux=(r.ux||[]).map(t=>({id:uid("u"), t}));
         if(oc.length||ux.length||r.content||r.act) rows.push({id:uid("r"), oc, ux, content:r.content, act:fmtAct(r.act), links:{}}); }
@@ -2043,63 +2082,26 @@ async function importDocx(file){
 }
 function showDocxDialog(){
   const {prog}=DOCX;
-  if(!DOCX.matchSet){ // guess the cycle from the title or module names: «5–6 класи», «7 клас» …
-    const txt=(prog.title+" "+prog.mods.map(m=>m.name).join(" ")); const nums=(txt.match(/\d{1,2}/g)||[]).map(Number).filter(n=>n>=1&&n<=12);
-    const mx=nums.length?Math.max(...nums):9; DOCX.matchSet = mx<=2?"2":mx<=4?"4":mx<=6?"6":mx<=9?"9":"12о"; }
-  if(!DOCX.field){ const probe=analyseDocx(prog, DOCX.matchSet, "ifo", []); const subj=probe.subjects.find(x=>x!=="ІФО");
-    DOCX.field = probe.subjects.length && !probe.subjects.includes("ІФО") ? "other" : "ifo";
-    DOCX.subj = subj && ALLSTD?.fields.some(f=>f[0]===subj) ? subj : (subj ? "upload" : (ALLSTD?.fields[0]?.[0]||"upload"));
-    DOCX.cycles = probe.cycles; DOCX.usesP = probe.usesP; }
-  // a built-in list for the chosen field: cycles used in the programme, or the guessed one
-  DOCX.builtin=null;
-  if(DOCX.field==="other" && DOCX.subj!=="upload" && ALLSTD){
-    let cy=(DOCX.cycles||[]).map(c=>String(c)==="12" ? (DOCX.usesP?"12п":"12о") : String(c)).filter(c=>ALLSTD.sets[c+" "+DOCX.subj]);
-    if(!cy.length){ const g=({"2":"2","4":"4","6":"6","12о":"12о","12п":"12п"})[DOCX.matchSet]||"9"; if(ALLSTD.sets[g+" "+DOCX.subj]) cy=[g]; }
-    if(cy.length) DOCX.builtin={keys:cy.map(c=>c+" "+DOCX.subj), list:cy.flatMap(c=>ALLSTD.sets[c+" "+DOCX.subj]).map(([c,t])=>({c,t}))}; }
   if(DOCX.title==null) DOCX.title = prog.title||DOCX.file.replace(/\.docx$/i,"");
-  const other=DOCX.field==="other";
-  const extraList = DOCX.subj==="upload" ? (DOCX.extra||[]) : (DOCX.builtin?.list || DOCX.extra || []);
-  const an=analyseDocx(prog, DOCX.matchSet, DOCX.field, extraList); DOCX.an=an;
+  const an=analyseDocx(prog); DOCX.an=an;
   const nT=prog.mods.reduce((s,m)=>s+m.topics.length,0);
-  const extraN=extraList.length;
-  const extraGroups = extraN ? [...new Set(extraList.map(o=>gkey(o.c)))].map(glabel).join(", ") : "";
-  const cySel = ALLSTD ? `<div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label for="dxSubj">Галузь:</label> <select id="dxSubj">${ALLSTD.fields.map(([f,n])=>`<option value="${f}" ${f===DOCX.subj?"selected":""}>${esc(n)} (${f})</option>`).join("")}<option value="upload" ${DOCX.subj==="upload"?"selected":""}>Інша — завантажити власний список</option></select>
-     ${!other||DOCX.subj==="upload"?"":`<select id="dxCyc">${Object.entries(CYC_LAB).filter(([c])=>ALLSTD.sets[c+" "+DOCX.subj]).map(([c,l])=>`<option value="${c}" ${DOCX.builtin?.keys.includes(c+" "+DOCX.subj)?"selected":""}>${l}</option>`).join("")}</select>`}</div>` : "";
   $("#modalHost").innerHTML = `<div class="modal" role="dialog" aria-label="Імпорт програми з Word"><div class="mbox">
     <div class="mhd"><h2>Імпорт програми з Word</h2><button class="btn small" data-mclose="1">Закрити</button></div>
     <div class="mbd">
       <label class="tiny muted" for="dxTitle">Назва програми</label><input id="dxTitle" class="dxin" value="${esc(DOCX.title)}">
       <div class="res"><b>Знайдено в «${esc(DOCX.file)}»:</b> модулів — ${prog.mods.length}, тем — ${nT}, рядків таблиць — ${an.nRows}.
         <ul>${prog.mods.map(m=>`<li>${esc(m.name)}: ${m.topics.map(t=>esc(t.name)).join("; ")}</li>`).join("")}</ul></div>
-      <div class="stdbox"><h3>Освітня галузь програми</h3>
-        <div class="opts"><label><input type="radio" name="dxField" value="ifo" ${!other?"checked":""}> Інформатична — орієнтири з вбудованого стандарту</label>
-        <label><input type="radio" name="dxField" value="other" ${other?"checked":""}> Інша освітня галузь</label></div>
-        ${other?cySel:""}
-        ${other && DOCX.subj!=="upload" ? `<div class="res" style="margin-top:8px">${DOCX.builtin?`Вбудований список орієнтирів: <b>${DOCX.builtin.keys.join(", ")}</b> — ${extraN} орієнтирів.`:`Для цієї галузі і класів вбудованого списку немає — оберіть «Інша — завантажити власний список».`}</div>`:""}
-        ${other && DOCX.subj==="upload"?`<div class="dxstd">
-          <p class="tiny muted" style="margin:6px 0">Список орієнтирів галузі: таблиця (.xlsx, .csv) чи текст (.txt), один орієнтир у рядку, індекс у квадратних дужках у кінці, наприклад «…власне висловлення [6 МОВ 1.2-3]». З нього візьмуться формулювання, повний перелік для матриці, зіставлення для програм без індексів і розгортання індексів результатів.</p>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><label class="btn small">Обрати файл<input type="file" id="dxStdFile" accept=".xlsx,.xls,.csv,.txt,.tsv" hidden></label><span class="tiny muted">або вставте текст:</span></div>
-          <textarea id="dxStdText" rows="4" placeholder="формулювання орієнтира [6 МОВ 1.1-1]"></textarea>
-          <button class="btn small" id="dxStdParse" style="margin-top:4px">Розпізнати текст</button>
-          <div class="res" style="margin-top:8px">${extraN?`Завантажено орієнтирів галузі: <b>${extraN}</b> (${esc(extraGroups)}).`:`Список орієнтирів галузі ще не завантажено — тоді формулювання візьмуться з тексту програми, а в матриці будуть лише орієнтири, що в ній трапляються.`}</div>
-        </div>`:""}
-      </div>
-      ${an.useFuzzy?`<div class="res">У програмі немає індексів орієнтирів, тому формулювання зіставляються ${other?"зі списком орієнтирів галузі":"зі стандартом"} за схожістю.
-          ${!other?`<div style="margin-top:6px"><label for="dxSet">Зіставляти з орієнтирами:</label> <select id="dxSet">${STD_SETS.map(([k,lab,pref])=>`<option value="${k}" ${k===DOCX.matchSet?"selected":""}>${esc(lab)} (${pref})</option>`).join("")}</select></div>`:""}
-          ${other && !extraN ? `<div style="margin-top:6px">Щоб зіставити, завантажте список орієнтирів галузі.</div>` : `<div style="margin-top:6px">Зіставлено орієнтирів у рядках: <b>${an.nOc}</b>; не вдалося зіставити: <b>${an.unmatched.length}</b>${an.unmatched.length?` — їх збережено й позначено червоним на кроці 2`:""}.</div>`}
-          ${an.unmatched.length?`<details style="margin-top:4px"><summary>Показати незіставлені формулювання</summary><ul>${an.unmatched.map(u=>`<li>${esc(u)}</li>`).join("")}</ul></details>`:""}</div>`
-        :`<div class="res">Орієнтирів у рядках таблиць: <b>${an.nOc}</b>.
-          ${!other && an.sets.length?` Список орієнтирів проєкту — зі стандарту інформатичної галузі: ${an.sets.map(k=>esc(STD_SETS.find(x=>x[0]===k)[1])).join(", ")}.`:""}
-          ${other && extraN?` Список орієнтирів проєкту — ${DOCX.subj==="upload"?"завантажений":"вбудований"} список галузі (${extraN}).`:""}
-          ${an.fromText?`<div style="margin-top:4px">Формулювань, узятих з тексту програми (індексів немає у ${other?"завантаженому списку":"вбудованому стандарті"}): ${an.fromText}.</div>`:""}
-          ${an.korHits.size?`<div style="margin-top:4px">Індексів конкретних результатів без номера орієнтира: ${an.korHits.size} — для кожного позначено всі його орієнтири (${[...an.korHits.values()].reduce((a,b)=>a+b,0)}).</div>`:""}
-          ${an.korUnknown.length?`<div style="margin-top:4px">Не знайдено орієнтирів для результатів: ${esc(an.korUnknown.join(", "))}${other&&!extraN?" — завантажте список орієнтирів галузі":""}.</div>`:""}
-          ${an.unmatched.length?`<div style="margin-top:4px;color:#c62828">Результатів без відповідного орієнтира стандарту: <b>${an.unmatched.length}</b> — їх збережено й позначено червоним на кроці 2: там можна встановити відповідність орієнтиру, переформулювати або перенести у види діяльності.</div>
-            <details style="margin-top:4px"><summary>Показати</summary><ul>${an.unmatched.map(u=>`<li>${esc(u)}</li>`).join("")}</ul></details>`:""}
-          ${an.missing.length?`<div style="margin-top:4px">Не знайдено формулювань для індексів: ${esc(an.missing.join(", "))}.</div>`:""}</div>`}
+      <div class="res"><b>Очікувані результати навчання переносяться дослівно, як в авторській програмі</b> — з авторськими формулюваннями та індексами. Конструктор нічого не додає, не розгортає й не замінює формулюваннями стандарту.
+        <ul style="margin:6px 0 0">
+          <li>з індексами орієнтирів: <b>${an.nIdx}</b></li>
+          ${an.nKor?`<li>з індексами конкретних результатів (без номера орієнтира): <b>${an.nKor}</b> — так і залишаться</li>`:""}
+          ${an.nUx?`<li>без індексу: <b>${an.nUx}</b> — збережуться як текст автора</li>`:""}
+        </ul>
+        ${an.variants.length?`<div class="tiny muted" style="margin-top:6px">Для ${an.variants.length} індексів автор у різних темах подає різні формулювання — у кожній темі збережеться її власне (позначка «уточнено»).</div>`:""}
+        ${an.nUx?`<details style="margin-top:4px"><summary>Показати результати без індексу</summary><ul>${an.unmatched.map(u=>`<li>${esc(u)}</li>`).join("")}</ul></details>`:""}</div>
       <p class="tiny muted" style="margin:0">Імпорт відкриє програму як новий проєкт замість поточного. Якщо поточну роботу ще не збережено у файл, спершу збережіть її: «Проєкт» → «Зберегти файл проєкту». Зв’язки видів діяльності з орієнтирами та планування оцінювання після імпорту розставляє автор.</p>
     </div>
-    <div class="mft"><button class="btn" data-mclose="1">Скасувати</button><button class="btn primary" id="dxGo" ${an.nOc||an.unmatched.length?"":"disabled"}>Імпортувати як новий проєкт</button></div>
+    <div class="mft"><button class="btn" data-mclose="1">Скасувати</button><button class="btn primary" id="dxGo" ${an.nOc||an.nUx?"":"disabled"}>Імпортувати як новий проєкт</button></div>
   </div></div>`;
 }
 /* ---------- loading outcomes ---------- */
@@ -2284,7 +2286,7 @@ function exportXLSX(){
   XLSX.utils.book_append_sheet(wb, ws1, "Розподіл за темами");
   // sheet 2: content and activities
   const aoa2=[["Модуль","Тема","Очікувані результати навчання","Пропонований зміст","Види навчальної діяльності"]];
-  for(const t of T){ ensureRows(t.id); for(const r of S.rows[t.id].filter(r=>r.oc.length||r.ux?.length)) aoa2.push([t.m.name, `${t.num} ${t.name}`, [...r.oc.map(c=>`${ocTT(t.id,c)} [${c}]`), ...(r.ux||[]).map(u=>`${u.t} [не відповідає стандарту]`)].join("\n"), r.content, r.act]); }
+  for(const t of T){ ensureRows(t.id); for(const r of S.rows[t.id].filter(r=>r.oc.length||r.ux?.length)) aoa2.push([t.m.name, `${t.num} ${t.name}`, [...r.oc.map(c=>`${ocTT(t.id,c)} [${c}]`), ...(r.ux||[]).map(u=>u.t)].join("\n"), r.content, r.act]); }
   const ws2=XLSX.utils.aoa_to_sheet(aoa2); ws2["!cols"]=[{wch:18},{wch:30},{wch:70},{wch:50},{wch:50}];
   XLSX.utils.book_append_sheet(wb, ws2, "Зміст і діяльність");
   // sheet: introductory and final parts
@@ -2337,7 +2339,7 @@ async function exportDOCX(){
       const t=topicById(t0.id); ensureRows(t.id); const rows=S.rows[t.id].filter(r=>r.oc.length||r.ux?.length);
       trows.push(new D.TableRow({cantSplit:true, children:[new D.TableCell({columnSpan:3, children:[P([R(`Тема ${t.num}. ${t.name}`,{bold:true})])], shading:{fill:"F1F2EE",type:D.ShadingType.CLEAR,color:"auto"}, margins:{top:60,bottom:60,left:100,right:100}})]}));
       if(!rows.length){ trows.push(new D.TableRow({children:[new D.TableCell({columnSpan:3, children:[P([R("До теми ще не добрано орієнтирів.",{italics:true})])], margins:{top:60,bottom:60,left:100,right:100}})]})); continue; }
-      for(const r of rows) trows.push(new D.TableRow({children:[ cell([...r.oc.map(c=>P([R(`${ocTT(t.id,c)} [${c}]`)])), ...(r.ux||[]).map(u=>P([R(`${u.t} [не відповідає стандарту]`,{color:"C62828"})]))],0), txtCell(r.content,1), txtCell(r.act,2) ]}));
+      for(const r of rows) trows.push(new D.TableRow({children:[ cell([...r.oc.map(c=>P([R(`${ocTT(t.id,c)} [${c}]`)])), ...(r.ux||[]).map(u=>P([R(u.t)]))],0), txtCell(r.content,1), txtCell(r.act,2) ]}));
     }
     children.push(new D.Table({rows:trows, width:{size:14570,type:D.WidthType.DXA}, columnWidths:W}));
   }
@@ -2448,6 +2450,13 @@ document.addEventListener("click", async e=>{
   if(c("[data-frstruct]")){ const txt=S.modules.filter(m=>m.topics.length).map(m=>`${m.name}: ${m.topics.map(t=>{ const tt=topicById(t.id); return `${tt.num} ${t.name}`; }).join("; ")}.`).join("\n");
     S.frame.structure=((S.frame.structure||"").trim()?S.frame.structure.replace(/\s+$/,"")+"\n":"")+txt; save(); render();
     const n=S.modules.filter(m=>m.topics.length).length; setTimeout(()=>$("#fr_structure")?.scrollIntoView({block:"center"}),150); toast(`Додано модулів: ${n}`); return; }
+  if(c("[data-propose]")){ S.ui.propose=!S.ui.propose; save(); rerenderTopicPanel(); return; }
+  if((b=c("[data-stdadd]"))){ addStdOutcome(S.ui.t2, b.dataset.r, b.dataset.stdadd, b.dataset.after); save(); rerenderTopicPanel(); toast(`Додано орієнтир ${b.dataset.stdadd}`); return; }
+  if((b=c("[data-stdall]")) || (b=c("[data-stdrep]"))){ const kor=b.dataset.stdall||b.dataset.stdrep, tid=S.ui.t2; const have=new Set(topicOutcomes(tid).map(o=>o.c));
+    const L=korOrients(kor).filter(x=>!have.has(x)); L.forEach(x=>addStdOutcome(tid, b.dataset.r, x, kor));
+    if(b.dataset.stdrep){ for(const r of S.rows[tid]) r.oc=r.oc.filter(x=>x!==kor); S.assign[kor]=(S.assign[kor]||[]).filter(x=>x!==tid); }
+    save(); rerenderTopicPanel(); toast(b.dataset.stdrep?`Результат ${kor} замінено орієнтирами: ${L.length}`:`Додано орієнтирів: ${L.length}`); return; }
+  if((b=c("[data-uxstd]"))){ addStdOutcome(S.ui.t2, b.dataset.ur, b.dataset.uxstd); uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxstd); return; }
   if((b=c("[data-uxmap]"))){ uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxmap); return; }
   if((b=c("[data-uxact]"))){ const r=findRow(b.dataset.ur), u=r?.ux?.find(x=>x.id===b.dataset.uxact); if(u){ r.act=fmtAct((r.act.trim()?r.act.replace(/\s+$/,"")+"\n":"")+u.t); uxResolve(r.id,u.id,null); toast("Перенесено у види діяльності — за потреби переформулюйте як дію учнів"); } return; }
   if((b=c("[data-uxdel]"))){ if(!armed(b)) return; uxResolve(b.dataset.ur, b.dataset.uxdel, null); return; }
