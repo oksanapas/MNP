@@ -303,6 +303,26 @@ table.am{border-collapse:collapse;margin-top:10px;font-size:12.5px}
 .frcomp{border-collapse:collapse;width:100%;margin-top:4px}
 .frcomp th,.frcomp td{border:1px solid var(--line);padding:5px 6px;vertical-align:top;text-align:left;font-size:13.5px}
 .frcomp th{background:var(--soft)}
+.uxpick{margin-top:8px;border:1px solid var(--line);border-radius:6px;background:var(--panel);padding:8px}
+.uxpt{display:flex;gap:6px;flex-wrap:wrap}.uxpt select{flex:1 1 200px;max-width:100%}.uxpt input{flex:1 1 160px;min-width:0;border:1px solid var(--line);border-radius:4px;padding:3px 6px;font:inherit;background:var(--panel);color:var(--ink)}
+.uxpl{max-height:260px;overflow:auto;display:flex;flex-direction:column;gap:2px}
+.uxpi{text-align:left;border:0;background:none;border-radius:4px;padding:4px 6px;font:inherit;font-size:12.5px;cursor:pointer;color:var(--ink)}
+.uxpi:hover{background:var(--accent-soft)}.uxpi b{color:var(--muted);font-weight:600;margin-right:4px}
+.dxo{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:10px 0}
+.dxohd{margin-bottom:6px}.dxohd .tiny{display:block;margin-top:2px}
+.dxquick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.dxm{border-top:1px solid var(--line);padding:6px 0}
+.dxm>.dxh .dxn{font-weight:600}
+.dxh{display:flex;align-items:center;gap:6px;min-height:28px}
+.dxt{margin-left:18px}
+.dxnum{font-size:12px;color:var(--muted);min-width:30px}
+.dxn{flex:1;outline:none;border-radius:4px;padding:1px 4px;cursor:text}
+.dxn:hover{background:var(--soft)}.dxn:focus{background:var(--panel);box-shadow:0 0 0 2px var(--accent-soft)}
+.dxtools{display:flex;gap:2px;opacity:.55}.dxh:hover .dxtools,.dxr:hover .dxtools{opacity:1}
+.dxtools .ib{width:24px;height:24px;font-size:13px}
+.dxrows{border:0;background:none;color:var(--muted);font-size:12px;cursor:pointer;white-space:nowrap}
+.dxrl{margin:2px 0 6px 36px;border-left:2px solid var(--line);padding-left:8px}
+.dxr{display:flex;gap:6px;align-items:center;justify-content:space-between;font-size:12.5px;padding:2px 0;color:var(--muted)}
 .prop{margin:4px 0 2px;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .prop .lab{font-size:12px;color:var(--muted);width:100%}
 .prop .propbtns{display:flex;gap:6px;flex-wrap:wrap;width:100%}
@@ -884,12 +904,47 @@ function uxHTML(tid, r, u){
   return `<div class="uxitem"><div class="uxhd">Результат без індексу (текст автора)</div>
     <textarea class="uxta" data-uxtext="${u.id}" data-ur="${r.id}" rows="2" aria-label="Результат з імпортованої програми">${esc(u.t)}</textarea>
     ${g.length?`<div class="sugg"><span class="lab">${S.ui.propose?"Орієнтири стандарту, схожі за змістом:":"Схоже на:"}</span>${g.map(x=>`<button class="schip" ${S.ui.propose?`data-uxstd="${esc(x.c)}"`:`data-uxmap="${esc(x.c)}"`} data-ux="${u.id}" data-ur="${r.id}" title="${esc(S.ui.propose?x.t:ocText(x.c))}">[${esc(x.c)}] ${esc(short(S.ui.propose?x.t:ocText(x.c),56))}</button>`).join("")}</div>`:(S.ui.propose?`<div class="tiny muted">Схожих орієнтирів у стандарті не знайдено.</div>`:"")}
-    <div class="uxbtns"><select data-uxsel="${u.id}" data-ur="${r.id}" aria-label="Встановити відповідність орієнтиру"><option value="">Відповідає орієнтиру…</option>
-        ${inT.length?`<optgroup label="Орієнтири теми">${inT.map(opt).join("")}</optgroup>`:""}
-        <optgroup label="Інші орієнтири">${S.outcomes.filter(o=>!inTs.has(o.c)).map(o=>opt(o.c)).join("")}</optgroup></select>
+    <div class="uxbtns"><button class="btn small ${UXPICK.uid===u.id?"primary":""}" data-uxopen="${u.id}" data-ur="${r.id}" title="Знайти орієнтир стандарту, якому відповідає це формулювання">Відповідає орієнтиру…</button>
+      <button class="btn small" data-uxsplit="${u.id}" data-ur="${r.id}" title="Поставте курсор у тексті там, де починається наступне формулювання, і натисніть. Якщо курсор не в тексті — розділить за «;»">✂ розділити</button>
+      ${(r.ux||[]).indexOf(u)>0?`<button class="btn small" data-uxjoin="${u.id}" data-ur="${r.id}" title="Це продовження попереднього формулювання — приєднати до нього">↑ приєднати до попереднього</button>`:""}
       <button class="btn small" data-uxact="${u.id}" data-ur="${r.id}" title="Найчастіше такий «результат» описує діяльність учнів">→ у види діяльності</button>
-      <button class="btn small ghost danger" data-uxdel="${u.id}" data-ur="${r.id}" data-confirm="Видалити?">Видалити</button></div></div>`;
+      <button class="btn small ghost danger" data-uxdel="${u.id}" data-ur="${r.id}" data-confirm="Видалити?">Видалити</button></div>${UXPICK.uid===u.id?uxPickHTML(tid,r,u):""}</div>`;
 }
+/* choosing an outcome for the author's statement: a set of the Standard (field × classes) and a search */
+const UXPICK={uid:null, set:"", q:""};
+function uxSets(){ const out=[]; if(S.outcomes.length) out.push(["P","Орієнтири програми"]);
+  if(STD) for(const [k,lab] of STD_SETS) if(STD.sets[k]) out.push(["I:"+k, "Інформатична, "+lab]);
+  if(ALLSTD) for(const [f,n,alias] of ALLSTD.fields){ if(alias) continue; for(const [cy,lab] of Object.entries(CYC_LAB)) if(ALLSTD.sets[cy+" "+f]) out.push(["A:"+cy+" "+f, n+", "+lab]); }
+  return out; }
+const uxSetList = k => k==="P" ? S.outcomes.map(o=>[o.c,o.t]) : k.startsWith("I:") ? (STD?.sets[k.slice(2)]||[]) : (ALLSTD?.sets[k.slice(2)]||[]);
+function uxGuessSet(text){
+  const codes=S.outcomes.map(o=>o.c); if(codes.length){ const p=parseCode(codes[0]); const cy=p.cyc===12?(p.lvl==="П"?"12п":"12о"):String(p.cyc); const k=p.subj==="ІФО"?"I:"+cy:"A:"+cy+" "+p.subj; if(uxSetList(k).length) return k; }
+  // no indices in the programme: the classes from its title, the field — where the wording fits best
+  const nums=((S.title||"").match(/\d{1,2}/g)||[]).map(Number).filter(n=>n>=1&&n<=12); const mx=nums.length?Math.max(...nums):9;
+  const cy = mx<=2?"2":mx<=4?"4":mx<=6?"6":mx<=9?"9":"12о";
+  const key = f => f==="ІФО" ? "I:"+cy : "A:"+cy+" "+f;
+  const fs=(Array.isArray(S.frame?.fields)?S.frame.fields:[]).concat(UX_FIELD_WORDS.filter(([re])=>re.test(S.title||"")).map(x=>x[1]));
+  for(const f of fs) if(uxSetList(key(f)).length) return key(f);
+  // otherwise — the field where the words of the statement occur most often
+  const W=new Set(stems(text)); let best=null, bs=-1;
+  for(const [k] of uxSets()){ if(k==="P" || !(k==="I:"+cy || k.startsWith("A:"+cy+" "))) continue; let m=0; for(const [,t] of uxSetList(k)){ let n=0; for(const w of stems(t)) if(W.has(w)) n++; if(n>m) m=n; } if(m>bs){ bs=m; best=k; } }
+  return best || uxSets()[0]?.[0] || ""; }
+const UX_FIELD_WORDS=[[/математ|алгебр|геометр/i,"МАО"],[/інформат/i,"ІФО"],[/мистецт|музик|образотвор/i,"МИО"],[/природ|фізик|хімі|біолог|географ|астроном/i,"ПРО"],[/технолог|трудов|дизайн/i,"ТЕО"],[/здоров|безпек|добробут|етик|фінанс|підприємлив/i,"СЗО"],[/істор|громадян|правознав/i,"ГІО"],[/англ|німец|француз|іспан|іноземн/i,"ІНО"],[/фізичн\S* культур/i,"ФІО"],[/укр\S* мов|літератур|читан/i,"МОВ"]];
+function uxPickList(u){ const L=uxSetList(UXPICK.set); const q=norm(UXPICK.q).trim();
+  let res;
+  if(q){ const ws=q.split(/\s+/).filter(Boolean); const hit=([c,t])=>{ const h=norm(c+" "+t); return ws.every(w=>h.includes(w)); };
+    res=L.filter(hit).slice(0,12).map(([c,t])=>({c,t}));
+    if(!res.length){ const all=uxSets().filter(([k])=>k!=="P"&&k!==UXPICK.set).flatMap(([k])=>uxSetList(k)); res=all.filter(hit).slice(0,12).map(([c,t])=>({c,t}));
+      if(res.length) return `<div class="tiny muted" style="padding:2px 6px">У вибраному наборі немає — знайдено в інших:</div>`+res.map(x=>`<button class="uxpi" data-uxpick="${esc(x.c)}" title="${esc(x.t)}"><b>${esc(x.c)}</b> ${esc(x.t)}</button>`).join(""); } }
+  else { const bg=bigrams(u.t); res=L.map(([c,t])=>({c,t,s:dice(bg,bigrams(t))})).sort((a,b)=>b.s-a.s).slice(0,8); }
+  return res.length ? res.map(x=>`<button class="uxpi" data-uxpick="${esc(x.c)}" title="${esc(x.t)}"><b>${esc(x.c)}</b> ${esc(x.t)}</button>`).join("") : `<div class="tiny muted" style="padding:6px">Нічого не знайдено — змініть запит або набір орієнтирів.</div>`; }
+function uxPickHTML(tid, r, u){ if(!UXPICK.set) UXPICK.set=uxGuessSet(u.t);
+  return `<div class="uxpick" data-uxpickbox="${u.id}" data-ur="${r.id}">
+    <div class="uxpt"><select data-uxset aria-label="Набір орієнтирів">${uxSets().map(([k,n])=>`<option value="${esc(k)}" ${k===UXPICK.set?"selected":""}>${esc(n)}</option>`).join("")}</select>
+      <input data-uxq placeholder="Пошук за словами чи індексом" value="${esc(UXPICK.q)}" aria-label="Пошук орієнтира">
+      <button class="btn small ghost" data-uxclose="1">Закрити</button></div>
+    <div class="tiny muted" style="margin:4px 0 2px">${UXPICK.q?"Знайдено за запитом:":"Найближчі за змістом до формулювання автора:"}</div>
+    <div class="uxpl" id="uxpl">${uxPickList(u)}</div></div>`; }
 function uxResolve(rid, uid_, code){
   const r=findRow(rid); if(!r) return; const u=(r.ux||[]).find(x=>x.id===uid_); if(!u) return; const tid=S.ui.t2;
   if(code){ const a=S.assign[code]=S.assign[code]||[]; if(!a.includes(tid)) a.push(tid);
@@ -2025,7 +2080,11 @@ function analyseDocx(prog){
   const known=new Map([...(STD?Object.values(STD.sets).flat():[]), ...(ALLSTD?Object.values(ALLSTD.sets).flat():[])]);
   const IDX=/(\d{1,2})\s*([А-ЯІЇЄҐ]{2,5})\s*(\d+)\s*\.\s*(\d+)(?:\s*\.\s*(\d+))?(?:\s*[-–—.]\s*(\d+))?(\s*П(?![а-яіїєґ]))?/g;
   const clean = t => t.replace(/\s*\n\s*/g," ").replace(/^(?:учень|учениця|учні|здобувач\S*)[^:]{0,40}:\s*/i,"").replace(/^[\]\)\s;,.•·\-–—*●▪]+/,"").replace(/[\[\(\s;,•·●▪]+$/,"").replace(/\s+/g," ").trim();
-  const paras = t => t.split("\n").map(clean).filter(x=>x.replace(/[^А-ЯІЇЄҐа-яіїєґA-Za-z]/g,"").length>=3 && !UX_SKIP.test(x));
+  /* a statement broken over paragraphs: a line that does not start with a verb continues the previous one («…власного» + «враження») */
+  const VERB=/^[a-zа-яіїєґ’ʼ'-]+(?:є|е|ить|ать|ять|ться|ся)$/;
+  const glueCont = L => { const out=[]; for(const raw of L){ const l=raw.trim(); if(!l) continue; const w=(l.match(/^[^\s,;.:]+/)||[""])[0];
+      if(out.length && !/[.!?:;»"]$/.test(out[out.length-1]) && /^[a-zа-яіїєґ(]/.test(l) && !VERB.test(w)) out[out.length-1]+=" "+l; else out.push(l); } return out; };
+  const paras = t => glueCont(t.split("\n")).map(clean).filter(x=>x.replace(/[^А-ЯІЇЄҐа-яіїєґA-Za-z]/g,"").length>=3 && !UX_SKIP.test(x));
   const first=new Map(); let nRows=0, nIdx=0, nKor=0, nUx=0; const unmatched=[]; const variants=new Set();
   for(const m of prog.mods) for(const t of m.topics){ t.out=[];
     for(const [a,b,c] of t.rows){ nRows++; const spans=[]; IDX.lastIndex=0; let mm;
@@ -2077,9 +2136,52 @@ async function importDocx(file){
     const body=doc.getElementsByTagNameNS(WNS,"body")[0];
     const prog=docxProgramme(docxItems(body));
     if(!prog.mods.length) throw new Error("у документі не знайдено таблиць зі стовпцем «Очікувані результати навчання»");
-    DOCX={prog, file:file.name}; showDocxDialog();
+    const items=docxItems(body); DOCX={prog, file:file.name, items}; showDocxDialog();
   }catch(e){ toast("Не вдалося імпортувати: "+e.message); }
 }
+/* the structure of an imported programme before import: rename, move, promote / demote, merge, split, move rows */
+const dxIcon = (op, i, t, label, dis) => `<button class="ib" data-dx="${op}" data-i="${i}" title="${esc(t)}" ${dis?"disabled":""}>${label}</button>`;
+const dxRowText = r => { const t=(r[0]||r[1]||r[2]||"").replace(/\s+/g," ").trim(); return t.length>110 ? t.slice(0,109)+"…" : t; };
+function dxOutlineHTML(){
+  const M=DOCX.prog.mods; DOCX.open=DOCX.open||new Set();
+  const flat=M.flatMap((m,mi)=>m.topics.map((t,ti)=>[mi,ti])); const pos=(mi,ti)=>flat.findIndex(x=>x[0]===mi&&x[1]===ti);
+  const grades=M.some(m=>/^\d{1,2} клас\.\s/.test(m.name));
+  return `<div class="dxo"><div class="dxohd"><b>Структура програми</b> <span class="tiny muted">Перевірте, як розпізнано модулі й теми. Назви можна виправити просто тут (клацніть); стрілки переміщують, ⇥ / ⇤ роблять модуль темою або тему модулем, ⤒ об’єднує тему з попередньою. У «рядків: n» — рядки таблиці теми: їх можна перенести в сусідню тему або почати з рядка нову тему (✂).</span></div>
+    <div class="dxquick">${M.length>1?`<button class="btn small ghost" data-dx="allTopics" title="Кожен модуль стане темою одного модуля">Усі модулі → теми</button>`:""}${grades?`<button class="btn small ghost" data-dx="grades" title="«7 клас», «8 клас»… стануть модулями, а модулі програми — темами в них">Класи → модулі, модулі → теми</button>`:""}<button class="btn small ghost" data-dx="reset" title="Повернути структуру, як її розпізнано з файлу">Скинути зміни</button></div>
+    ${M.map((m,mi)=>`<div class="dxm"><div class="dxh"><span class="dxn" contenteditable="plaintext-only" data-dxname="m|${mi}" title="Клацніть, щоб виправити назву модуля">${esc(m.name)}</span>
+        <span class="dxtools">${dxIcon("mUp",mi,"Модуль вище","↑",mi===0)}${dxIcon("mDown",mi,"Модуль нижче","↓",mi===M.length-1)}${dxIcon("mToTopic",mi,"Зробити темою попереднього модуля (усі рядки модуля — в одну тему)","⇥",mi===0)}${dxIcon("mDel",mi,"Видалити модуль разом з темами","×")}</span></div>
+      ${m.topics.map((t,ti)=>{ const k=mi+"|"+ti, op=DOCX.open.has(t), fp=pos(mi,ti); return `<div class="dxt"><div class="dxh"><span class="dxnum">${mi+1}.${ti+1}</span><span class="dxn" contenteditable="plaintext-only" data-dxname="t|${k}" title="Клацніть, щоб виправити назву теми">${esc(t.name)}</span>
+          <button class="dxrows" data-dx="rows" data-i="${k}" aria-expanded="${op}">рядків: ${t.rows.length} ${op?"▴":"▾"}</button>
+          <span class="dxtools">${dxIcon("tUp",k,"Тема вище (з першої позиції — у попередній модуль)","↑",fp===0)}${dxIcon("tDown",k,"Тема нижче (з останньої позиції — у наступний модуль)","↓",fp===flat.length-1)}${dxIcon("tMerge",k,"Об’єднати з попередньою темою","⤒",fp===0)}${dxIcon("tToModule",k,"Зробити модулем (наступні теми модуля перейдуть до нього)","⇤")}${dxIcon("tDel",k,"Видалити тему","×")}</span></div>
+        ${op?`<div class="dxrl">${t.rows.map((r,ri)=>`<div class="dxr"><span>${esc(dxRowText(r))||"<i>порожній рядок</i>"}</span><span class="dxtools">${dxIcon("rPrev",k+"|"+ri,"Перенести рядок у попередню тему","↑",fp===0)}${dxIcon("rNext",k+"|"+ri,"Перенести рядок у наступну тему","↓",fp===flat.length-1)}${dxIcon("rSplit",k+"|"+ri,"Почати з цього рядка нову тему","✂",ri===0)}</span></div>`).join("")}</div>`:""}</div>`; }).join("")}</div>`).join("")}</div>`;
+}
+function dxOp(op, idx){
+  const M=DOCX.prog.mods; const [mi,ti,ri]=String(idx).split("|").map(Number); const m=M[mi], t=m?.topics?.[ti];
+  const flat=M.flatMap((mm,a)=>mm.topics.map((tt,b)=>[a,b])); const fp=flat.findIndex(x=>x[0]===mi&&x[1]===ti);
+  const at=f=>f>=0&&f<flat.length ? M[flat[f][0]].topics[flat[f][1]] : null;
+  const clean=()=>{ DOCX.prog.mods=M.filter(x=>x.topics.length); };
+  const merged=x=>x.topics.flatMap(tt=>tt.rows);
+  if(op==="reset"){ DOCX.prog=docxProgramme(DOCX.items); DOCX.open=new Set(); return; }
+  if(op==="allTopics"){ DOCX.prog.mods=[{name:"Зміст програми", topics:M.map(x=>({name:x.name, rows:merged(x)}))}]; return; }
+  if(op==="grades"){ const out=[]; for(const x of M){ const g=x.name.match(/^(\d{1,2} клас)\.\s*(.*)$/); const box=g?g[1]:"Зміст програми"; let B=out.find(y=>y.name===box); if(!B){ B={name:box, topics:[]}; out.push(B); }
+      if(x.topics.length===1 || !g) B.topics.push({name:g?g[2]:x.name, rows:merged(x)}); else x.topics.forEach(tt=>B.topics.push(tt)); }
+    DOCX.prog.mods=out; return; }
+  if(op==="mUp"&&mi>0){ [M[mi-1],M[mi]]=[M[mi],M[mi-1]]; return; }
+  if(op==="mDown"&&mi<M.length-1){ [M[mi+1],M[mi]]=[M[mi],M[mi+1]]; return; }
+  if(op==="mDel"){ M.splice(mi,1); return; }
+  if(op==="mToTopic"&&mi>0){ M[mi-1].topics.push({name:m.name, rows:merged(m)}); M.splice(mi,1); return; }
+  if(op==="rows"){ DOCX.open.has(t)?DOCX.open.delete(t):DOCX.open.add(t); return; }
+  if(op==="tUp"&&fp>0){ if(ti>0) [m.topics[ti-1],m.topics[ti]]=[m.topics[ti],m.topics[ti-1]]; else { m.topics.splice(ti,1); M[mi-1].topics.push(t); } clean(); return; }
+  if(op==="tDown"&&fp<flat.length-1){ if(ti<m.topics.length-1) [m.topics[ti+1],m.topics[ti]]=[m.topics[ti],m.topics[ti+1]]; else { m.topics.splice(ti,1); M[mi+1].topics.unshift(t); } clean(); return; }
+  if(op==="tMerge"&&fp>0){ at(fp-1).rows.push(...t.rows); m.topics.splice(ti,1); clean(); return; }
+  if(op==="tToModule"){ const rest=m.topics.splice(ti); M.splice(mi+1,0,{name:t.name, topics:rest}); clean(); return; }
+  if(op==="tDel"){ m.topics.splice(ti,1); clean(); return; }
+  if(op==="rPrev"&&fp>0){ const r=t.rows.splice(ri,1)[0]; at(fp-1).rows.push(r); if(!t.rows.length){ m.topics.splice(ti,1); clean(); } return; }
+  if(op==="rNext"&&fp<flat.length-1){ const r=t.rows.splice(ri,1)[0]; at(fp+1).rows.unshift(r); if(!t.rows.length){ m.topics.splice(ti,1); clean(); } return; }
+  if(op==="rSplit"&&ri>0){ const nt={name:"Нова тема", rows:t.rows.splice(ri)}; m.topics.splice(ti+1,0,nt); DOCX.open.add(nt); DOCX.focus="t|"+mi+"|"+(ti+1); return; }
+}
+function dxRerender(){ const box=document.querySelector(".modal .mbd"), y=box?box.scrollTop:0; showDocxDialog(); const b2=document.querySelector(".modal .mbd"); if(b2) b2.scrollTop=y;
+  if(DOCX.focus){ const el=document.querySelector(`[data-dxname="${DOCX.focus}"]`); DOCX.focus=null; if(el){ el.focus(); document.getSelection().selectAllChildren(el); } } }
 function showDocxDialog(){
   const {prog}=DOCX;
   if(DOCX.title==null) DOCX.title = prog.title||DOCX.file.replace(/\.docx$/i,"");
@@ -2090,7 +2192,7 @@ function showDocxDialog(){
     <div class="mbd">
       <label class="tiny muted" for="dxTitle">Назва програми</label><input id="dxTitle" class="dxin" value="${esc(DOCX.title)}">
       <div class="res"><b>Знайдено в «${esc(DOCX.file)}»:</b> модулів — ${prog.mods.length}, тем — ${nT}, рядків таблиць — ${an.nRows}.
-        <ul>${prog.mods.map(m=>`<li>${esc(m.name)}: ${m.topics.map(t=>esc(t.name)).join("; ")}</li>`).join("")}</ul></div>
+</div>${dxOutlineHTML()}
       <div class="res"><b>Очікувані результати навчання переносяться дослівно, як в авторській програмі</b> — з авторськими формулюваннями та індексами. Конструктор нічого не додає, не розгортає й не замінює формулюваннями стандарту.
         <ul style="margin:6px 0 0">
           <li>з індексами орієнтирів: <b>${an.nIdx}</b></li>
@@ -2457,6 +2559,19 @@ document.addEventListener("click", async e=>{
     if(b.dataset.stdrep){ for(const r of S.rows[tid]) r.oc=r.oc.filter(x=>x!==kor); S.assign[kor]=(S.assign[kor]||[]).filter(x=>x!==tid); }
     save(); rerenderTopicPanel(); toast(b.dataset.stdrep?`Результат ${kor} замінено орієнтирами: ${L.length}`:`Додано орієнтирів: ${L.length}`); return; }
   if((b=c("[data-uxstd]"))){ addStdOutcome(S.ui.t2, b.dataset.ur, b.dataset.uxstd); uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxstd); return; }
+  if((b=c("[data-uxopen]"))){ const id=b.dataset.uxopen; if(UXPICK.uid===id){ UXPICK.uid=null; } else { UXPICK.uid=id; UXPICK.q=""; UXPICK.set=""; } rerenderTopicPanel(); if(UXPICK.uid) setTimeout(()=>document.querySelector("[data-uxq]")?.focus(),30); return; }
+  if(c("[data-uxclose]")){ UXPICK.uid=null; rerenderTopicPanel(); return; }
+  if((b=c("[data-uxpick]"))){ const box=b.closest("[data-uxpickbox]"); const uid_=box.dataset.uxpickbox, rid=box.dataset.ur, code=b.dataset.uxpick;
+    if(!S.outcomes.some(o=>o.c===code)) addStdOutcome(S.ui.t2, rid, code);
+    UXPICK.uid=null; uxResolve(rid, uid_, code); return; }
+  if((b=c("[data-uxsplit]"))){ const r=findRow(b.dataset.ur); const i=(r?.ux||[]).findIndex(x=>x.id===b.dataset.uxsplit); if(i<0) return;
+    const u=r.ux[i], ta=document.querySelector(`[data-uxtext="${u.id}"]`), t=ta?ta.value:u.t, pos=ta?ta.selectionStart:0;
+    const tidy=x=>x.replace(/^[\s;,.]+/,"").replace(/[\s;,]+$/,"").trim();
+    let parts = (pos>0 && pos<t.trim().length && UXCARET.id===u.id) ? [t.slice(0,pos), t.slice(pos)] : t.split(/;\s*/);
+    parts=parts.map(tidy).filter(Boolean);
+    if(parts.length<2){ toast("Поставте курсор там, де має початися нове формулювання, або розділіть текст крапкою з комою"); return; }
+    r.ux.splice(i,1,...parts.map((x,k)=>({id: k?uid("u"):u.id, t:x}))); save(); rerenderTopicPanel(); toast(`Розділено на ${parts.length}`); return; }
+  if((b=c("[data-uxjoin]"))){ const r=findRow(b.dataset.ur); const i=(r?.ux||[]).findIndex(x=>x.id===b.dataset.uxjoin); if(i>0){ const pr=r.ux[i-1]; pr.t=(pr.t.replace(/\s+$/,"")+" "+r.ux[i].t.trim()).replace(/\s+/g," "); r.ux.splice(i,1); save(); rerenderTopicPanel(); } return; }
   if((b=c("[data-uxmap]"))){ uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxmap); return; }
   if((b=c("[data-uxact]"))){ const r=findRow(b.dataset.ur), u=r?.ux?.find(x=>x.id===b.dataset.uxact); if(u){ r.act=fmtAct((r.act.trim()?r.act.replace(/\s+$/,"")+"\n":"")+u.t); uxResolve(r.id,u.id,null); toast("Перенесено у види діяльності — за потреби переформулюйте як дію учнів"); } return; }
   if((b=c("[data-uxdel]"))){ if(!armed(b)) return; uxResolve(b.dataset.ur, b.dataset.uxdel, null); return; }
@@ -2473,6 +2588,7 @@ document.addEventListener("click", async e=>{
   if(c("[data-mclose]")){ $("#modalHost").innerHTML=""; return; }
   if(c("#cpBtn")){ const ta=$("#cpText"); ta.select(); (navigator.clipboard?.writeText(ta.value)||Promise.reject()).then(()=>toast("Скопійовано"),()=>{ try{ document.execCommand("copy"); toast("Скопійовано"); }catch(e){ toast("Виділіть текст і натисніть Ctrl+C"); } }); return; }
   if(c("#dxStdParse")){ const r=parseText($("#dxStdText").value); if(!r.out.length){ toast("У тексті не знайдено орієнтирів з індексами."); return; } DOCX.extra=sortOutcomes(r.out.map(o=>({c:o.c,t:o.t}))); showDocxDialog(); toast(`Завантажено орієнтирів галузі: ${r.out.length}`); return; }
+  if((b=c("[data-dx]"))){ dxOp(b.dataset.dx, b.dataset.i); dxRerender(); return; }
   if(c("#dxGo")){ const P=buildProject(DOCX.prog, DOCX.an, $("#dxTitle").value.trim()); S=P; S.ui=blankState().ui; S.ui.active=allTopics()[0]?.id||null; applyDir(); cleanAssign(); save(); $("#modalHost").innerHTML=""; render();
     toast(`Імпортовано: ${S.modules.length} мод., ${allTopics().length} тем`); return; }
   if(c("#stdBtn")){ const keys=[...document.querySelectorAll("[data-std]:checked")].map(x=>x.dataset.std), akeys=[...document.querySelectorAll("[data-alls]:checked")].map(x=>x.dataset.alls); if(!keys.length && !akeys.length){ toast("Позначте хоча б один набір орієнтирів."); return; }
@@ -2484,6 +2600,7 @@ document.addEventListener("click", async e=>{
 
 document.addEventListener("change", e=>{
   const t=e.target;
+  if(t.matches("[data-uxset]")){ UXPICK.set=t.value; const box=t.closest("[data-uxpickbox]"); const r=findRow(box.dataset.ur); const u=r?.ux?.find(x=>x.id===box.dataset.uxpickbox); const el=box.querySelector("#uxpl"); if(u&&el) el.innerHTML=uxPickList(u); return; }
   if(t.matches("[data-tcode]")){ toggle(t.dataset.tcode, S.ui.active, t.checked); refreshCoverage(); const row=t.closest(".orow"); const n=assigned(t.dataset.tcode).length; row.classList.toggle("none", !n); return; }
   if(t.id==="activeSel"){ S.ui.active=t.value; save(); render(); return; }
   if(t.id==="fSel"){ S.ui.filter=t.value; save(); render(); return; }
@@ -2519,6 +2636,7 @@ document.addEventListener("change", e=>{
 let qTimer;
 document.addEventListener("input", e=>{
   const t=e.target;
+  if(t.matches("[data-uxq]")){ UXPICK.q=t.value; const box=t.closest("[data-uxpickbox]"); const r=findRow(box.dataset.ur); const u=r?.ux?.find(x=>x.id===box.dataset.uxpickbox); const el=box.querySelector("#uxpl"); if(u&&el) el.innerHTML=uxPickList(u); return; }
   if(t.matches("[data-anote]")){ aState(t.dataset.anote).note=t.value; save(); return; }
   if(t.matches("[data-ocedit]")){ S.ocEdit=S.ocEdit||{}; const m=S.ocEdit[S.ui.t2]=S.ocEdit[S.ui.t2]||{}; const v=t.value.replace(/\s+/g," ").trim(); const code=t.dataset.ocedit; if(!v || v===ocText(code)) delete m[code]; else m[code]=v; save(); return; }
   if(t.id==="dxTitle" && DOCX){ DOCX.title=t.value; return; }
@@ -2533,14 +2651,19 @@ document.addEventListener("input", e=>{
       r[t.dataset.f]=t.value; save(); } autosize(t); return; }
   if(t.id==="refq"){ refState.q=t.value; const pos=t.selectionStart; renderRef(); const q=$("#refq"); q.focus(); q.setSelectionRange(pos,pos); return; }
 });
-document.addEventListener("focusout", e=>{ const kp=e.target.closest?.("[data-kpedit]");
+const UXCARET={id:null};
+document.addEventListener("focusout", e=>{ if(e.target.matches?.("[data-uxtext]")){ UXCARET.id=e.target.dataset.uxtext; setTimeout(()=>{ UXCARET.id=null; }, 400); }
+  const dn=e.target.closest?.("[data-dxname]");
+  if(dn && DOCX){ const [k,mi,ti]=dn.dataset.dxname.split("|"); const v=dn.textContent.replace(/\s+/g," ").trim(); const o = k==="m" ? DOCX.prog.mods[+mi] : DOCX.prog.mods[+mi]?.topics[+ti];
+    if(o){ if(v && v!==o.name){ o.name=v; } else if(!v) dn.textContent=o.name; } return; }
+  const kp=e.target.closest?.("[data-kpedit]");
   if(kp){ const [i,ck,j]=kp.dataset.kpedit.split("|"); const L=lines(((S.frame.comp||{})[i]||{})[ck]); const v=kp.textContent.replace(/\s+/g," ").trim();
     if(v!==L[+j]){ if(v) L[+j]=v; else L.splice(+j,1); kpSet(i,ck,L); if(!v) setTimeout(kpRerender,0); } return; }
   if(e.target.matches('.prog textarea[data-f="act"]')){ const r=findRow(e.target.dataset.r); if(r){ const f=fmtAct(r.act); if(f!==r.act){ r.act=f; e.target.value=f; save(); } } }
   if(e.target.matches(".prog textarea[data-f]")){ refreshRow(e.target.dataset.r); const m=document.querySelector(".amx"); if(m && e.target.dataset.f==="act"){ const o=m.open; m.outerHTML=alignMatrixHTML(S.ui.t2); const m2=document.querySelector(".amx"); if(m2) m2.open=o; } } });
 document.addEventListener("toggle", e=>{ if(e.target.matches?.(".amx")){ S.ui.amx=e.target.open; } if(e.target.matches?.(".acovbox")){ S.ui.covOpen=e.target.open; save(); const h=e.target.querySelector(".sumhint"); if(h) h.textContent=e.target.open?"сховати таблицю":"показати таблицю"; } }, true);
 function rerenderSugg(rid){ const r=findRow(rid); const box=document.querySelector(`tr[data-row="${rid}"] .suggs`); if(r&&box) box.innerHTML=suggHTML(r); const kb=document.querySelector(`tr[data-row="${rid}"] .ksuggs`); if(r&&kb) kb.innerHTML=knSuggHTML(r); }
-document.addEventListener("keydown", e=>{ if(e.target.closest?.("[data-kpedit]") && e.key==="Enter"){ e.preventDefault(); e.target.blur(); return; } if(e.key==="Escape"){ if(refState.open) closeRef(); else $("#modalHost").innerHTML=""; } });
+document.addEventListener("keydown", e=>{ if(e.target.closest?.("[data-kpedit],[data-dxname]") && e.key==="Enter"){ e.preventDefault(); e.target.blur(); return; } if(e.key==="Escape"){ if(refState.open) closeRef(); else $("#modalHost").innerHTML=""; } });
 document.addEventListener("dragover", e=>{ const d=e.target.closest?.("#drop"); if(d){ e.preventDefault(); d.classList.add("over"); } });
 document.addEventListener("dragleave", e=>{ const d=e.target.closest?.("#drop"); if(d) d.classList.remove("over"); });
 document.addEventListener("drop", e=>{ const d=e.target.closest?.("#drop"); if(!d) return; e.preventDefault(); d.classList.remove("over"); const f=e.dataTransfer.files[0]; if(f) readFile(f).catch(err=>toast("Не вдалося прочитати файл: "+err.message)); });
