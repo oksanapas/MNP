@@ -880,6 +880,7 @@ function topicPanelHTML(tid){
       <td><textarea data-f="content" data-r="${r.id}" placeholder="Поняття, факти, інструменти, з якими працюють учні">${esc(r.content)}</textarea>
         <div class="ksuggs">${knSuggHTML(r)}</div></td>
       <td><textarea data-f="act" data-r="${r.id}" placeholder="По одному виду діяльності в рядку">${esc(r.act)}</textarea>
+        ${hasStemList(r.act)?`<button class="btn small ghost" data-actexpand="${r.id}" title="«Розв’язування задач на: відсотки; пропорції.» → «Розв’язування задач на відсотки.» і «Розв’язування задач на пропорції.»">Розгорнути переліки після двокрапки</button>`:""}
         <div class="linksbox">${linksHTML(r)}</div>
         <div class="suggs">${suggHTML(r)}</div></td></tr>`;
   });
@@ -905,7 +906,7 @@ function uxHTML(tid, r, u){
     <textarea class="uxta" data-uxtext="${u.id}" data-ur="${r.id}" rows="2" aria-label="Результат з імпортованої програми">${esc(u.t)}</textarea>
     ${g.length?`<div class="sugg"><span class="lab">${S.ui.propose?"Орієнтири стандарту, схожі за змістом:":"Схоже на:"}</span>${g.map(x=>`<button class="schip" ${S.ui.propose?`data-uxstd="${esc(x.c)}"`:`data-uxmap="${esc(x.c)}"`} data-ux="${u.id}" data-ur="${r.id}" title="${esc(S.ui.propose?x.t:ocText(x.c))}">[${esc(x.c)}] ${esc(short(S.ui.propose?x.t:ocText(x.c),56))}</button>`).join("")}</div>`:(S.ui.propose?`<div class="tiny muted">Схожих орієнтирів у стандарті не знайдено.</div>`:"")}
     <div class="uxbtns"><button class="btn small ${UXPICK.uid===u.id?"primary":""}" data-uxopen="${u.id}" data-ur="${r.id}" title="Знайти орієнтир стандарту, якому відповідає це формулювання">Відповідає орієнтиру…</button>
-      <button class="btn small" data-uxsplit="${u.id}" data-ur="${r.id}" title="Поставте курсор у тексті там, де починається наступне формулювання, і натисніть. Якщо курсор не в тексті — розділить за «;»">✂ розділити</button>
+      <button class="btn small" data-uxsplit="${u.id}" data-ur="${r.id}" title="Поставте курсор у тексті там, де починається наступне формулювання, і натисніть. Якщо курсор не в тексті — розділить за «;». Вступна фраза перед двокрапкою («наводить приклади: …») додається до кожної частини">✂ розділити</button>
       ${(r.ux||[]).indexOf(u)>0?`<button class="btn small" data-uxjoin="${u.id}" data-ur="${r.id}" title="Це продовження попереднього формулювання — приєднати до нього">↑ приєднати до попереднього</button>`:""}
       <button class="btn small" data-uxact="${u.id}" data-ur="${r.id}" title="Найчастіше такий «результат» описує діяльність учнів">→ у види діяльності</button>
       <button class="btn small ghost danger" data-uxdel="${u.id}" data-ur="${r.id}" data-confirm="Видалити?">Видалити</button></div>${UXPICK.uid===u.id?uxPickHTML(tid,r,u):""}</div>`;
@@ -1086,6 +1087,12 @@ function appendField(rid, f, text){
 }
 const cap = t => t ? t[0].toUpperCase()+t.slice(1) : t;
 // every activity: on its own line, starts with a capital letter, ends with a full stop
+/* «наводить приклади: скінченних…; взаємно обернених чисел» → «наводить приклади скінченних…», «наводить приклади взаємно обернених чисел» */
+function stemOf(t){ const m=String(t).match(/^([^:;]{3,}?):\s*(\S[\s\S]*)$/); return m ? {stem:m[1].trim(), rest:m[2]} : null; }
+function expandStem(t, sep){ const st=stemOf(t); if(!st) return null; const items=st.rest.split(sep||/;\s*/).map(x=>x.replace(/^[\s,;.]+/,"").replace(/[\s;,.]+$/,"").trim()).filter(Boolean);
+  return items.length>1 ? items.map(x=>st.stem+" "+x) : null; }
+const VERB_G=/^[a-zа-яіїєґ’ʼ'-]+(?:є|е|ить|ать|ять|ться|ся)$/;
+const hasStemList = act => lines(act).some(l=>expandStem(l.replace(/\.$/,"")));
 function fmtActLine(l){
   l=l.trim().replace(/^[-–—•·*▪◦]\s*/,"").replace(/[\s;,:]+$/,"").trim(); if(!l) return "";
   l=l.charAt(0).toLocaleUpperCase("uk")+l.slice(1);
@@ -1952,7 +1959,10 @@ const WNS="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 const wkids=(el,name)=>[...el.childNodes].filter(n=>n.nodeType===1 && n.namespaceURI===WNS && (!name||n.localName===name));
 function wText(el){ let t=""; const walk=n=>{ for(const c of n.childNodes){ if(c.nodeType!==1) continue; const ln=c.localName;
     if(ln==="t") t+=c.textContent; else if(ln==="tab") t+="\t"; else if(ln==="br"||ln==="cr") t+="\n"; else if(ln==="p"){ if(t && !t.endsWith("\n")) t+="\n"; walk(c); } else if(ln!=="tbl") walk(c); } };
-  walk(el); return t.replace(/\n{2,}/g,"\n").trim(); }
+  walk(el);
+  // list markers typed as characters (Wingdings symbols from old .doc files, •, ▪ …) start a new line of the list
+  t=t.replace(/[ \t]*[\uE000-\uF8FF][ \t]*/g,"\n").replace(/(^|\n|[ \t;:,])[ \t]*[•▪●◦■□➢✓✔‣⁃][ \t]*/g,(m,a)=>(/[;:,]/.test(a)?a:"")+"\n");
+  return t.replace(/\n{2,}/g,"\n").trim(); }
 function docxItems(body){
   const out=[]; const walk=el=>{ for(const n of wkids(el)){
       if(n.localName==="p"){ const pPr=wkids(n,"pPr")[0]; let lvl=null;
@@ -1963,8 +1973,10 @@ function docxItems(body){
       else if(n.localName==="sdt"){ const c=wkids(n,"sdtContent")[0]; if(c) walk(c); } } };
   walk(body); return out;
 }
+const inStemList = prev => /:\s*$/.test(prev) || (/[;,]\s*$/.test(prev) && /:\s*\S/.test(prev));   // «… на:» or «… на: перше;»
 const joinLines = txt => { const out=[]; for(const raw of String(txt||"").split("\n")){ const l=raw.trim(); if(!l) continue;
-    if(out.length && !/[.!?:;)»"]$/.test(out[out.length-1]) && (/^[a-zа-яіїєґ(]/.test(l))) out[out.length-1]+=" "+l; else out.push(l); }
+    const prev=out[out.length-1];
+    if(out.length && /^[a-zа-яіїєґ(]/.test(l) && (!/[.!?:;)»"]$/.test(prev) || inStemList(prev))) out[out.length-1]+=" "+l; else out.push(l); }
   return out.map(l=>l.replace(/\s+/g," ")).join("\n"); };
 const startsCont = s => !!s && /^[a-zа-яіїєґ0-9\[(,;]/.test(s);
 /* recognising the parts of a programme */
@@ -2083,7 +2095,8 @@ function analyseDocx(prog){
   /* a statement broken over paragraphs: a line that does not start with a verb continues the previous one («…власного» + «враження») */
   const VERB=/^[a-zа-яіїєґ’ʼ'-]+(?:є|е|ить|ать|ять|ться|ся)$/;
   const glueCont = L => { const out=[]; for(const raw of L){ const l=raw.trim(); if(!l) continue; const w=(l.match(/^[^\s,;.:]+/)||[""])[0];
-      if(out.length && !/[.!?:;»"]$/.test(out[out.length-1]) && /^[a-zа-яіїєґ(]/.test(l) && !VERB.test(w)) out[out.length-1]+=" "+l; else out.push(l); } return out; };
+      const prev=out[out.length-1];
+      if(out.length && /^[a-zа-яіїєґ(]/.test(l) && ((!/[.!?:;»"]$/.test(prev) && !VERB.test(w)) || /:\s*$/.test(prev) || (inStemList(prev) && !VERB.test(w)))) out[out.length-1]+=" "+l; else out.push(l); } return out; };
   const paras = t => glueCont(t.split("\n")).map(clean).filter(x=>x.replace(/[^А-ЯІЇЄҐа-яіїєґA-Za-z]/g,"").length>=3 && !UX_SKIP.test(x));
   const first=new Map(); let nRows=0, nIdx=0, nKor=0, nUx=0; const unmatched=[]; const variants=new Set();
   for(const m of prog.mods) for(const t of m.topics){ t.out=[];
@@ -2559,6 +2572,8 @@ document.addEventListener("click", async e=>{
     if(b.dataset.stdrep){ for(const r of S.rows[tid]) r.oc=r.oc.filter(x=>x!==kor); S.assign[kor]=(S.assign[kor]||[]).filter(x=>x!==tid); }
     save(); rerenderTopicPanel(); toast(b.dataset.stdrep?`Результат ${kor} замінено орієнтирами: ${L.length}`:`Додано орієнтирів: ${L.length}`); return; }
   if((b=c("[data-uxstd]"))){ addStdOutcome(S.ui.t2, b.dataset.ur, b.dataset.uxstd); uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxstd); return; }
+  if((b=c("[data-actexpand]"))){ const r=findRow(b.dataset.actexpand); if(!r) return; let n=0;
+    r.act=fmtAct(lines(r.act).flatMap(l=>{ const e=expandStem(l.replace(/\.$/,"")); if(e){ n++; return e; } return [l]; }).join("\n")); save(); rerenderTopicPanel(); toast(`Розгорнуто переліків: ${n}`); return; }
   if((b=c("[data-uxopen]"))){ const id=b.dataset.uxopen; if(UXPICK.uid===id){ UXPICK.uid=null; } else { UXPICK.uid=id; UXPICK.q=""; UXPICK.set=""; } rerenderTopicPanel(); if(UXPICK.uid) setTimeout(()=>document.querySelector("[data-uxq]")?.focus(),30); return; }
   if(c("[data-uxclose]")){ UXPICK.uid=null; rerenderTopicPanel(); return; }
   if((b=c("[data-uxpick]"))){ const box=b.closest("[data-uxpickbox]"); const uid_=box.dataset.uxpickbox, rid=box.dataset.ur, code=b.dataset.uxpick;
@@ -2566,12 +2581,15 @@ document.addEventListener("click", async e=>{
     UXPICK.uid=null; uxResolve(rid, uid_, code); return; }
   if((b=c("[data-uxsplit]"))){ const r=findRow(b.dataset.ur); const i=(r?.ux||[]).findIndex(x=>x.id===b.dataset.uxsplit); if(i<0) return;
     const u=r.ux[i], ta=document.querySelector(`[data-uxtext="${u.id}"]`), t=ta?ta.value:u.t, pos=ta?ta.selectionStart:0;
-    const tidy=x=>x.replace(/^[\s;,.]+/,"").replace(/[\s;,]+$/,"").trim();
-    let parts = (pos>0 && pos<t.trim().length && UXCARET.id===u.id) ? [t.slice(0,pos), t.slice(pos)] : t.split(/;\s*/);
+    const tidy=x=>x.replace(/[\uE000-\uF8FF•▪●◦■]/g," ").replace(/\s+/g," ").replace(/^[\s;,.]+/,"").replace(/[\s;,]+$/,"").trim();
+    let parts;
+    if(pos>0 && pos<t.trim().length && UXCARET.id===u.id){ const st=stemOf(t.slice(0,pos)); const right=tidy(t.slice(pos));
+      parts = st && right && !/^[A-ZА-ЯІЇЄҐ]/.test(right) && !VERB_G.test((right.match(/^[^\s,;.:]+/)||[""])[0]) ? [st.stem+" "+tidy(st.rest), st.stem+" "+right] : [t.slice(0,pos), t.slice(pos)]; }
+    else parts = expandStem(t) || t.split(/;\s*/);
     parts=parts.map(tidy).filter(Boolean);
     if(parts.length<2){ toast("Поставте курсор там, де має початися нове формулювання, або розділіть текст крапкою з комою"); return; }
     r.ux.splice(i,1,...parts.map((x,k)=>({id: k?uid("u"):u.id, t:x}))); save(); rerenderTopicPanel(); toast(`Розділено на ${parts.length}`); return; }
-  if((b=c("[data-uxjoin]"))){ const r=findRow(b.dataset.ur); const i=(r?.ux||[]).findIndex(x=>x.id===b.dataset.uxjoin); if(i>0){ const pr=r.ux[i-1]; pr.t=(pr.t.replace(/\s+$/,"")+" "+r.ux[i].t.trim()).replace(/\s+/g," "); r.ux.splice(i,1); save(); rerenderTopicPanel(); } return; }
+  if((b=c("[data-uxjoin]"))){ const r=findRow(b.dataset.ur); const i=(r?.ux||[]).findIndex(x=>x.id===b.dataset.uxjoin); if(i>0){ const pr=r.ux[i-1]; pr.t=(pr.t.replace(/\s+$/,"")+" "+r.ux[i].t.trim()).replace(/[\uE000-\uF8FF•▪●◦■]/g," ").replace(/\s+/g," ").trim(); r.ux.splice(i,1); save(); rerenderTopicPanel(); } return; }
   if((b=c("[data-uxmap]"))){ uxResolve(b.dataset.ur, b.dataset.ux, b.dataset.uxmap); return; }
   if((b=c("[data-uxact]"))){ const r=findRow(b.dataset.ur), u=r?.ux?.find(x=>x.id===b.dataset.uxact); if(u){ r.act=fmtAct((r.act.trim()?r.act.replace(/\s+$/,"")+"\n":"")+u.t); uxResolve(r.id,u.id,null); toast("Перенесено у види діяльності — за потреби переформулюйте як дію учнів"); } return; }
   if((b=c("[data-uxdel]"))){ if(!armed(b)) return; uxResolve(b.dataset.ur, b.dataset.uxdel, null); return; }
