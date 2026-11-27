@@ -204,6 +204,7 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .tlist button[aria-current="true"]{background:var(--accent-soft)}
 .tlist .num{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .stat{font-size:11.5px;border-radius:999px;padding:1px 7px;font-variant-numeric:tabular-nums;background:var(--soft);color:var(--muted);white-space:nowrap}
+.stat .ic{width:13px;height:13px;vertical-align:-2px}
 .stat.done{background:var(--ok-soft);color:var(--ok)}
 .stat.part{background:var(--warn-soft);color:var(--warn)}
 .thead{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
@@ -1025,9 +1026,14 @@ function toggle(code, tid, on){
 }
 
 /* ---------- step 2 ---------- */
+function mergeRows(R){ const j=k=>R.map(r=>(r[k]||"").trim()).filter(Boolean).join("\n");
+  const r0={id:R[0].id, oc:[...new Set(R.flatMap(r=>r.oc||[]))], content:j("content"), act:j("act")};
+  const ux=R.flatMap(r=>r.ux||[]); if(ux.length) r0.ux=ux; const L=Object.assign({}, ...R.map(r=>r.links||{})); if(Object.keys(L).length || R.some(r=>r.links)) r0.links=L;
+  return r0; }
 function ensureRows(tid){
   const outs = topicOutcomes(tid).map(o=>o.c); const set=new Set(outs);
   if(!S.rows[tid] || !S.rows[tid].length) S.rows[tid]=[{id:uid("r"),oc:[],content:"",act:""}];
+  if(S.rows[tid].length>1) S.rows[tid]=[mergeRows(S.rows[tid])];        // one row per topic
   for(const r of S.rows[tid]) r.oc = r.oc.filter(c=>set.has(c));
   /* outcomes of the topic that are in no row go to the first row, except those the author took out of the table */
   S.rowsOut = S.rowsOut || {}; const out = new Set((S.rowsOut[tid]||[]).filter(c=>set.has(c)));
@@ -1129,8 +1135,8 @@ function renderStep2(){
   if(!T.length){ main.innerHTML=`<section class="panel"><div class="empty"><h2>Спершу визначте теми</h2><p class="muted">На кроці 1 додайте теми й доберіть до них орієнтири, тоді тут з’явиться таблиця для кожної теми.</p><button class="btn primary" data-goto="1">До кроку 1</button></div></section>`; return; }
   if(!topicById(S.ui.t2)) S.ui.t2 = T[0].id;
   const side = `<aside class="panel side"><h2 style="margin-bottom:6px">Теми</h2><div class="tlist">${S.modules.map(m=>`<div class="mt">${esc(m.name)}</div>${m.topics.map(t=>{const tt=topicById(t.id); const st=topicStatus(t.id); const cls = st.n===0?"":(st.filled===st.withOc&&st.unpl===0&&st.withOc?"done":(st.filled?"part":""));
-    return `<button data-t2="${t.id}" aria-current="${t.id===S.ui.t2}"><span class="num">${tt.num}</span><span>${esc(t.name)}</span><span class="stat ${cls}" title="Заповнено рядків / усього">${st.n? `${st.filled}/${st.withOc}` : "0 ор."}</span>${uxCount(t.id)?`<span class="stat uxs" title="Результати без індексу (текст автора)">${uxCount(t.id)}</span>`:""}</button>`;}).join("")}`).join("")}</div>
-    <p class="tiny muted" style="margin-top:12px">Рядок вважається заповненим, коли в ньому є орієнтири, зміст і види діяльності.</p></aside>`;
+    return `<button data-t2="${t.id}" aria-current="${t.id===S.ui.t2}"><span class="num">${tt.num}</span><span>${esc(t.name)}</span><span class="stat ${cls}" title="${st.n?(st.filled?"Таблицю теми заповнено":"Ще не заповнено змісту чи видів діяльності"):"У темі немає орієнтирів"}">${st.n? (st.filled?ico("check"):"—") : "0 ор."}</span>${uxCount(t.id)?`<span class="stat uxs" title="Результати без індексу (текст автора)">${uxCount(t.id)}</span>`:""}</button>`;}).join("")}`).join("")}</div>
+    <p class="tiny muted" style="margin-top:12px">Тема позначається галочкою, коли в її таблиці є орієнтири, зміст і види діяльності.</p></aside>`;
   main.innerHTML = `<div class="layout">${side}<section class="panel" id="t2panel">${topicPanelHTML(S.ui.t2)}</section></div>`;
   autosizeAll();
 }
@@ -1140,13 +1146,12 @@ function topicPanelHTML(tid){
   let html = `<div class="thead"><div><h2>${t.num} ${esc(t.name)}</h2><div class="tiny muted">${esc(t.m.name)} · орієнтирів у темі: ${n}${uxCount(tid)?` · <span class="uxn">результатів без індексу: ${uxCount(tid)}</span>`:""}</div></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">${propCount(tid)||S.ui.propose?`<button class="btn small ${S.ui.propose?"primary":""}" data-propose="1" title="Для результатів автора без індексу орієнтира — пропозиції орієнтирів стандарту; результати автора залишаються, доки ви їх не заміните">${ico("spark")}${S.ui.propose?"Сховати пропозиції":"Запропонувати результати навчання з індексами"}</button>`:""}<button class="btn small" data-goto="1" data-pickfrom="${tid}">${ico("pick")}Змінити добір орієнтирів</button><button class="btn small" data-ref-open="1">${ico("books")}Довідники</button></div></div>`;
   if(!n && !uxCount(tid)){ return html + `<div class="empty"><p class="muted">До цієї теми ще не добрано жодного орієнтира. Поверніться на крок 1 і позначте їх у стовпці теми.</p></div>`; }
-  html += `<div class="twrap"><table class="prog"><thead><tr><th>Очікувані результати навчання<div class="thsub">Взято з матриці кроку 1. Формулювання можна уточнити для цієї теми (олівець біля коду). Усі орієнтири теми стоять в одному рядку; за потреби їх можна впорядкувати, наприклад за групами результатів: у меню «⋯» біля коду орієнтира оберіть «в окремий рядок» або інший рядок. Кожен рядок матиме власний зміст і види діяльності.</div></th><th>Пропонований зміст<div class="thsub">Підказки — з базових знань Державного стандарту; дописуйте й уточнюйте власні формулювання.</div></th><th>Види навчальної діяльності<div class="thsub">Підказки з довідника — лише пропозиції; пишіть і власні, у довільному формулюванні, по одному в рядку.</div></th></tr></thead><tbody>`;
+  html += `<div class="twrap"><table class="prog"><thead><tr><th>Очікувані результати навчання<div class="thsub">Взято з матриці кроку 1. Формулювання можна уточнити для цієї теми (олівець біля коду). Усі орієнтири теми стоять в одному рядку таблиці.</div></th><th>Пропонований зміст<div class="thsub">Підказки — з базових знань Державного стандарту; дописуйте й уточнюйте власні формулювання.</div></th><th>Види навчальної діяльності<div class="thsub">Підказки з довідника — лише пропозиції; пишіть і власні, у довільному формулюванні, по одному в рядку.</div></th></tr></thead><tbody>`;
   rows.forEach((r,i)=>{
     const A = rowAlign(r);
     html += `<tr data-row="${r.id}">
-      <td class="oc"><div class="rn"><span>Рядок ${i+1}</span><span>
-        ${i>0?ibtn("joinup","Об’єднати з попереднім рядком",`data-merge="${r.id}"`):""}${ibtn("trash","Видалити рядок",`data-rdel="${r.id}"`,"danger")}</span></div>
-        ${r.oc.length ? r.oc.map(c=>`<div class="ocitem" data-oc="${esc(c)}" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${isMulti()&&parseCode(c)?(p=>`${p.cyc} ${ftag(p.subj)}${esc(c.slice(c.indexOf(p.subj)+p.subj.length).trim())}`)(parseCode(c)):esc(c)}</span><span class="ocact">${ibtn("edit","Уточнити формулювання для цієї теми",`data-ocedit-open="${esc(c)}"`)}${moreMenu([...rows.map((x,i)=>mItem("move", x.id===r.id?`у рядку ${i+1}`:`у рядок ${i+1}`, `data-mv="${esc(c)}" data-from="${r.id}" data-to="${x.id}" ${x.id===r.id?'aria-current="true" disabled':""}`)), mItem("rowadd","в окремий рядок",`data-mv="${esc(c)}" data-from="${r.id}" data-to="__new"`), mItem("x","прибрати з таблиці",`data-mv="${esc(c)}" data-from="${r.id}" data-to="__out"`,"danger")],"Перемістити орієнтир")}</span></div>${ocTextHTML(tid,c)}${ocStatusHTML(r,c,A)||'<div class="ocst"></div>'}${S.ui.propose?korPropHTML(tid,r,c):""}</div>`).join("") : (r.ux?.length?"":`<div class="tiny muted">Порожній рядок: перемістіть сюди орієнтири з інших рядків.</div>`)}
+      <td class="oc">
+        ${r.oc.length ? r.oc.map(c=>`<div class="ocitem" data-oc="${esc(c)}" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${isMulti()&&parseCode(c)?(p=>`${p.cyc} ${ftag(p.subj)}${esc(c.slice(c.indexOf(p.subj)+p.subj.length).trim())}`)(parseCode(c)):esc(c)}</span><span class="ocact">${ibtn("edit","Уточнити формулювання для цієї теми",`data-ocedit-open="${esc(c)}"`)}${ibtn("x","Прибрати з таблиці теми",`data-mv="${esc(c)}" data-from="${r.id}" data-to="__out"`,"danger")}</span></div>${ocTextHTML(tid,c)}${ocStatusHTML(r,c,A)||'<div class="ocst"></div>'}${S.ui.propose?korPropHTML(tid,r,c):""}</div>`).join("") : (r.ux?.length?"":`<div class="tiny muted">Орієнтирів у таблиці немає.</div>`)}
         ${(r.ux||[]).map(u=>uxHTML(tid,r,u)).join("")}
       </td>
       <td><textarea data-f="content" data-r="${r.id}" placeholder="Поняття, факти, інструменти, з якими працюють учні">${esc(r.content)}</textarea>
@@ -1158,11 +1163,10 @@ function topicPanelHTML(tid){
   });
   html += `</tbody></table></div>`;
   if(unpl.length){
-    html += `<div class="unplaced"><h3>Не включені до таблиці: ${unpl.length}</h3>${unpl.map(c=>`<div class="ocitem" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${esc(c)}</span><select data-move="${esc(c)}" data-from="" aria-label="Додати"><option value="">додати…</option>${rowOpts(null)}</select></div>${esc(ocText(c))}</div>`).join("")}</div>`;
+    html += `<div class="unplaced"><h3>Не включені до таблиці: ${unpl.length}</h3>${unpl.map(c=>`<div class="ocitem" style="--gc:${gcolor(gkey(c))}"><div class="code"><span>${esc(c)}</span><button class="btn small ghost" data-mv="${esc(c)}" data-from="" data-to="${rows[0].id}">${ico("plus")}Повернути в таблицю</button></div>${esc(ocText(c))}</div>`).join("")}</div>`;
   }
   html += alignMatrixHTML(tid);
-  html += `<div class="rowtools"><button class="btn small" data-radd="1">${ico("rowadd")}Порожній рядок</button>
-    <button class="btn small ghost danger" data-regroup="1" data-confirm="Натисніть ще раз: увесь текст теми буде видалено" title="Видаляє зміст і види діяльності цієї теми; усі орієнтири теми знову стають в один рядок">${ico("clear")}Очистити таблицю теми</button></div>`;
+  html += `<div class="rowtools"><button class="btn small ghost danger" data-regroup="1" data-confirm="Натисніть ще раз: увесь текст теми буде видалено" title="Видаляє зміст і види діяльності цієї теми; усі орієнтири теми повертаються в таблицю">${ico("clear")}Очистити таблицю теми</button></div>`;
   return html;
 }
 /* results from an imported programme that match no outcome of the standard */
@@ -1171,7 +1175,7 @@ function moveOc(code, from, to){
   if(from){ const fr=rows.find(r=>r.id===from); if(fr) fr.oc=fr.oc.filter(c=>c!==code); }
   S.rowsOut=S.rowsOut||{}; const ol=(S.rowsOut[S.ui.t2]||[]).filter(c=>c!==code); S.rowsOut[S.ui.t2] = to==="__out" ? ol.concat(code) : ol;
   if(to==="__new") rows.push({id:uid("r"),oc:[code],content:"",act:""});
-  else if(to!=="__out"){ const tr=rows.find(r=>r.id===to); if(tr && !tr.oc.includes(code)) tr.oc.push(code); }
+  else if(to!=="__out"){ const tr=rows.find(r=>r.id===to); if(tr && !tr.oc.includes(code)){ tr.oc.push(code); const ix=c=>{ const i=S.outcomes.findIndex(o=>o.c===c); return i<0?1e9:i; }; tr.oc.sort((a,b)=>ix(a)-ix(b)); } }
   save(); rerenderTopicPanel(); if(to==="__out") toast(`Орієнтир ${code} прибрано з таблиці`); }
 function uxGuess(tid, text){
   const bg=bigrams(text), inT=new Set(topicOutcomes(tid).map(o=>o.c));
@@ -1240,7 +1244,11 @@ function stdSetsFor(codes){ const keys=new Set();
     if(p.subj==="ІФО"){ if(STD?.sets[cy]) keys.add("I:"+cy); } else { const k=cy+" "+p.subj; if(ALLSTD?.sets[k]) keys.add("A:"+k); } }
   return [...keys].flatMap(k=>k[0]==="I" ? STD.sets[k.slice(2)] : ALLSTD.sets[k.slice(2)]); }
 function korOrients(kor){ if(!korOrients.m){ const m=korOrients.m=new Map(); for(const c of STD_ALL().keys()){ const p=parseCode(c); if(!p||p.isKor) continue; const k=p.kor+(p.lvl==="П"?" П":""); if(!m.has(k)) m.set(k,[]); m.get(k).push(c); } } return korOrients.m.get(kor)||[]; }
-function stdGuess(tid, text){ let pool=stdSetsFor(S.outcomes.map(o=>o.c)); if(!pool.length) pool=[...STD_ALL().entries()];
+function stdGuess(tid, text){ let pool=stdSetsFor(S.outcomes.map(o=>o.c));
+  const FS=Array.isArray(S.frame?.fields)&&S.frame.fields.length ? new Set(S.frame.fields) : null;
+  if(FS) pool=pool.filter(([c])=>FS.has(FIELD_OF(parseCode(c)?.subj)));
+  if(!pool.length){ pool=[...STD_ALL().entries()]; if(FS) pool=pool.filter(([c])=>FS.has(FIELD_OF(parseCode(c)?.subj)));
+    const nums=((S.title||"").match(/\d{1,2}/g)||[]).map(Number).filter(n=>n>=1&&n<=12); if(nums.length){ const mx=Math.max(...nums), cy=mx<=2?2:mx<=4?4:mx<=6?6:mx<=9?9:12; const P2=pool.filter(([c])=>parseCode(c)?.cyc===cy); if(P2.length) pool=P2; } }
   const bg=bigrams(text), have=new Set(topicOutcomes(tid).map(o=>o.c));
   return pool.filter(([c])=>!have.has(c)).map(([c,t])=>({c,t,s:dice(bg,bigrams(t))})).filter(x=>x.s>=0.42).sort((a,b)=>b.s-a.s).slice(0,3); }
 function addStdOutcome(tid, rid, code, after){
@@ -2422,7 +2430,8 @@ function buildProject(prog, an, title){
         for(const c of oc){ (P.assign[c]=P.assign[c]||[]); if(!P.assign[c].includes(T.id)) P.assign[c].push(T.id); }
         const ux=(r.ux||[]).map(t=>({id:uid("u"), t}));
         if(oc.length||ux.length||r.content||r.act) rows.push({id:uid("r"), oc, ux, content:r.content, act:fmtAct(r.act), links:{}}); }
-      P.rows[T.id]=rows; } }
+      P.rows[T.id]=rows.length>1?[mergeRows(rows)]:rows; } }
+  if(DOCX?.fields?.length) P.frame.fields=[...DOCX.fields];
   return P;
 }
 let DOCX=null;
@@ -2487,12 +2496,16 @@ function showDocxDialog(){
   if(DOCX.title==null) DOCX.title = prog.title||DOCX.file.replace(/\.docx$/i,"");
   const an=analyseDocx(prog); DOCX.an=an;
   const nT=prog.mods.reduce((s,m)=>s+m.topics.length,0);
+  if(!DOCX.fields){ const det=[...new Set(an.subjects.map(FIELD_OF))]; DOCX.fields = det.length ? det : [...new Set(UX_FIELD_WORDS.filter(([re])=>re.test((DOCX.title||"")+" "+DOCX.file)).map(x=>x[1]))]; }
+  const fsHTML=`<div class="res"><b>Освітня галузь програми</b> <span class="tiny muted">— для підказок змісту, видів діяльності, пропозицій орієнтирів і вступної частини; для інтегрованого курсу позначте кілька</span>
+      <div class="frfields" style="margin-top:6px">${ALL_FIELDS().map(([c,n])=>`<label><input type="checkbox" name="dxField" value="${c}" ${DOCX.fields.includes(c)?"checked":""}> ${esc(n)}</label>`).join("")}</div>
+      ${DOCX.fields.length?"":`<div class="tiny" style="color:var(--warn,#b45309);margin-top:4px">Позначте хоча б одну галузь.</div>`}</div>`;
   $("#modalHost").innerHTML = `<div class="modal" role="dialog" aria-label="Імпорт програми з Word"><div class="mbox">
     <div class="mhd"><h2>Імпорт програми з Word</h2><button class="btn small" data-mclose="1">Закрити</button></div>
     <div class="mbd">
       <label class="tiny muted" for="dxTitle">Назва програми</label><input id="dxTitle" class="dxin" value="${esc(DOCX.title)}">
       <div class="res"><b>Знайдено в «${esc(DOCX.file)}»:</b> модулів — ${prog.mods.length}, тем — ${nT}, рядків таблиць — ${an.nRows}.
-</div>${dxOutlineHTML()}
+</div>${fsHTML}${dxOutlineHTML()}
       <div class="res"><b>Очікувані результати навчання переносяться дослівно, як в авторській програмі</b> — з авторськими формулюваннями та індексами. Конструктор нічого не додає, не розгортає й не замінює формулюваннями стандарту.
         <ul style="margin:6px 0 0">
           <li>з індексами орієнтирів: <b>${an.nIdx}</b></li>
@@ -2503,7 +2516,7 @@ function showDocxDialog(){
         ${an.nUx?`<details style="margin-top:4px"><summary>Показати результати без індексу</summary><ul>${an.unmatched.map(u=>`<li>${esc(u)}</li>`).join("")}</ul></details>`:""}</div>
       <p class="tiny muted" style="margin:0">Імпорт відкриє програму як новий проєкт замість поточного. Якщо поточну роботу ще не збережено у файл, спершу збережіть її: «Проєкт» → «Зберегти файл проєкту». Зв’язки видів діяльності з орієнтирами та планування оцінювання після імпорту розставляє автор.</p>
     </div>
-    <div class="mft"><button class="btn" data-mclose="1">Скасувати</button><button class="btn primary" id="dxGo" ${an.nOc||an.nUx?"":"disabled"}>Імпортувати як новий проєкт</button></div>
+    <div class="mft"><button class="btn" data-mclose="1">Скасувати</button><button class="btn primary" id="dxGo" ${(an.nOc||an.nUx)&&DOCX.fields.length?"":"disabled"}>Імпортувати як новий проєкт</button></div>
   </div></div>`;
 }
 /* ---------- loading outcomes ---------- */
@@ -2938,7 +2951,7 @@ document.addEventListener("change", e=>{
   if(t.id==="fileIn"){ const f=t.files[0]; if(f) readFile(f).catch(err=>toast("Не вдалося прочитати файл: "+err.message)); return; }
   if(t.id==="fileDocx"){ const f=t.files[0]; if(f) importDocx(f); t.value=""; return; }
   if(t.id==="dxSet"){ DOCX.matchSet=t.value; showDocxDialog(); return; }
-  if(t.name==="dxField"){ DOCX.field=t.value; showDocxDialog(); return; }
+  if(t.name==="dxField"){ const ti=$("#dxTitle"); if(ti) DOCX.title=ti.value; DOCX.fields=[...document.querySelectorAll('input[name="dxField"]:checked')].map(x=>x.value); const y=document.querySelector(".modal .mbd")?.scrollTop; showDocxDialog(); const bd=document.querySelector(".modal .mbd"); if(bd&&y) bd.scrollTop=y; return; }
   if(t.id==="dxSubj"){ DOCX.subj=t.value; showDocxDialog(); return; }
   if(t.id==="dxCyc"){ DOCX.cycles=[t.value]; showDocxDialog(); return; }
   if(t.id==="dxStdFile"){ const f=t.files[0]; if(f) parseOutcomeFile(f).then(r=>{ if(!r.out.length){ toast("У файлі не знайдено орієнтирів з індексами."); return; } DOCX.extra=sortOutcomes(r.out.map(o=>({c:o.c,t:o.t}))); showDocxDialog(); toast(`Завантажено орієнтирів галузі: ${r.out.length}`); }).catch(e=>toast("Не вдалося прочитати файл: "+e.message)); return; }
@@ -3025,7 +3038,7 @@ document.addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey) && !e.shiftK
 /* short hints for a first-time author, one per step */
 const HINTS = {
   1:"Ліворуч задайте модулі й теми програми. У матриці позначте, які орієнтири для оцінювання досягатимуться в кожній темі (стовпець — тема); орієнтир може належати кільком темам, а непозначені підсвічено жовтим.",
-  2:"Для кожної теми заповніть таблицю. Рядок об’єднує орієнтири, для яких спільні зміст і види діяльності; рядки можна додавати, об’єднувати, а орієнтири переносити між ними. Коди орієнтирів біля видів діяльності та рівні — лише для вашого контролю й аналізу, у документ вони не потрапляють.",
+  2:"Для кожної теми заповніть таблицю. Усі орієнтири теми стоять в одному рядку зі спільним змістом і видами діяльності; орієнтир можна прибрати з таблиці (×) і повернути. Коди орієнтирів біля видів діяльності та рівні — лише для вашого контролю й аналізу, у документ вони не потрапляють.",
   3:"Для кожної теми оберіть інструменти формувального оцінювання за етапами та види підсумкових робіт для груп результатів (ГР), що є в темі. ★ підказує інструменти, які підтримують види діяльності, обрані на кроці 2; таблиця вгорі показує, скільки разів оцінюється кожна група.",
   4:"Заповніть вступну частину (пояснювальну записку) і прикінцеву частину (методичні рекомендації). Абзаци й пункти пишіть з нового рядка; незаповнені поля в документ не потрапляють, а в перегляді позначені.",
   5:"Перегляньте готову програму: вступна частина, таблиці за темами, прикінцева частина з плануванням оцінювання. Завантажте .docx або скопіюйте таблиці; у меню «Експорт» є також Excel. Щоб продовжити роботу на іншому пристрої, збережіть файл проєкту (меню «Проєкт»)."
