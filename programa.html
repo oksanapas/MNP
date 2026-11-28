@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Конструктор навчальної програми</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Unbounded:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
+<style>
+/* VOICE: спокійний робочий інструмент учителя; підказки як нотатки на берегах документа
+   IDEA: аркуш навчальної програми — три частини документа, які вчитель заповнює по черзі
+   PICTURE: сам робочий аркуш: блоки частин програми, таблиця тем, рубрики
+   COLOUR and TYPE: темно-синій #16325c + бірюзовий #0f7f81 + бурштин для незавершеного; Unbounded для заголовків, Golos Text для тексту
+   LAYOUT: смуга з назвою й кроками вгорі, нижче — одна колонка робочого аркуша до 1240px */
+:root{color-scheme:light dark;
+--bg:light-dark(#ffffff,#0d1a2e);--paper:light-dark(#ffffff,#13233d);--sheet:light-dark(#f2f6f7,#0f1e35);
+--ink:light-dark(#14213a,#e6edf5);--mute:light-dark(#5b6678,#9fb0c6);--line:light-dark(#d9e1e6,#2a3d5c);
+--navy:#16325c;--teal:light-dark(#0f7f81,#3cc0c2);--tealbg:light-dark(#e3f3f3,#123a45);
+--amber:light-dark(#9a5b00,#f2b54a);--amberbg:light-dark(#fff3dc,#3a2d12);--ok:light-dark(#1b7a3d,#6fd08f)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Golos Text",system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:Unbounded,"Golos Text",sans-serif;font-weight:600;line-height:1.15;text-wrap:balance;margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+.top{background:var(--navy);color:#fff;padding:22px max(4vw,16px) 0}
+.top h1{font-size:clamp(22px,3vw,32px)}
+.top p{margin:6px 0 16px;color:#c9d6ea;max-width:70ch}
+.steps{display:flex;gap:4px;overflow-x:auto;max-width:1240px}
+.steps button{flex:none;border:0;background:transparent;color:#c9d6ea;padding:12px 16px 14px;border-radius:10px 10px 0 0;cursor:pointer;min-height:44px;font-weight:500}
+.steps button b{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:#ffffff22;margin-right:8px;font-size:13px}
+.steps button[aria-current=true]{background:var(--sheet);color:var(--ink)}
+.steps button[aria-current=true] b{background:var(--teal);color:#fff}
+.steps .pc{font-size:13px;opacity:.75;margin-left:6px}
+main{background:var(--sheet);min-height:70vh;padding:28px max(4vw,16px) 120px}
+.wrap{max-width:1240px;margin:0 auto}
+.lead{margin-bottom:18px}
+.lead h2{font-size:clamp(20px,2.4vw,26px)}
+.lead p{margin:6px 0 0;color:var(--mute);max-width:78ch}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-bottom:14px}
+.bh{display:flex;gap:12px;align-items:flex-start}
+.code{flex:none;font:600 14px Unbounded,sans-serif;background:var(--tealbg);color:var(--teal);border-radius:8px;padding:6px 8px}
+.bh h3{font-size:17px;flex:1;padding-top:3px}
+.pts{flex:none;font-size:13px;color:var(--mute);padding-top:5px;white-space:nowrap}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;background:var(--line);vertical-align:middle}
+.dot.part{background:var(--amber)}.dot.full{background:var(--ok)}
+.grp{font-weight:600;margin:18px 0 0;font-size:15px;color:var(--teal)}
+.fld{margin-top:14px}
+.fld>label{display:block;font-weight:500;font-size:15px;margin-bottom:4px}
+.fld .sub{font-size:13px;color:var(--mute);font-weight:400}
+textarea,input[type=text],input[type=number],select{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--bg);font-size:16px;line-height:1.45}
+textarea{resize:vertical;min-height:72px;overflow:hidden}
+textarea:focus,input:focus,select:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+.hints{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+.hints span{font-size:13px;color:var(--mute);margin-right:2px}
+.hint{border:1px dashed var(--teal);background:transparent;color:var(--teal);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer;min-height:32px;text-align:left}
+.hint:hover{background:var(--tealbg)}
+.todo{font-size:13px;color:var(--amber);margin-top:4px;display:none}
+.todo.on{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips label{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;min-height:44px;font-weight:400;margin:0}
+.chips input{accent-color:var(--teal);width:18px;height:18px}
+.chips label:has(input:checked){border-color:var(--teal);background:var(--tealbg)}
+.btn{border:1px solid var(--line);background:var(--paper);border-radius:10px;padding:9px 14px;cursor:pointer;min-height:44px;font-weight:500}
+.btn:hover{border-color:var(--teal)}
+.btn.pri{background:var(--teal);border-color:var(--teal);color:#fff}
+.btn.sm{min-height:36px;padding:5px 10px;font-size:14px}
+.btn.ghost{border-color:transparent;background:transparent}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:34px 20px;text-align:center;background:var(--paper);cursor:pointer}
+.drop.on{border-color:var(--teal);background:var(--tealbg)}
+.drop h3{font-size:19px;margin-bottom:8px}
+.drop p{color:var(--mute);margin:0 0 14px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0 18px}
+.note{background:var(--amberbg);border-radius:10px;padding:10px 14px;font-size:14px;margin:10px 0}
+.okn{background:var(--tealbg);border-radius:10px;padding:10px 14px;font-size:15px;margin:10px 0}
+details.ref{background:var(--paper);border:1px solid var(--line);border-radius:14px;margin-bottom:16px}
+details.ref summary{padding:14px 18px;cursor:pointer;font-weight:500;min-height:44px}
+details.ref textarea{border:0;border-top:1px solid var(--line);border-radius:0 0 14px 14px;min-height:220px;max-height:420px;overflow:auto;font-size:15px;background:transparent}
+/* рубрики */
+.rub{margin-top:8px;overflow-x:auto}
+.rub table{border-collapse:separate;border-spacing:4px;width:100%;min-width:720px}
+.rub th{font-size:13px;color:var(--mute);font-weight:600;text-align:left;padding:2px 4px;vertical-align:bottom}
+.rub th input{font-size:14px;font-weight:600;padding:6px 8px;color:var(--ink)}
+.rub td{vertical-align:top}
+.rub td textarea{min-height:64px;font-size:14px;padding:8px}
+.rub td input{font-size:14px;padding:6px 8px;margin-top:4px}
+.rub .ib{margin-top:4px}
+.rubbar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:6px;font-size:14px}
+.rubbar select{width:auto;padding:6px 8px;font-size:14px}
+/* основна частина */
+.bar{position:sticky;top:0;z-index:5;background:var(--sheet);padding:10px 0;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;border-bottom:1px solid var(--line)}
+.sum{font-size:15px}.sum b{font:600 20px Unbounded,sans-serif}
+.sum.bad b{color:var(--amber)}.sum.good b{color:var(--ok)}
+.plan{display:flex;align-items:center;gap:8px;font-size:15px}.plan input{width:90px}
+.it{background:var(--paper);border:1px solid var(--line);border-radius:12px;margin-bottom:8px}
+.it.drag{opacity:.4}.it.over-top{box-shadow:0 -3px 0 var(--teal)}.it.over-bot{box-shadow:0 3px 0 var(--teal)}
+.ih{display:flex;gap:8px;align-items:center;padding:8px 10px}
+.hd{cursor:grab;color:var(--mute);font-size:20px;padding:6px 4px;user-select:none}
+.num{font:600 13px Unbounded,sans-serif;color:var(--teal);flex:none;min-width:28px}
+.ih input.nm{flex:1;border-color:transparent;background:transparent;font-weight:600;padding:8px}
+.ih input.nm:hover{border-color:var(--line)}
+.hrs{display:flex;align-items:center;gap:4px;flex:none;font-size:14px;color:var(--mute)}
+.hrs input{width:70px;text-align:right;padding:8px}
+.it.sec{background:var(--navy);border-color:var(--navy);color:#fff}
+.it.sec input.nm{color:#fff;font-family:Unbounded,sans-serif;font-weight:500}
+.it.sec .hd,.it.sec .ib,.it.sec .hrs{color:#c9d6ea}
+.ib{border:0;background:transparent;cursor:pointer;width:36px;height:36px;border-radius:8px;flex:none;color:var(--mute);font-size:16px}
+.ib:hover{background:var(--tealbg);color:var(--teal)}
+.ib[disabled]{opacity:.3;cursor:default}
+.tg{flex:none;border:1px solid var(--teal);color:var(--teal);background:var(--paper);border-radius:999px;padding:5px 12px;font-size:14px;font-weight:600;cursor:pointer;min-height:36px;white-space:nowrap}
+.tg[aria-expanded=true]{background:var(--teal);color:#fff}
+.tags{display:flex;gap:6px;flex:none;flex-wrap:wrap}
+.tag{font-size:12px;border-radius:999px;padding:2px 8px;background:var(--tealbg);color:var(--teal);font-weight:600;white-space:nowrap}
+.tag.w{background:var(--amberbg);color:var(--amber)}
+.ibody{border-top:1px solid var(--line);padding:12px 14px 14px;display:grid;grid-template-columns:1.25fr 1fr 1fr .8fr;gap:14px}
+.col h4{margin:0 0 6px;font-size:13px;color:var(--mute);font-weight:600}
+.li{display:flex;gap:2px;align-items:flex-start;margin-bottom:4px}
+.li textarea{min-height:0;padding:6px 8px;font-size:14px;border-radius:8px;border-color:transparent;background:var(--sheet)}
+.li textarea:hover{border-color:var(--line)}
+.li.del textarea{text-decoration:line-through;opacity:.5}
+.li.chg textarea{border-left:3px solid var(--teal)}
+.li.todo2 textarea{border-left:3px solid var(--amber)}
+.li .ops{display:flex;flex-direction:column}
+.li .ib{width:26px;height:22px;font-size:12px}
+@media(hover:hover){.li .ops{opacity:.35}.li:hover .ops,.li:focus-within .ops{opacity:1}}
+.gl{font-size:12px;font-weight:600;color:var(--teal);margin:8px 0 2px;display:flex;align-items:center;justify-content:space-between}
+.gl .ib{width:24px;height:22px;font-size:12px}
+.col .tools textarea{font-size:14px;min-height:96px}
+.flags{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px}
+.flags .chips label{min-height:36px;padding:4px 12px;font-size:14px}
+.legend{font-size:13px;color:var(--mute);margin:-2px 0 10px}
+@media(max-width:1000px){.ibody{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.ibody{grid-template-columns:minmax(0,1fr)}.ih{flex-wrap:wrap}.ih input.nm{flex-basis:60%}.steps .pc{display:none}}
+/* оцінювання */
+.asx{grid-column:1/-1;border-top:1px dashed var(--line);padding-top:12px}
+.ash{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.asx h4{margin:0;font-size:15px;color:var(--ink)}
+.asub{font-weight:600;font-size:14px;margin:14px 0 4px;color:var(--teal)}
+.grbar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.pill{font-size:13px;border-radius:999px;padding:3px 10px;background:var(--sheet);border:1px solid var(--line)}
+.ablk{margin:6px 0 8px}
+.abn{font-size:13px;font-weight:600;margin-bottom:4px;cursor:default}
+details.ablk summary.abn{cursor:pointer;color:var(--teal);min-height:32px;display:flex;align-items:center}
+.astage{margin:6px 0}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:4px 11px;font-size:13px;cursor:pointer;min-height:32px;text-align:left}
+.tchip.rec{border-color:var(--teal)}
+.tchip[aria-pressed=true]{background:var(--teal);border-color:var(--teal);color:#fff}
+.tgr{font-size:11px;opacity:.75;margin-left:6px}
+.tiny{font-size:13px}
+.fsel{display:flex;align-items:center;gap:8px;font-size:14px}.fsel select{width:auto;padding:6px 8px;font-size:14px}
+.gsrc{font-size:13px;color:var(--mute);margin:-4px 0 10px}.gsrc a{color:var(--teal)}
+/* перевірка */
+table.chk{width:100%;border-collapse:collapse;font-size:15px}
+table.chk th,table.chk td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}
+table.chk th{font-size:13px;color:var(--mute);font-weight:600}
+table.chk td.n{text-align:right;white-space:nowrap}
+table.chk tr.g td{font-weight:600;background:var(--sheet)}
+table.chk select{width:auto;padding:6px 8px}
+.total{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline;margin:4px 0}
+.total b{font:600 40px Unbounded,sans-serif;color:var(--teal)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;display:flex;gap:14px;align-items:center;z-index:50;max-width:calc(100vw - 32px);box-shadow:0 8px 24px #0004}
+.toast button{background:#ffffff22;border:0;color:#fff;border-radius:8px;padding:6px 12px;cursor:pointer;min-height:36px}
+.muted{color:var(--mute)}
+@media(max-width:600px){table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:8em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:7.5em;margin-inline-start:-8em;white-space:normal;color:var(--mute)}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:no-preference){.it{transition:box-shadow .15s}}
+</style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <h1>Конструктор навчальної програми</h1>
+    <p>Завантажте модельну програму — і складіть на її основі власну: допишіть вступну й прикінцеву частини, розподіліть години, упорядкуйте теми, уточніть зміст і види діяльності.</p>
+    <nav class="steps" id="steps" aria-label="Кроки"></nav>
+  </div>
+</header>
+<main><div class="wrap" id="view"></div></main>
+<div id="toastHost"></div>
+<input type="file" id="fDocx" accept=".docx" hidden>
+<input type="file" id="fJson" accept=".json,application/json" hidden>
+
+<script>
+{
+/* ================= блоки вступної й прикінцевої частин і підказки =================
+   поле: {k, l (назва), s (уточнення), o (варіанти вибору), h (підказки-заготовки; «…» треба дописати), rub (рубрика)} */
+const INTRO=[
+ {c:"А1",t:"Мета та обґрунтування актуальності",m:5,f:[
+  {k:"goal",l:"Мета",s:"у компетентнісному ключі, з опорою на Державний стандарт; не перелік тем",h:[
+   "Сформувати в учнів здатність … (що вони вмітимуть робити) для розв’язання задач у … (сфера профілю).",
+   "Мета узгоджена з групами результатів Державного стандарту: ГР … — ….",
+   "Курс розвиває ключові компетентності: … (інформаційно-цифрову, підприємливість, …)."]},
+  {k:"why",l:"Обґрунтування актуальності",s:"конкретні потреби учнів, закладу, цифрового суспільства, ринку праці",h:[
+   "Потреби учнів: … (за результатами анкети чи вхідної діагностики).",
+   "Потреби закладу: … (профіль, освітня програма, наявні ресурси).",
+   "Виклики цифрового суспільства: ….",
+   "Ринок праці: … (за даними DOU, Work.ua, звітів роботодавців)."]},
+  {k:"tasks",l:"Завдання",s:"що конкретизує досягнення мети",h:[
+   "Сформувати в учнів уміння …, потрібні для … (ГР …).",
+   "Розвинути здатність … через … (проєктну, дослідницьку, командну діяльність).",
+   "Створити умови для … (роботи з реальними даними, професійних проб, співпраці з партнерами).",
+   "Навчити учнів відповідально … (використовувати ШІ, дотримуватися академічної доброчесності, дбати про безпеку)."]}]},
+ {c:"А2",t:"Місце предмета (курсу) в освітній траєкторії",m:5,f:[
+  {k:"level",l:"Рівень",o:["Основний","Поглиблений"]},
+  {k:"status",l:"Статус",o:["Базовий предмет","Профільний предмет","Вибірковий курс за профілем","Вибірковий курс поза профілем"]},
+  {k:"scope",l:"Профіль(і) та обсяг",auto:"grades",h:["Профіль: …; обсяг: … год на тиждень (… год на рік)."]},
+  {k:"pre",l:"Передумови",s:"що учні мають уміти до початку навчання",h:[
+   "Учні вже вміють … (результати базової середньої освіти).",
+   "Для учнів без потрібного досвіду передбачено адаптаційний старт: …."]},
+  {k:"links",l:"Узгодження з іншими предметами й курсами",s:"без дублювання змісту",h:[
+   "Курс входить до пакета: … → … → … (наступність: складність зростає).",
+   "Не дублює базове ядро: … вивчають у …, а в цьому курсі — ….",
+   "Інтеграція з … (предмет, галузь): спільне завдання …."]}]},
+ {c:"А3",t:"Адаптація до профілю та освітніх потреб",m:5,f:[
+  {k:"how",l:"Як змінюються зміст, приклади й завдання залежно від профілю",h:[
+   "Для … профілю зміст наповнюємо прикладами з …: ….",
+   "Одна структура завдання — різні набори даних чи контексти: для … — …, для … — ….",
+   "Учні обирають контекст або формат продукту: …."]},
+  {k:"needs",l:"Освітні потреби учнів",s:"з опорою на реальний контингент закладу",h:[
+   "У класі … учнів; серед них … (нові учні з інших шкіл, після перерви в навчанні, з різних програм).",
+   "Цифрові можливості учнів: … (комп’ютер, лише смартфон, стабільність інтернету).",
+   "Плани учнів після школи: …."]}]},
+ {c:"А4",t:"Компетентнісне завдання і навчальний проєкт",m:6,f:[
+  {k:"#",l:"Компетентнісне завдання"},
+  {k:"kz_name",l:"Назва завдання"},
+  {k:"kz_res",l:"Результати навчання, які перевіряє завдання",s:"один-два, з індексами",h:["… [індекс]; … [індекс]."]},
+  {k:"kz_ctx",l:"Життєвий контекст і стимул",h:[
+   "Ситуація з досвіду підлітків: … (шкільне життя, громада, хобі, соцмережі, перша робота).",
+   "Стимул: … (допис у чаті, лист, скриншот, фото, таблиця даних, діалог)."]},
+  {k:"kz_prob",l:"Проблема",h:["Учням потрібно з’ясувати чи вирішити …, тому що …."]},
+  {k:"kz_prod",l:"Очікуваний продукт",h:["… (пам’ятка, порівняльна таблиця, модель, дашборд, висновок) для … (адресат); вимоги: …."]},
+  {k:"kz_cond",l:"Умови виконання",h:[
+   "Тривалість: … (від 15 хв до кількох уроків); індивідуально / в парах / у групах.",
+   "Учні самі обирають: … (інструмент, спосіб, формат продукту, аудиторію).",
+   "Рівень використання ШІ: …; свідчення процесу: … (чернетки, журнал запитів, усне пояснення)."]},
+  {k:"#",l:"Навчальний проєкт"},
+  {k:"pr_name",l:"Назва проєкту"},
+  {k:"pr_goal",l:"Мета",h:["Створити … для … (замовник, користувачі), щоб …."]},
+  {k:"pr_steps",l:"Етапи",s:"спринти: що робимо, хто відповідає, який результат",h:[
+   "Спринт 0 (дослідження): ролі в команді, розмова з користувачами, технічне завдання — ….",
+   "Спринт 1: ідея, вимоги, макет — ….",
+   "Спринт 2: прототип і тестування з користувачами — ….",
+   "Спринт 3: продукт, виправлення, підготовка до презентації — …."]},
+  {k:"pr_dur",l:"Тривалість",h:["… тижнів (… уроків); формат: індивідуальний / парний / командний / міжпредметний."]},
+  {k:"pr_prod",l:"Продукт",h:[
+   "…; вимоги до продукту: …; успіх побачимо за ….",
+   "Свідчення процесу: … (дошка проєкту, коміти, макети, протокол тестування)."]},
+  {k:"pr_pres",l:"Форма презентації",h:[
+   "Захист перед … із запитаннями однокласників: ….",
+   "Пітч 1–2 хв і демонстрація продукту замовнику: ….",
+   "Картка проєкту в цифровому портфоліо: …."]}]},
+ {c:"А5",t:"Диференціація та підтримка учнів",m:5,f:[
+  {k:"diag",l:"Вхідна діагностика",h:[
+   "Анкета цифрового досвіду: пристрої, інтернет, програми й мови, інтереси — ….",
+   "Міні-завдання «покажи, що вмієш» у доменах …: ….",
+   "Самооцінка за Я-орієнтирами (вмію / частково / ще ні): ….",
+   "Адаптаційний старт у перші … тижні: …."]},
+  {k:"lev",l:"Рівневі завдання",h:[
+   "Одне завдання з рівнями підтримки «опора — підказка — самостійно — виклик», наприклад: ….",
+   "2–3 рівні складності або контексти на вибір учня: …."]},
+  {k:"res",l:"Додаткові ресурси",h:[
+   "Опорні матеріали: … (інструкційні картки, відео з паузами, шаблони коду з пропусками).",
+   "Альтернативні інструменти для тієї самої мети: … (наприклад, Google Таблиці замість Excel).",
+   "План Б на випадок відсутності світла чи інтернету: …."]},
+  {k:"oop",l:"Підтримка учнів з ООП",h:[
+   "Для учнів з ООП: … (темп, формат інструкцій, доступність матеріалів — відповідно до ІПР).",
+   "Пара «пілот — штурман», правило «спитай трьох, потім мене»: …."]},
+  {k:"high",l:"Учні з високою мотивацією",h:[
+   "Завдання-виклик (не «ще такі самі», а глибше): ….",
+   "Роль консультанта чи ментора однокласників: ….",
+   "Олімпіадна підготовка, онлайн-курси, конкурси: …."]}]},
+ {c:"А6",t:"Професійне самовизначення та партнери",m:4,f:[
+  {k:"prof",l:"Зв’язок змісту з професіями та освітніми траєкторіями",h:[
+   "Профорієнтаційний «гачок» у темах: тема «…» — професія ….",
+   "Аналіз реальних вакансій для початківців (DOU, Work.ua) у темі …: ….",
+   "«Знайди інформатику» в професії поза ІТ: …; цифровий профіль ІТ-професії: ….",
+   "Кар’єрний профіль у портфоліо учня: …."]},
+  {k:"partners",l:"Партнери та форми співпраці",s:"реалістичні для вашого закладу",h:[
+   "Разовий гість (випускник, батьки — ІТ-фахівці): … у темі ….",
+   "Подія з підготовкою (майстер-клас, екскурсія, участь у журі): ….",
+   "Проєкт із замовником з громади (бібліотека, музей, громадська організація): ….",
+   "Співпраця із ЗВО чи фаховим коледжем: ….",
+   "Що отримує партнер (взаємна вигода): …."]}]}
+];
+const FINAL=[
+ {c:"В1",t:"Методичні рекомендації, програмні інструменти та ресурси",m:5,f:[
+  {k:"org",l:"Організація навчання",h:[
+   "Діяльнісні методики (проблемне, дослідницьке навчання, кейс, парне програмування, квест, симуляція, проєкт): у темі … — ….",
+   "Структура типового уроку: проблемний вхід → діяльність → рефлексія (щонайменше 5 хв): ….",
+   "Порядок тем змінено, тому що …."]},
+  {k:"diff",l:"Типові труднощі учнів і способи їх подолання",h:[
+   "Типова трудність: …; як долаємо: ….",
+   "Учні перепитують кожен крок — обговорюємо алгоритм разом, правило «спитай трьох, потім мене»: ….",
+   "Учні з різним досвідом — дозволяємо знайому мову чи інструмент, визначаємо мінімум під задачу: …."]},
+  {k:"cond",l:"Умови реалізації",h:[
+   "Обладнання й години: ….",
+   "Маршрут учня: де отримує, виконує, здає завдання й бачить відгук — ….",
+   "План Б: безмашинні вправи, офлайн-копії, мобільні версії сервісів — …."]},
+  {k:"tools",l:"Програмні інструменти та ресурси",h:[
+   "Для напряму … — … (середовища програмування, Colab, GitHub, SQLite, …).",
+   "Ресурси перевіряємо за змістовою, педагогічною, технічною якістю й безпекою: ….",
+   "Онлайн-курси й відкриті ресурси: …."]}]},
+ {c:"В2",t:"Система оцінювання",m:10,f:[
+  {k:"works",l:"Види робіт",h:[
+   "Формувальне оцінювання: … (світлофор, передбачення результату, пошук помилки, вихідний квиток).",
+   "Поточне оцінювання: практичні роботи, компетентнісні завдання — ….",
+   "Підсумкове оцінювання: … (захист проєкту, підсумкова робота)."]},
+  {k:"ratio",l:"Співвідношення формувального, поточного та підсумкового оцінювання",s:"як виводиться оцінка",h:[
+   "Модель виведення оцінки: … (не зводити / зважене середнє / сума балів рубрики / порогова / домінуючий рівень).",
+   "Поточні оцінки: … (кількість, статус, вага).",
+   "Індивідуальний внесок у командній роботі оцінюємо за …."]},
+  {k:"crit",l:"Критерії оцінювання, узгоджені з результатами навчання",h:[
+   "Критерій описує спостережуваний прояв результату: «…» […].",
+   "Рівні відрізняються складністю й самостійністю (за зразком → за алгоритмом → самостійно → творчо): …."]},
+  {k:"rkz",l:"Рубрика для компетентнісного завдання",rub:"kz"},
+  {k:"rpr",l:"Рубрика для навчального проєкту",rub:"pr"},
+  {k:"self",l:"Само- та взаємооцінювання",h:[
+   "Самооцінювання: … (Я-орієнтири, чек-лист, рефлексія в портфоліо).",
+   "Взаємооцінювання за чек-листом з 3–4 критеріїв: ….",
+   "Запитання однокласників на захисті проєкту: …."]}]},
+ {c:"В3",t:"ШІ, цифрові ресурси й платформи",m:5,f:[
+  {k:"ai",l:"Коли і з якою метою використовують ШІ",h:[
+   "Провідний аспект ШІ в курсі: … (інструмент учня / технологія / інструмент учителя).",
+   "ШІ як технологія: у темі … учні … (навчають модель і шукають її межі, перевіряють чат-бота на вигадані факти).",
+   "Рівень використання ШІ (1 — без ШІ … 5 — дослідження ШІ) позначаємо в кожному завданні: …."]},
+  {k:"plat",l:"Цифрові ресурси й платформи",h:[
+   "Маршрут учня: … → … → … (отримує, виконує, здає, бачить відгук).",
+   "Основна платформа: … з корпоративними акаунтами; для напряму … — …."]},
+  {k:"safe",l:"Вікові обмеження, захист даних, доступність",h:[
+   "Вікові обмеження сервісів перевіряємо: ….",
+   "Не вводимо в ШІ персональні дані учнів і вчителів; ….",
+   "Доступність: робота зі смартфона, без встановлення, офлайн-альтернатива — ….",
+   "Сервіс, що не відповідає вимогам безпеки, не використовуємо: …."]}]},
+ {c:"В4",t:"Академічна доброчесність і цифрова етика",m:5,f:[
+  {k:"rules",l:"Правила, допустимі рівні використання ШІ та вимоги до позначення",h:[
+   "Домовленість замість заборони: «Ви можете використовувати ШІ на етапах, позначених у завданні, і коротко описуєте, як саме» — ….",
+   "Позначення використання ШІ: … (журнал запитів, примітка «Як я використав ШІ»).",
+   "Цитуємо з посиланням; чужі думки — в лапках, свої висновки — своїми словами; ….",
+   "Фотографуємо роботи, а не людей; людей — лише з їхньої згоди; …."]},
+  {k:"react",l:"Процедури реагування",h:[
+   "Несамостійну роботу обговорюємо й доопрацьовуємо: ….",
+   "Результат детектора не є вироком; підстава для розмови — … (усне пояснення, журнал запитів, версії коду).",
+   "Якщо учень не встигає чи не розуміє — домовляємося до дедлайну про …."]},
+  {k:"teach",l:"Як учні навчаються доброчесності",h:[
+   "Пам’ятку «Як я працюю зі ШІ» створюємо разом з учнями на початку року: ….",
+   "Завдання, у яких доброчесність природна (власні дані, особистий контекст, усний захист): ….",
+   "Зворотний зв’язок, що повертає до навчання: «…»."]}]}
+];
+const LEVELS={4:["Початковий","Середній","Достатній","Високий"],3:["Недостатній","Достатній","Високий"]};
+const RUB_HINTS={
+ kz:["Розв’язує поставлену проблему з урахуванням умов і адресата","Добирає цифрові інструменти відповідно до задачі","Порівнює можливі рішення та аргументує свій вибір","Оцінює придатність продукту й удосконалює його","Враховує доступність і зрозумілість продукту для користувача","Показує свідчення процесу й пояснює свої рішення"],
+ pr:["Продукт відповідає вимогам, погодженим із замовником","Продукт протестовано з користувачами, помилки виправлено","Виконує задачі своєї ролі в кожному спринті","Документує свою роботу","Пояснює свої рішення на захисті","Аналізує власну роботу"]};
+const STEPS=["Початок","Вступна частина","Основна частина","Прикінцева частина","Збереження"];
+const PRESETS=[["Власна тема",""],["Навчальний проєкт","Навчальний проєкт"],["Підсумкове оцінювання","Підсумкове оцінювання"],["Резерв","Резервний час"]];
+const TODO="…";
+
+/* ================= стан ================= */
+const KEY="np-constructor-v1";
+let uidN=0; const uid=p=>p+Date.now().toString(36)+(uidN++).toString(36);
+const newRub=()=>({levels:[...LEVELS[4]],rows:[]});
+const blank=()=>({v:1,step:0,meta:{title:"",grades:"",author:"",school:"",year:String(new Date().getFullYear()),model:"",plan:""},intro:{},final:{},items:[],ref:{intro:"",final:""},self:{},open:{},rub:{kz:newRub(),pr:newRub()},assess:{},field:""});
+let S=blank();
+const fix=o=>{ const b=blank(); const s=Object.assign(b,o); s.rub=Object.assign(blank().rub,o.rub||{}); return s; };
+try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); if(o&&o.v===1) S=fix(o);}}catch(e){}
+let saveT=null; const save=()=>{clearTimeout(saveT); saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}},400);};
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm=s=>String(s||"").toLowerCase().replace(/[’ʼ']/g,"’").replace(/\s+/g," ").trim();
+const done=v=>{ const s=String(v||"").trim(); return !!s && !s.includes(TODO); };
+function toast(msg,undo){ const h=$("#toastHost"); h.innerHTML=`<div class="toast" role="status"><span>${esc(msg)}</span>${undo?'<button id="tUndo">Повернути</button>':""}</div>`;
+  if(undo) $("#tUndo").onclick=()=>{undo(); h.innerHTML="";};
+  clearTimeout(toast.t); toast.t=setTimeout(()=>h.innerHTML="",undo?7000:4000); }
+
+/* ================= читання .docx ================= */
+const WNS="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+const wkids=(el,name)=>[...el.childNodes].filter(n=>n.nodeType===1&&n.namespaceURI===WNS&&(!name||n.localName===name));
+function wText(el){ let t=""; const walk=n=>{ for(const c of n.childNodes){ if(c.nodeType!==1) continue; const ln=c.localName;
+    if(ln==="t") t+=c.textContent; else if(ln==="tab") t+="\t"; else if(ln==="br"||ln==="cr") t+="\n"; else if(ln==="p"){ if(t&&!t.endsWith("\n")) t+="\n"; walk(c);} else if(ln!=="tbl") walk(c);} };
+  walk(el);
+  t=t.replace(/[ \t]*[-][ \t]*/g,"\n").replace(/(^|\n|[ \t;:,])[ \t]*[•▪●◦■□➢✓✔‣⁃][ \t]*/g,(m,a)=>(/[;:,]/.test(a)?a:"")+"\n");
+  return t.replace(/\n{2,}/g,"\n").trim(); }
+function docxItems(body){ const out=[]; const walk=el=>{ for(const n of wkids(el)){
+    if(n.localName==="p"){ const pPr=wkids(n,"pPr")[0]; let lvl=null;
+      if(pPr){ const ol=wkids(pPr,"outlineLvl")[0]; if(ol) lvl=+ol.getAttributeNS(WNS,"val");
+        const st=wkids(pPr,"pStyle")[0]; if(lvl===null&&st){ const v=st.getAttributeNS(WNS,"val")||""; const m=v.match(/(?:heading|заголовок|^)\s*(\d)$/i); if(m) lvl=+m[1]-1; } }
+      out.push({k:"p",t:wText(n).replace(/\s+/g," ").trim(),lvl}); }
+    else if(n.localName==="tbl") out.push({k:"t",rows:wkids(n,"tr").map(tr=>wkids(tr,"tc").map(tc=>wText(tc)))});
+    else if(n.localName==="sdt"){ const c=wkids(n,"sdtContent")[0]; if(c) walk(c); } } };
+  walk(body); return out; }
+const inStemList=prev=>/:\s*$/.test(prev)||(/[;,]\s*$/.test(prev)&&/:\s*\S/.test(prev));
+const joinLines=txt=>{ const out=[]; for(const raw of String(txt||"").split("\n")){ const l=raw.trim(); if(!l) continue; const prev=out[out.length-1];
+    if(out.length&&/^[a-zа-яіїєґ(,]/.test(l)&&(!/[.!?:;)»"]$/.test(prev)||inStemList(prev))) out[out.length-1]+=" "+l; else out.push(l); }
+  return out.map(l=>l.replace(/\s+/g," ")); };
+const splitActs=lines=>lines.flatMap(l=>l.split(/(?<=[.!?])\s+(?=[А-ЯІЇЄҐA-Z])/)).flatMap(l=>/:\s*\S/.test(l)?[l]:l.split(/;\s+/))
+  .map(x=>x.trim().replace(/[;,]$/,"")).filter(Boolean).map(x=>x[0].toUpperCase()+x.slice(1)+(/[.!?]$/.test(x)?"":"."));
+/* результати: кожен закінчується індексом у квадратних дужках; рядки «Група вмінь …» стають підписами груп */
+const RX_GROUP=/^(?:група (?:вмінь|умінь|результатів)|змістова лінія|ГР\s*\d)(?=[\s.:]|$)/i;
+const GROUP_NAMES=/^((?:група (?:вмінь|умінь|результатів)|ГР\s*\d\.?)\s*(?:\d\.?\s*)?(?:Інформація\.?\s*Дані\.?\s*Моделі\.?|Цифрова творчість\.?|Цифрове середовище\.?|Безпека (?:та|і) відповідальність\.?))\s+(\S.*)$/i;
+const RX_IDX=/\[[^\[\]]*\d[^\[\]]*\]/;
+function parseOutcomes(txt){
+  const lines=String(txt||"").split("\n").map(x=>x.trim()).filter(Boolean);
+  if(!lines.some(l=>RX_IDX.test(l))) return joinLines(lines.join("\n")).map(t=>RX_GROUP.test(t)?{t,g:true}:{t});
+  const out=[]; let buf=[];
+  const flush=()=>{ if(!buf.length) return; const s=buf.join(" ").replace(/\s+/g," ").trim(); buf=[];
+    const re=/([^\[\]]*?)((?:\s*\[[^\[\]]*\d[^\[\]]*\])+)/g; let m, last=0;
+    while((m=re.exec(s))){ const text=m[1].replace(/^[\s;,.•·\-–—]+/,"").trim(), idx=m[2].replace(/\s+/g," ").trim();
+      if(!text&&out.length&&!out[out.length-1].g) out[out.length-1].t+=" "+idx; else out.push({t:(text?text+" ":"")+idx});
+      last=re.lastIndex; }
+    const rest=s.slice(last).replace(/^[\s;,.]+/,"").trim(); if(rest) out.push({t:rest}); };
+  for(const l0 of lines){ const gm=l0.match(GROUP_NAMES); const parts=gm?[gm[1],gm[2]]:[l0]; for(const l of parts){ if(RX_GROUP.test(l)&&l.length<=90&&!RX_IDX.test(l)){ flush(); out.push({t:l,g:true}); } else buf.push(l); } }
+  flush();
+  return out;
+}
+const startsCont=s=>!!s&&/^[a-zа-яіїєґ0-9\[(,;]/.test(s);
+const RX_MODULE=/^(?:[IVXІ]+\.\s*)?(?:(?:основна частина\s*)?(\d{1,2})\s*[-–]?\s*(?:й\s*)?клас(?:\b|$)|(?:модуль|розділ|блок|частина)\s*[\dIVXІ]+\b)/i;
+const RX_TOPIC=/^тема\s*(?:\d+(?:\.\d+)*)?\s*[.:)\-–]?\s*/i;
+const RX_END=/^(?:(?:ІІІ|III|IV|ІV|3)\.\s*)?(?:прикінцева частина|прикінцеві положення|список (?:використаних )?(?:джерел|літератури)|використані джерела|додатк)/i;
+const RX_MAINHEAD=/^(?:(?:ІІ|II|2)\.\s*)?(?:основна частина|зміст (?:навчальної )?програми|зміст навчання)\.?$/i;
+const hoursOf=t=>{const m=t.match(/\(\s*(\d+)\s*(?:год|г)\.?[^)]*\)\s*$/i); return m?m[1]:"";};
+const cleanTopic=t=>t.replace(RX_TOPIC,"").replace(/\(\s*\d+\s*(?:год|г)\.?[^)]*\)\s*$/i,"").replace(/[\s.:]+$/,"").trim()||t.trim();
+function headerMap(row){ if(row.some(x=>x.trim().length>90)) return null; const h=row.map(norm); const find=re=>h.findIndex(x=>re.test(x));
+  const res=find(/^(?:очікуван\S*\s+)?результат/), cont=find(/^(?:пропонован\S*\s+|навчальн\S*\s+)?зміст/), act=find(/^(?:види|форми|пропонован\S*\s+види)?\s*(?:навчальн\S*\s+)?(?:діяльн|роботи)/);
+  if(res<0||(cont<0&&act<0)) return null; return {res,cont,act,topic:find(/^тем|назва теми|^розділ|^модуль/),n:row.length}; }
+const isCritTable=rows=>rows[0]&&rows[0].length>1&&/^(?:[А-ЯІЇЄҐ]{2,5})\s*\d$/.test((rows[0][1]||"").trim());
+
+function parseProgramme(items){
+  const mods=[]; let mod=null,topic=null,started=false,ended=false,lastNum=0,title="",authors="",cmap=null,pendMod=null,pendTopic=null,firstT=-1,endAt=-1,lastT=-1;
+  const newModule=name=>{mod={name,topics:[]};mods.push(mod);topic=null;};
+  const newTopic=(name,synth)=>{ if(!mod) newModule(pendMod||""); topic={name:synth?"":cleanTopic(name),hours:synth?"":hoursOf(name),rows:[]}; mod.topics.push(topic); };
+  const moduleName=t=>{const m=t.match(/(\d{1,2})\s*[-–]?\s*(?:й\s*)?клас/i); if(m){lastNum=+m[1]; return `${m[1]} клас`;} return t.replace(/^[IVXІ]+\.\s*/,"");};
+  items.forEach((it,idx)=>{
+    if(it.k==="p"){ const t=it.t; if(!t) return;
+      if(!title){const q=t.match(/«([^»]{3,160})»/); if(q&&!/рекомендовано|гриф/i.test(q[1])) title=q[1];}
+      if(!authors&&!started){const a=t.match(/автор(?:и|ка|ський колектив|и-укладачі)?\s*[:–-]?\s+([^()]{5,200}?)\s*\)?\s*$/i); if(a&&/[А-ЯІЇЄҐ]\.\s*[А-ЯІЇЄҐ]?\.?/.test(a[1])) authors=a[1].replace(/[\s.;,]+$/,"")+(/\.$/.test(a[1].trim())?".":"");}
+      if(t.length>120) return;
+      if(started&&!ended&&RX_END.test(t)){ended=true; endAt=idx; return;}
+      if(ended) return;
+      const isMod=RX_MODULE.test(t)||(/^клас$/i.test(t)&&lastNum);
+      const name=/^клас$/i.test(t)?`${++lastNum} клас`:(isMod?moduleName(t):null);
+      if(!started){ if(isMod){pendMod=name;pendTopic=null;} else if(RX_TOPIC.test(t)) pendTopic=t; return; }
+      if(isMod){newModule(name);return;}
+      if(RX_MAINHEAD.test(t)) return;
+      if(RX_TOPIC.test(t)||(it.lvl!==null&&it.lvl>=1&&t.length<=100)){newTopic(t);return;}
+      if(it.lvl===0&&t.length<=100){newModule(t);return;}
+      return; }
+    if(ended) return;
+    const rows=it.rows.filter(r=>r.some(x=>x.trim())); if(!rows.length) return;
+    const hi=rows.findIndex(r=>headerMap(r)); const hm=hi>=0?headerMap(rows[hi]):null;
+    if(!started&&!hm) return;
+    if(isCritTable(rows)) return;
+    if(hm) cmap=hm;
+    if(!hm&&rows.every(r=>r.length<3)) return;
+    if(!started){started=true; firstT=idx; if(pendMod) newModule(pendMod); if(pendTopic) newTopic(pendTopic);}
+    lastT=idx; let first=true;
+    for(let ri=0;ri<rows.length;ri++){ const cells=rows[ri].map(x=>x.trim());
+      if(ri===hi){first=false;continue;}
+      const nonEmpty=cells.filter(Boolean);
+      if(cells.length===1||(nonEmpty.length&&cells.every(x=>x===cells[0]))||(nonEmpty.length===1&&cells.length>=3&&cells[0]&&!first&&cells[0].length<=120&&!/[.;]$/.test(cells[0])&&!/\[/.test(cells[0]))){
+        const t=(nonEmpty[0]||"").replace(/\s+/g," "); if(!t||/^очікувані/i.test(t)){first=false;continue;}
+        if(RX_MODULE.test(t)) newModule(moduleName(t)); else newTopic(t); first=false; continue; }
+      const map=(cmap&&cmap.n===cells.length)?cmap:{res:cells.length-3,cont:cells.length-2,act:cells.length-1,topic:cells.length>3?0:-1};
+      if(cells.length<3){first=false;continue;}
+      if(map.topic>=0&&cells[map.topic]&&(!topic||cleanTopic(cells[map.topic])!==topic.name)) newTopic(cells[map.topic].split("\n")[0]);
+      const a=cells[map.res]||"",b=map.cont>=0?(cells[map.cont]||""):"",c=map.act>=0?(cells[map.act]||""):"";
+      if(!a&&!b&&!c){first=false;continue;}
+      if(!topic) pendTopic?newTopic(pendTopic):newTopic("",true);
+      const cont=first&&topic.rows.length&&([a,b,c].some(startsCont)||(!b&&!c));
+      if(cont){const pr=topic.rows[topic.rows.length-1]; [a,b,c].forEach((x,i)=>{ if(x) pr[i]=(pr[i]+(startsCont(x)?" ":"\n")+x).trim(); });}
+      else topic.rows.push([a,b,c]);
+      first=false; } });
+  mods.forEach(m=>m.topics=m.topics.filter(t=>t.rows.length));
+  return {title,authors,mods:mods.filter(m=>m.topics.length),firstT,endAt,lastT};
+}
+const itemText=it=>it.k==="p"?it.t:it.rows.map(r=>r.map(x=>x.replace(/\n/g," ")).join(" | ")).join("\n");
+function refTexts(items,p){
+  if(p.firstT<0) return {intro:"",final:""};
+  let a=p.firstT; while(a>0&&items[a-1].k==="p"&&(!items[a-1].t||(items[a-1].t.length<=120&&(RX_MODULE.test(items[a-1].t)||RX_TOPIC.test(items[a-1].t)||RX_MAINHEAD.test(items[a-1].t))))) a--;
+  const b=p.endAt>=0?p.endAt:p.lastT+1;
+  const pick=arr=>arr.map(itemText).filter(x=>x.trim()).join("\n\n");
+  return {intro:pick(items.slice(0,a)),final:pick(items.slice(b))};
+}
+const L=(t,orig=true,extra={})=>({t,o:orig?t:null,d:false,...extra});
+function buildItems(p){
+  const out=[]; const many=p.mods.length>1||p.mods.some(m=>m.name);
+  for(const m of p.mods){
+    if(many&&m.name) out.push({id:uid("s"),k:"sec",name:m.name});
+    for(const t of m.topics){
+      const res=parseOutcomes(t.rows.map(r=>r[0]).filter(Boolean).join("\n")), cont=joinLines(t.rows.map(r=>r[1]).join("\n")), act=splitActs(joinLines(t.rows.map(r=>r[2]).join("\n")));
+      out.push({id:uid("t"),k:"topic",name:t.name||"Тема",orig:t.name||"",hours:t.hours||"",res:res.map(x=>L(x.t,true,x.g?{g:true}:{})),cont:cont.map(x=>L(x)),act:act.map(x=>L(x)),tools:"",kz:false,pr:false}); } }
+  return out;
+}
+async function importDocx(file){
+  if(!window.JSZip){toast("Бібліотека для читання Word не завантажилася. Перевірте інтернет і перезавантажте сторінку.");return;}
+  try{
+    const zip=await JSZip.loadAsync(await file.arrayBuffer()); const f=zip.file("word/document.xml"); if(!f) throw new Error("це не документ Word (.docx)");
+    const doc=new DOMParser().parseFromString(await f.async("string"),"application/xml"); const body=doc.getElementsByTagNameNS(WNS,"body")[0];
+    const items=docxItems(body); const p=parseProgramme(items);
+    if(!p.mods.length) throw new Error("у документі не знайдено таблиці зі стовпцем «Очікувані результати навчання»");
+    const hasWork=S.items.length||Object.values(S.intro).some(Boolean)||Object.values(S.final).some(Boolean);
+    const prev=JSON.stringify(S);
+    const keep={intro:S.intro,final:S.final,meta:S.meta,rub:S.rub,sources:S.sources,field:S.field};
+    S=blank(); Object.assign(S,keep);
+    const name=p.title?`«${p.title}»`:file.name.replace(/\.docx$/i,"");
+    S.meta={...keep.meta,model:name+(p.authors?` (автори ${p.authors})`:"")};
+    const gm=(p.title||"").match(/^(.*?)[.,]?\s*(\d{1,2}(?:\s*[–-]\s*\d{1,2})?\s*клас\S*)\s*$/i);
+    if(!S.meta.title) S.meta.title=gm?gm[1].trim():(p.title||"");
+    if(!S.meta.grades&&gm) S.meta.grades=gm[2].replace(/\s*[–-]\s*/,"–");
+    if(!S.meta.year) S.meta.year=String(new Date().getFullYear());
+    S.items=buildItems(p); S.ref=refTexts(items,p); S.step=0; save(); render();
+    const nT=S.items.filter(x=>x.k==="topic").length;
+    toast(`Розпізнано тем: ${nT}. Перевірте назву й авторів модельної програми нижче.`, hasWork?()=>{S=JSON.parse(prev);save();render();}:null);
+  }catch(e){toast("Не вдалося прочитати файл: "+e.message);}
+}
+
+/* ================= стан заповнення ================= */
+const rubDone=r=>r.rows.length>0&&r.rows.every(x=>done(x.c)&&x.d.every(done));
+const fDone=(f,obj,c)=>f.rub?rubDone(S.rub[f.rub]):done(obj[c+"."+f.k]);
+const realF=b=>b.f.filter(x=>x.k!=="#");
+const blockState=(b,obj)=>{const ks=realF(b); const n=ks.filter(f=>fDone(f,obj,b.c)).length; return n===0?"":n===ks.length?"full":"part";};
+const partPct=(blocks,obj)=>{let a=0,n=0; for(const b of blocks) for(const f of realF(b)){ n++; if(fDone(f,obj,b.c)) a++; } return n?Math.round(a/n*100):0;};
+const topics=()=>S.items.filter(x=>x.k==="topic");
+const live=arr=>arr.filter(x=>!x.d&&String(x.t||"").trim());
+const liveO=t=>live(t.res).filter(x=>!x.g);
+function mainPct(){ const T=topics(); if(!T.length) return 0; let a=0; for(const t of T){ a+=[liveO(t).length,live(t.cont).length,live(t.act).length&&live(t.act).every(x=>done(x.t)),String(t.tools).trim(),String(t.hours).trim()].filter(Boolean).length; } return Math.round(a/(T.length*5)*100); }
+
+/* ================= планування оцінювання =================
+   за путівниками МОН «… освітня галузь: як оцінювати в НУШ» (2025) і каталогом формувального оцінювання FormA (ETF);
+   логіка та дані — з «Конструктора модельної навчальної програми» */
+const A_TOOLS = {
+  "Практична робота":"Застосування знань, уміння діяти й самостійно розв’язувати завдання, перенесення знань у практичні ситуації; може поєднувати кілька компонентів у цілісний продукт.",
+  "Усна відповідь / співбесіда":"Глибина розуміння, уміння аргументувати, рівень самостійності й взаємодії.",
+  "Тест":"Перевірка знання, розуміння, аналізу; завдання різних типів: вибір, увідповіднення, упорядкування рядків коду, пропуски, вільний текст.",
+  "Проєкт":"Глибина знань, уміння планувати, виконувати дії, співпрацювати й переносити знання в практику.",
+  "Представлення / захист проєкту":"Аналіз джерел, самостійність, взаємодія з аудиторією, уміння адаптувати зміст до контексту.",
+  "Карта понять":"Аналіз, узагальнення й структурування інформації, встановлення зв’язків між поняттями.",
+  "Інтерактивні вправи":"Знання, участь, ініціатива, взаємодія; миттєвий зворотний зв’язок, самоперевірка.",
+  "Дискусії, дебати":"Аналітичне мислення, аргументація, взаємодія, відповідальність за висловлення.",
+  "Анкетування / опитування":"Розуміння понять і цінностей, саморефлексія; налаштування навчання.",
+  "Щоденник / журнал рефлексії":"Автономне мислення, осмислення досвіду, рефлексія щодо власного поступу.",
+  "Есе":"Знання, уміння структурувати й обґрунтовувати думки, письмова комунікація.",
+  "Аналіз кейсу":"Аналіз ситуації, висновки, застосування знань у новому контексті, аргументація вибору дій.",
+  "Дослідницьке завдання":"Планування, аналіз, виконання дій, рефлексія, співпраця.",
+  "Квест":"Командне розв’язання послідовності завдань: знання з теми, стратегії поведінки, оптимальні рішення.",
+  "Вікторина":"Швидка перевірка знань з теми, зокрема з миттєвим зворотним зв’язком.",
+  "Міні-дослідження":"Повний цикл роботи з інформацією: пошук, аналіз, подання результатів.",
+  "Компетентнісне завдання":"Застосування знань і навичок у реальних чи змодельованих ситуаціях з міжпредметною інтеграцією.",
+  "Хакатон":"Інтенсивна робота над модульним рішенням в обмежений час у тісній співпраці.",
+  "Симуляційний кейс":"Робота у віртуальних середовищах, швидке освоєння нових цифрових інструментів."
+};
+const A_STRAT = [
+  ["1","Чітке розуміння учнями цілей навчання і критеріїв успіху",["Анкетування / опитування","Карта понять"]],
+  ["2","Ефективне збирання свідчень про досягнення результатів",["Тест","Практична робота","Інтерактивні вправи","Аналіз кейсу","Усна відповідь / співбесіда","Квест","Вікторина"]],
+  ["3","Зворотний зв’язок, який сприяє навчанню",["Дискусії, дебати","Есе","Представлення / захист проєкту"]],
+  ["4","Активізація учнів як суб’єктів власного навчання",["Проєкт","Дослідницьке завдання","Інтерактивні вправи"]],
+  ["5","Рефлексія та мислення зростання",["Щоденник / журнал рефлексії","Анкетування / опитування","Есе"]]
+];
+/* methods of the FormA catalogue (ETF), distributed over the stages of formative assessment */
+const A_FORMA = {
+  "1":["Навчальні цілі","Критерії успіху","Дві зірки та мета","SMART-аудит","Буде ще краще, якщо…"],
+  "2":["Метод Фейнмана","Відеосвідчення","Теорія змін","Діагностика базових знань","Презентація поступу","Вихідне опитування","Іпсативне оцінювання"],
+  "3":["Знайди відмінності","SCRUM","Учнівські виставки","Наставництво з боку колег","Структуроване опитування"],
+  "4":["Порівняльне ранжування","Ікігай","Взаємне спостереження","Правда й брехня","Світлофор"],
+  "5":["Перепона","Вікторини від колег","Сценарії для обговорення","Картки з афірмаціями","5 Чому й Як","3-2-1","Цикл зворотного зв’язку","Разом ми вчимося більше","Карусель зворотного зв’язку","А як би ви вчинили?"]
+};
+const FORMA_SET = new Set(Object.values(A_FORMA).flat());
+const A_SUM = {
+  "1":["Аналіз кейсу","Карта понять","Щоденник / журнал рефлексії","Проєкт","Представлення / захист проєкту","Міні-дослідження","Тест","Інтерактивні вправи","Усна відповідь / співбесіда","Дискусії, дебати"],
+  "2":["Практична робота","Проєкт","Представлення / захист проєкту","Дослідницьке завдання","Компетентнісне завдання","Хакатон"],
+  "3":["Практична робота","Інтерактивні вправи","Проєкт","Представлення / захист проєкту","Щоденник / журнал рефлексії","Усна відповідь / співбесіда","Симуляційний кейс"],
+  "4":["Дискусії, дебати","Есе","Щоденник / журнал рефлексії","Аналіз кейсу","Проєкт","Тест","Усна відповідь / співбесіда","Квест","Вікторина"]
+};
+const A_GR_NAME = {"1":"Робота з інформацією, даними, моделями","2":"Створення інформаційних продуктів","3":"Робота в цифровому середовищі","4":"Безпечна та відповідальна робота з ІТ"};
+/* which words in the topic's activities point to an assessment tool */
+const A_KEYS = {
+  "Карта понять":["карт понять","карти понять","схеми взаємозв","ментальн","структуруван"],
+  "Щоденник / журнал рефлексії":["щоденник","журнал","рефлекс"],
+  "Анкетування / опитування":["анкет","опитуван","опитувальн"],
+  "Тест":["тесту","тест з","тест із","тестові завдання","тестових завдань"],
+  "Практична робота":["інтеграц","комплексн","поєднан","цілісн","створ","програмуван","налаштуван","складан","розроб","побудов","виконан","конструюв","редагуван","форматуван"],
+  "Інтерактивні вправи":["класифік","сортуван","впорядкув","розпізнаван","вправ","тренажер","парсонса"],
+  "Аналіз кейсу":["кейс","ситуац"],
+  "Есе":["есе","роздум","твір"],
+  "Дискусії, дебати":["дебат","дискус","обговор"],
+  "Проєкт":["проєкт","проект"],
+  "Представлення / захист проєкту":["презентац","захист","представлен"],
+  "Дослідницьке завдання":["дослідж","експеримент","гіпотез","калібр"],
+  "Міні-дослідження":["дослідж","опитуван","збирання","збір дан"],
+  "Квест":["квест"],
+  "Вікторина":["вікторин"],
+  "Компетентнісне завдання":["реальн","життєв","міжпредмет","змодельован"],
+  "Хакатон":["хакатон"],
+  "Симуляційний кейс":["симуляц","віртуальн","симулятор"],
+  "Усна відповідь / співбесіда":["поясн","аргумент","обґрунтув","опис"],
+  "Метод Фейнмана":["поясн"], "Відеосвідчення":["відео","скрінкаст"], "Презентація поступу":["презентац","представлен","портфоліо"],
+  "Діагностика базових знань":["анкети очікуван","діагност"], "Вихідне опитування":["вихідн","квиток"], "Іпсативне оцінювання":["щоденник","траєктор","власного рівня"],
+  "Теорія змін":["дизайн-мисл"], "SCRUM":["scrum","kanban","канбан","дошкою завдань"],
+  "Учнівські виставки":["виставк","галере","захист"], "Наставництво з боку колег":["парне програм","взаємонавч","пазл","допомог"],
+  "Структуроване опитування":["опитуван","анкет"], "Знайди відмінності":["порівнян","помил"],
+  "Порівняльне ранжування":["ранжуван"], "Взаємне спостереження":["взаємооцін","спостереж"], "Світлофор":["самооцін"],
+  "Правда й брехня":["хибн","неправдив","достовір","фактчек"], "Ікігай":["професі"],
+  "Критерії успіху":["критері","чекліст","рубрик"], "Дві зірки та мета":["дві зірки"], "Буде ще краще, якщо…":["вдоскона","покращ"],
+  "SMART-аудит":["smart"], "Навчальні цілі":["навчальн ціл","цілей навчан"],
+  "Цикл зворотного зв’язку":["зворотн","відгук"], "Карусель зворотного зв’язку":["зворотного зв’язку в парах"], "Разом ми вчимося більше":["груп","команд","співпрац"],
+  "А як би ви вчинили?":["кейс","ситуац","рольов"], "Сценарії для обговорення":["обговор","дискус","дебат"], "Вікторини від колег":["вікторин","квест"],
+  "5 Чому й Як":["причинно"], "3-2-1":["рефлекс"], "Перепона":["помил","налагодж"], "Картки з афірмаціями":["мотивац"]
+};
+
+const SRC_ASSESS = [
+  ["Інформатична освітня галузь: як оцінювати в НУШ (путівник, 2025)","https://educationforlife.mon.gov.ua/wp-content/uploads/2025/10/ifo-ociniuvannia-2025-putivnik.pdf"],
+  ["Каталог формувального оцінювання FormA (ETF)","https://share.articulate.com/dmhZmI8rCabv7dROc-IdK#/"]
+];
+const AG_URL = f => `https://mon.gov.ua/static-objects/mon/sites/1/zagalna%20serednya/nush/${f}-ociniuvannia-2025-putivnik.pdf`;
+const AG = {
+"МОВ": { file:"mov", src:"Мовно-літературна освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Усна взаємодія","2":"Робота з текстом","3":"Письмова взаємодія","4":"Дослідження мовлення"},
+  map:{}, mapNote:"Групи результатів збігаються з групами стандарту (МОВ 1–4).",
+  note:{"1":"Мінімум — 2 підсумкові роботи на семестр; за рік оцінюють слухання, діалогічне й монологічне мовлення (4 роботи).","2":"Мінімум — 1–2 підсумкові роботи на семестр.","3":"Мінімум — 1 підсумкова робота на семестр.","4":"Мінімум — 1 підсумкова робота на семестр."},
+  cur:{
+    "1":["Спостереження за усним мовленням","Мовні шаблони","Рефлексивні запитання","Картки з ролями","Взаємне спостереження за мовленням","Перефразування","Самооцінювання усного мовлення","Взаємооцінювання усного мовлення","Подумай – обговори в парі – поділися","Візуалізація почутого"],
+    "2":["Читання в парі з обговоренням","Щоденник подвійних нотаток","Емоційний відгук","Картка самооцінювання «Працюю з текстом»","Візуалізація прочитаного","Інсценізація"],
+    "3":["Маркування","Рефлексія в парі","Запитання до автора / авторки","Аудіоспостереження","Щоденник спостережень за мовленням","Само- і взаємооцінювання есе"],
+    "4":["Партнерська взаємодія","Спостереження за власним мовленням"]},
+  sum:{
+    "1":["Аудіювання художнього тексту","Аудіювання нехудожнього тексту","Візуалізація почутого (ментальна карта)","Усний переказ почутого","Діалогування, рольова гра","Усне висловлення за прослуханим","Усна розповідь про події","Публічний виступ","Інтерв’ювання","Комплексна підсумкова робота"],
+    "2":["Тестування за новим художнім текстом","Тестування за новим нехудожнім текстом","Тестування за новим медіатекстом","Візуалізація прочитаного (інтелект-карта)","Усний переказ прочитаного","Есе (усне) за прочитаним","Есе (письмове) за прочитаним","Комплексна підсумкова робота"],
+    "3":["Творче письмо на визначену тему","Творче письмо за графічною інформацією","Створення медіатексту","Редагування тексту","Тези, аргументи, висновки за почутим чи прочитаним","Комплексна підсумкова робота"],
+    "4":["Тестування за новим художнім текстом","Тестування за новим нехудожнім текстом","Тестування за новим медіатекстом","Комплексна підсумкова робота"]},
+  t:{
+    "Спостереження за усним мовленням":["Учитель / учителька слухає висловлення під час завдання (доречність, логічність, відповідність меті, норми, інтонація) і одразу коментує, що вдалося і що покращити.",["висловл","діалог","монолог","усн"]],
+    "Мовні шаблони":["Перед завданням учні отримують мовні кліше («Я думаю, що…»); оцінюють правильність і доречність їх використання.",["кліше","шаблон","мовні конструкц"]],
+    "Рефлексивні запитання":["Після завдання учні відповідають: що вдалося, що було складним, що зроблю інакше; оцінюють усвідомлення власних мовленнєвих стратегій.",["рефлекс"]],
+    "Картки з ролями":["Ролі в обговоренні (модератор, опонент, підсумовувач тощо): учні вчаться взаємодіяти відповідно до ролі, слухати й конструктивно реагувати.",["ролі","ролей","рольов","обговор","дискус"]],
+    "Взаємне спостереження за мовленням":["Одна група спілкується, інша за критеріями (ввічливість, активне слухання, аргументованість) спостерігає й надає зворотний зв’язок.",["спостереж","обговор","груп"]],
+    "Перефразування":["Учень / учениця передає власними словами думку однокласника чи однокласниці; розвиває активне слухання.",["перефраз","власними словами"]],
+    "Самооцінювання усного мовлення":["Учень / учениця слухає аудіозапис власного мовлення, аналізує його за критеріями й планує наступні кроки.",["аудіозапис","самооцін"]],
+    "Взаємооцінювання усного мовлення":["Розмова в парі 2–5 хв, після якої учні дають одне одному зворотний зв’язок за контрольним списком чи простою рубрикою.",["взаємооцін","парах","парі","парн","розпитув"]],
+    "Подумай – обговори в парі – поділися":["Учні обмірковують відповідь самостійно, узгоджують її в парі й представляють класу; оцінюють аргументацію і вміння слухати.",["обговор","парах","парі","парн"]],
+    "Візуалізація почутого":["Учні створюють візуальне подання змісту почутого (схему, малюнок, ментальну карту) і захищають його за заздалегідь відомими критеріями.",["візуаліз","унаочн","ментальн","інтелект-карт","аудіюв","прослух"]],
+    "Читання в парі з обговоренням":["Учні читають текст у парі, ставлять запитання й обговорюють прочитане; учитель оцінює якість запитань і глибину обговорення.",["читан","прочит","обговор"]],
+    "Щоденник подвійних нотаток":["Ліворуч — цитата чи факт з тексту, праворуч — власний коментар; учитель оцінює повноту й глибину нотаток.",["щоденник","нотат","цитат"]],
+    "Емоційний відгук":["Учні описують емоції й враження від прочитаного; оцінюють глибину емоційного відгуку та його зв’язок з текстом.",["враж","емоці","відгук"]],
+    "Картка самооцінювання «Працюю з текстом»":["Учні за картою з описами рівнів оцінюють, як застосовують види критичного читання й співвідносять текст з іншими джерелами.",["самооцін","критичн"]],
+    "Візуалізація прочитаного":["Перетворення текстової інформації на графічну (схема, таблиця, інтелект-карта) з взаємооцінюванням за критеріями.",["візуаліз","схем","таблиц","інтелект-карт","кластер","ментальн"]],
+    "Інсценізація":["Учні інсценізують фрагмент тексту; виконавці й глядачі оцінюють взаємодію, емоційність, виразність мовлення, сценічну поведінку.",["інсцен","драматиз","ролі","ролей","рольов"]],
+    "Маркування":["Учні обмінюються в парі текстами й позначають умовними знаками вдалі місця, помилки й місця, що потребують доопрацювання.",["редагув","помил","взаємоперевір"]],
+    "Рефлексія в парі":["Учень / учениця переглядає власну роботу разом з партнером чи партнеркою й обговорює, що вдалося і що змінити.",["парах","парі","парн","рефлекс"]],
+    "Запитання до автора / авторки":["Прочитавши текст однокласника чи однокласниці, учні ставлять запитання до змісту й форми; автор доопрацьовує текст.",["запитан","текст"]],
+    "Аудіоспостереження":["Учень / учениця читає вголос власний текст (або слухає запис) і помічає недоліки побудови, ритму, зв’язності.",["вголос","аудіо"]],
+    "Щоденник спостережень за мовленням":["Учні фіксують типові власні помилки й успіхи в письмових роботах і відстежують поступ.",["щоденник","помил"]],
+    "Само- і взаємооцінювання есе":["Учні оцінюють есе за критеріями: чіткість, аргументація, особистісність, структура (самооцінювання) або переконливість і оригінальність (взаємооцінювання).",["есе","твір"]],
+    "Партнерська взаємодія":["Виконавши завдання з дослідження мовлення самостійно, учні звіряють і обговорюють результати в парі.",["парах","парі","парн","мовн","аналіз"]],
+    "Спостереження за власним мовленням":["Учні слухають запис власного мовлення й аналізують використання мовних засобів.",["запис","мовлен"]],
+    "Аудіювання художнього тексту":["Фронтальна письмова робота на урок: тест на виокремлення інформації, аналіз і оцінювання почутого художнього тексту.",["аудіюв","прослух"]],
+    "Аудіювання нехудожнього тексту":["Фронтальна письмова робота на урок: тест на виокремлення фактів, суджень, аргументів, аналіз і оцінювання почутого.",["аудіюв","прослух"]],
+    "Візуалізація почутого (ментальна карта)":["Фронтальна робота на урок: учні унаочнюють почутий текст, зокрема створюють ментальну карту.",["візуаліз","ментальн","інтелект-карт"]],
+    "Усний переказ почутого":["Індивідуальна робота на кількох уроках: переказ почутого тексту чи медіатексту.",["переказ"]],
+    "Діалогування, рольова гра":["Парна робота: діалог за коміксом чи ілюстрацією, діалог-розпитування, діалог етикетного характеру.",["діалог","рольов"]],
+    "Усне висловлення за прослуханим":["Індивідуальна робота: неструктуроване есе на задану тему за одним чи кількома прослуханими текстами.",["висловл","есе"]],
+    "Усна розповідь про події":["Індивідуальна усна розповідь про події.",["розповід"]],
+    "Публічний виступ":["Індивідуальний підготовлений виступ перед аудиторією.",["виступ","промов","презентац"]],
+    "Інтерв’ювання":["Учні готують запитання й беруть інтерв’ю.",["інтерв’ю"]],
+    "Комплексна підсумкова робота":["Робота, що охоплює кілька або всі групи результатів (приклад у путівнику — «Кобзар», 7 клас).",["комплексн"]],
+    "Тестування за новим художнім текстом":["Тест із закритими й відкритими завданнями на основі нового (не опрацьованого на уроках) художнього тексту.",["тест","читан","художн"]],
+    "Тестування за новим нехудожнім текстом":["Тест із закритими й відкритими завданнями на основі нового нехудожнього тексту.",["тест","читан"]],
+    "Тестування за новим медіатекстом":["Тест із закритими й відкритими завданнями на основі нового медіатексту.",["тест","медіатекст"]],
+    "Візуалізація прочитаного (інтелект-карта)":["Унаочнення прочитаного художнього чи нехудожнього тексту, зокрема інтелект-карта.",["візуаліз","інтелект-карт","ментальн"]],
+    "Усний переказ прочитаного":["Переказ прочитаного тексту чи медіатексту.",["переказ"]],
+    "Есе (усне) за прочитаним":["Усне есе на задану тему на основі одного чи кількох прочитаних текстів.",["есе"]],
+    "Есе (письмове) за прочитаним":["Письмове есе на задану тему на основі одного чи кількох прочитаних текстів.",["есе","твір"]],
+    "Творче письмо на визначену тему":["Створення текстів визначених стилів, типів і жанрів, що опрацьовуються.",["твор","письм","пише","написан"]],
+    "Творче письмо за графічною інформацією":["Створення письмового тексту на основі графічної інформації.",["графічн","інфографік","діаграм"]],
+    "Створення медіатексту":["Створення медіатексту на певну тему з використанням графічних прийомів.",["медіатекст","допис","блог"]],
+    "Редагування тексту":["Аналіз і вдосконалення змісту написаного, доповнення окремих частин.",["редагув"]],
+    "Тези, аргументи, висновки за почутим чи прочитаним":["Формулювання й запис тез, аргументів, висновків і власних міркувань на основі почутої, переглянутої чи прочитаної інформації.",["тез","аргумент","висновк"]]
+  }},
+"ІНО": { file:"mon-ino", src:"Мовно-літературна освітня галузь (іншомовна освіта): як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Сприймає усну інформацію","2":"Сприймає письмові тексти","3":"Усно взаємодіє та висловлюється","4":"Письмово взаємодіє та висловлюється"},
+  map:{"1.1":["1"],"1.2":["2"],"1.3":["1","2"],"2.1":["3"],"2.2":["4"],"2.3":["3","4"],"2.4":["3"],"3.1":["3"],"3.2":["4"],"3.3":["3","4"],"4":["3","4"]},
+  mapNote:"Оцінюють чотири види мовленнєвої діяльності, як у свідоцтві досягнень; загальні результати стандарту розподілено між ними орієнтовно (онлайн-взаємодію і стратегії — на усне й письмове мовлення).",
+  note:{"*":"Поточне оцінювання кожного виду мовленнєвої діяльності — щонайменше двічі на семестр."},
+  cur:{
+    "1":["Множинний вибір","Правдиве / хибне твердження","Відкриті запитання","Заповнення таблиці","Прослуховування і заповнення пропусків","Слідування інструкціям","Вибір малюнка чи схеми за почутим"],
+    "2":["Множинний вибір","Правдиве / хибне твердження","Відкриті запитання","Заповнення таблиці","Розташування абзаців у послідовності","Підбір заголовка до абзацу","Заповнення пропусків (cloze test)"],
+    "3":["Інтерв’ю","Обговорення","Коротка презентація","Опис світлини, об’єкта, фільму","Рольова гра","Відповідь на запит","Дебати"],
+    "4":["Заповнення форми","Опис світлини чи діаграми","Написання історії","Огляд фільму чи книги","Есе, твір, лист, листівка, доповідь"]},
+  sum:{
+    "1":["Підсумкова робота за темою","Підсумкова робота наприкінці семестру","Множинний вибір","Правдиве / хибне твердження","Відкриті запитання","Прослуховування і заповнення пропусків"],
+    "2":["Підсумкова робота за темою","Підсумкова робота наприкінці семестру","Множинний вибір","Правдиве / хибне твердження","Розташування абзаців у послідовності","Підбір заголовка до абзацу","Заповнення пропусків (cloze test)"],
+    "3":["Підсумкова робота за темою","Підсумкова робота наприкінці семестру","Інтерв’ю","Коротка презентація","Опис світлини, об’єкта, фільму","Рольова гра"],
+    "4":["Підсумкова робота за темою","Підсумкова робота наприкінці семестру","Заповнення форми","Опис світлини чи діаграми","Написання історії","Есе, твір, лист, листівка, доповідь"]},
+  t:{
+    "Множинний вибір":["Після прослуховування чи читання учні обирають правильний варіант з кількох; перевіряє основну думку, деталі, мету повідомлення. 1–2 рази на розділ чи тему.",["вибір","тест"]],
+    "Правдиве / хибне твердження":["Учні визначають, які твердження про почуте чи прочитане правдиві, а які — хибні.",["правдив","хибн"]],
+    "Відкриті запитання":["Коротка відповідь власними словами на запитання до тексту; на рівні A1–A2 — про факти, на B1 — з інтерпретацією.",["запитан","відповіда"]],
+    "Заповнення таблиці":["Учні заповнюють таблицю інформацією з почутого чи прочитаного.",["таблиц"]],
+    "Прослуховування і заповнення пропусків":["Учні заповнюють пропуски в реченнях чи тексті під час або після прослуховування (зокрема пісні).",["пропуск","прослух","пісн"]],
+    "Слідування інструкціям":["Учні виконують усні інструкції: малюють об’єкт, проходять маршрут тощо.",["інструкц","маршрут"]],
+    "Вибір малюнка чи схеми за почутим":["Учні обирають зображення, схему чи вислів, що найкраще передає зміст почутого.",["малюн","зображен","схем"]],
+    "Розташування абзаців у послідовності":["Учні впорядковують абзаци, щоб утворився зв’язний текст; перевіряє розуміння структури й зв’язків.",["абзац","послідовн","впорядк"]],
+    "Підбір заголовка до абзацу":["Учні обирають або формулюють заголовок, що передає основну думку абзацу.",["заголов"]],
+    "Заповнення пропусків (cloze test)":["Учні заповнюють пропуски в реченні чи тексті відповідно до контексту.",["пропуск"]],
+    "Інтерв’ю":["Бесіда з учителем чи в парі / групі у формі інтерв’ю: зв’язне висловлення у відповідь на запитання, думка, приклади.",["інтерв’ю","бесід","розпитув"]],
+    "Обговорення":["Учні обговорюють тему, висловлюють і обґрунтовують думки, реагують на репліки інших.",["обговор","дискус"]],
+    "Коротка презентація":["Короткий усний виступ на тему зі вступом, основною частиною й завершенням.",["презентац","виступ","розповід"]],
+    "Опис світлини, об’єкта, фільму":["Учні описують зображення, предмет чи медіатекст, висловлюють враження й оцінку.",["опис","світлин","фото"]],
+    "Рольова гра":["Учні розігрують комунікативну ситуацію в ролях.",["рольов","діалог","ролі","ролей"]],
+    "Відповідь на запит":["Учні усно реагують на запит чи ситуацію спілкування.",["запит","ситуац"]],
+    "Дебати":["Учні обстоюють позицію за правилами дебатів.",["дебат"]],
+    "Заповнення форми":["Учні заповнюють анкету чи реєстраційну форму відповідно до ситуації.",["анкет","форму","бланк"]],
+    "Опис світлини чи діаграми":["Письмовий опис зображення чи діаграми.",["опис","діаграм","світлин"]],
+    "Написання історії":["Учні пишуть розповідь (історію) на тему.",["істор","розповід"]],
+    "Огляд фільму чи книги":["Учні пишуть огляд (відгук) про фільм чи книгу.",["огляд","відгук"]],
+    "Есе, твір, лист, листівка, доповідь":["Створення письмового висловлення відповідного жанру.",["есе","твір","листа","листи","листів","доповід","пише"]],
+    "Підсумкова робота за темою":["Перевірка засвоєння матеріалу теми; може бути комплексною або оцінювати окремі види мовленнєвої діяльності частинами.",["підсумков"]],
+    "Підсумкова робота наприкінці семестру":["Оцінювання динаміки мовленнєвих умінь і досягнення очікуваних результатів за семестр; можна проводити за кілька уроків або частинами.",["підсумков","семестр"]]
+  }},
+"МАО": { file:"mao", src:"Математична освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Досліджує ситуації та створює математичні моделі","2":"Розв’язує математичні задачі","3":"Інтерпретує та критично аналізує результати"},
+  map:{"1":["1"],"2":["2"],"2.3":["1"],"3":["3"],"4":["2"]},
+  mapNote:"За путівником: ГР 1 — група 1 стандарту й моделювання з групи 2; ГР 2 — решта групи 2 і група 4; ГР 3 — група 3. Розподіл групи 2 орієнтовний.",
+  note:{},
+  cur:{"*":["Розв’язування задач з поясненням","Побудова схем, графіків, діаграм","Тестові завдання й вправи","Компетентнісне завдання","Дослідження з математичними методами","Навчальний проєкт","Самостійна робота"]},
+  sum:{"*":["Самостійна робота","Підсумкова робота","Комплексна підсумкова робота","Компетентнісне завдання","Навчальний проєкт"]},
+  t:{
+    "Розв’язування задач з поясненням":["Задачі навчального й практичного змісту з детальним поясненням: оцінюють не лише відповідь, а й хід математичного мислення.",["задач","розв’яз","обчисл","рівнян"]],
+    "Побудова схем, графіків, діаграм":["Подання умови чи даних у вигляді схеми, графіка, діаграми, таблиці як математичної моделі.",["схем","графік","діаграм","таблиц","модел"]],
+    "Тестові завдання й вправи":["Завдання з вибором, на відповідність, з короткою відповіддю для швидкого зворотного зв’язку.",["тест","вправ"]],
+    "Компетентнісне завдання":["Задача з реального життя з кількома запитаннями: проаналізувати умову, створити модель, обчислити, інтерпретувати розв’язок; зазвичай охоплює всі три групи.",["реальн","життєв","практичн","компетентн"]],
+    "Дослідження з математичними методами":["Учні збирають дані, будують модель і роблять висновки.",["дослідж","експеримент","збир"]],
+    "Навчальний проєкт":["Створення практичного продукту (модель, макет, звіт, презентація) з дослідженням, аргументацією рішень і презентацією; найчастіше охоплює всі три групи.",["проєкт","проект","макет"]],
+    "Самостійна робота":["Письмова робота на 15–25 хв для перевірки однієї, двох чи трьох груп результатів; індивідуально або в парах.",["самостійн"]],
+    "Підсумкова робота":["Індивідуальна письмова робота на 25–45 хв за кількома групами результатів, зокрема тест з відкритими й закритими завданнями.",["підсумков","тест"]],
+    "Комплексна підсумкова робота":["Індивідуальна письмова робота на 45 хв за трьома групами результатів.",["комплексн"]]
+  }},
+"ПРО": { file:"pro", src:"Природнича освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Досліджує природу","2":"Здійснює пошук та опрацьовує інформацію","3":"Усвідомлює закономірності природи"},
+  map:{"1":["1"],"2":["2"],"3":["3"],"4":["1","2","3"]},
+  mapNote:"Групи 1–3 стандарту відповідають ГР 1–3; група 4 (наукове мислення, розв’язання проблем, співпраця) — наскрізна, її оцінюють у межах усіх трьох груп.",
+  note:{"1":"Для ГР 1 краще розробити окрему підсумкову роботу.","*":"Підсумкове оцінювання можна здійснювати й за проєктами: дослідницьким, пошуковим, практико-орієнтованим, соціальним."},
+  cur:{
+    "1":["Спостереження за дослідницькою діяльністю","Практична робота","Дослідницький практикум","Моделювання","Звіт про дослідження","Портфоліо","Само- та взаємооцінювання","Дослідницький проєкт"],
+    "2":["Аналітичне завдання з інформацією","Інтерпретування інформації в різних формах","Побудова графічних залежностей","Тестування","Інформаційний проєкт","Підготовка презентації"],
+    "3":["Ситуаційне завдання","Тематичний кейс","Моделювання","Дискусія","Ділова гра","Творчий проєкт","Лепбук","Тестування"]},
+  sum:{
+    "1":["Реальне дослідження","Віртуальний експеримент","Моделювання природних об’єктів і явищ","Технологічна карта чи план дослідження","Аналіз описаного дослідження","Дослідницький проєкт","Комплексна робота"],
+    "2":["Опрацювання інформації природничого змісту","Узагальнення інформації у схемах, таблицях, інфографіці","Створення тексту за інформацією в різних формах","Пошуковий (інформаційний) проєкт","Комплексна робота"],
+    "3":["Тест або тест-кластер","Комплексна проблема","Практико-орієнтований проєкт","Соціальний проєкт","Комплексна робота"]},
+  t:{
+    "Спостереження за дослідницькою діяльністю":["Учитель / учителька спостерігає, як учні формулюють гіпотезу, планують і проводять дослід, фіксують дані, дотримуються правил безпеки, співпрацюють.",["спостереж","дослід"]],
+    "Практична робота":["Виконання практичної роботи з вимірюваннями й фіксуванням результатів.",["практичн","вимірюв","лаборатор"]],
+    "Дослідницький практикум":["Серія дослідницьких завдань: гіпотеза, план, експеримент, висновки.",["дослідж","експеримент","гіпотез"]],
+    "Моделювання":["Створення моделей природних об’єктів, явищ і процесів.",["модел","макет"]],
+    "Звіт про дослідження":["Письмовий звіт з гіпотезою, методикою, результатами й висновками.",["звіт"]],
+    "Портфоліо":["Добірка робіт учня / учениці, що показує поступ.",["портфоліо"]],
+    "Само- та взаємооцінювання":["Учні оцінюють власну роботу й роботу інших за спільними критеріями; зокрема вміння комунікувати й співпрацювати.",["самооцін","взаємооцін"]],
+    "Дослідницький проєкт":["Отримання нового для учнів знання через експеримент чи аналіз даних; результат — науковий звіт.",["проєкт","дослідж"]],
+    "Аналітичне завдання з інформацією":["Робота з інформацією на одну тему з джерел різного ступеня надійності.",["джерел","інформац","достовір"]],
+    "Інтерпретування інформації в різних формах":["Тлумачення інформації, поданої текстом, схемою, діаграмою, графіком, інфографікою.",["інфографік","діаграм","графік","схем"]],
+    "Побудова графічних залежностей":["Побудова графіків і діаграм на основі числових чи статистичних даних.",["графік","діаграм","даних"]],
+    "Тестування":["Тестові завдання різних форм і когнітивних рівнів.",["тест"]],
+    "Інформаційний проєкт":["Збирання, перевірка й узагальнення відомостей з різних джерел; результат — огляд, довідник, інфографіка, презентація.",["проєкт","огляд","довідник"]],
+    "Підготовка презентації":["Представлення опрацьованої інформації природничого змісту.",["презентац"]],
+    "Ситуаційне завдання":["Застосування закономірностей природи до життєвої ситуації.",["ситуац","життєв"]],
+    "Тематичний кейс":["Аналіз кейсу на тему з поясненням явищ і прогнозом.",["кейс"]],
+    "Дискусія":["Обговорення природничої проблеми з аргументацією.",["дискус","обговор"]],
+    "Ділова гра":["Учні в ролях розв’язують природничу чи екологічну проблему.",["гра","ролі","ролей","рольов"]],
+    "Творчий проєкт":["Проєкт з креативною інтерпретацією теми, зокрема мистецькими засобами.",["проєкт","творч"]],
+    "Лепбук":["Тематична папка-розкладачка, що систематизує знання з теми.",["лепбук"]],
+    "Реальне дослідження":["Експеримент, короткочасне спостереження, вимірювання.",["дослідж","експеримент","вимірюв","спостереж"]],
+    "Віртуальний експеримент":["Дослід у віртуальній лабораторії, комп’ютерній симуляції, доповненій чи віртуальній реальності.",["віртуальн","симуляц"]],
+    "Моделювання природних об’єктів і явищ":["Створення моделі природного об’єкта, явища чи процесу.",["модел"]],
+    "Технологічна карта чи план дослідження":["Розроблення інструкції чи плану дослідження за відомими темою, метою й гіпотезою.",["план","інструкц"]],
+    "Аналіз описаного дослідження":["Пояснення етапів, процедур, обладнання, форми подання результатів і висновків дослідження за описом, ілюстрацією чи відео.",["аналіз","опис"]],
+    "Опрацювання інформації природничого змісту":["Завдання на відтворення, розуміння, застосування й аналіз запропонованої текстової, графічної чи мультимедійної інформації.",["інформац","текст"]],
+    "Узагальнення інформації у схемах, таблицях, інфографіці":["Подання текстової інформації у формі схем класифікації, таблиць, інфографіки, ментальних карт.",["схем","таблиц","інфографік","ментальн"]],
+    "Створення тексту за інформацією в різних формах":["Опис за інформацією, поданою символьно, на карті, в інфографіці, числами чи мультимедійно.",["опис","текст"]],
+    "Пошуковий (інформаційний) проєкт":["Збирання, перевірка й узагальнення відомостей; результат — огляд, довідник, інфографіка чи презентація.",["проєкт","пошук"]],
+    "Тест або тест-кластер":["Тест із завдань різних когнітивних рівнів і форм або тест-кластер, об’єднаний однією ідеєю і сюжетом.",["тест"]],
+    "Комплексна проблема":["Задача з контекстом: визначити невідомі величини, пояснити причини явищ, спрогнозувати результати.",["задач","проблем"]],
+    "Практико-орієнтований проєкт":["Створення виробу, моделі чи системи для розв’язання життєвої ситуації; результат — прототип з описом і тестуванням.",["проєкт","прототип"]],
+    "Соціальний проєкт":["Розв’язання проблеми громади; результат — соціально значущий продукт чи дія.",["соціальн","громад"]],
+    "Комплексна робота":["Комплексний тест за ГР 2 і ГР 3 або робота на два уроки: дослідження (ГР 1) й опрацювання його результатів (ГР 2, ГР 3).",["комплексн"]]
+  }},
+"ТЕО": { file:"teo", src:"Технологічна освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Процес виконання проєктної роботи","2":"Результат проєкту / готовий продукт"},
+  map:{"1":["1","2"],"2":["2"],"3":["2"],"4":["2"]},
+  mapNote:"ГР 1 (процес) — група 1 стандарту; ГР 2 (результат, продукт) — групи 1–4 стандарту залежно від змісту проєкту.",
+  note:{"*":"Підсумкову оцінку виставляють за результатами проєктної діяльності з урахуванням спостережень; окремі контрольні роботи не обов’язкові."},
+  cur:{
+    "1":["Аналіз зразків і аналогів","Відпрацювання елемента технології","Дослідницьке практичне завдання","Пояснення алгоритму дій","Проміжна презентація","Педагогічне спостереження","Портфоліо","Дорожня карта проєкту","Чек-листи","Інструкційні та технологічні карти","Аналіз письмових і візуальних джерел","Усне опитування, тестування","Онлайн-опитування","Щоденник саморефлексії","Рольова гра","Взаємооцінювання"],
+    "2":["Практичне виготовлення частини виробу","Тестування прототипу","Огляд продукту","Практичне завдання","Створення інформаційного продукту","Застосування цифрових інструментів","Аналіз якості власного продукту","Взаємооцінювання"]},
+  sum:{
+    "1":["Якість планування, вибір матеріалів і технологій","Дотримання безпеки й екологічності","Аналітична частина проєкту","Презентація і захист ідеї","Комплексна діагностувальна робота"],
+    "2":["Готовий продукт","Презентація чи захист продукту","Оцінювання продукту за критеріями","Соціальна чи волонтерська ініціатива","Комплексна діагностувальна робота"]},
+  t:{
+    "Аналіз зразків і аналогів":["Учні аналізують наявні вироби-аналоги перед проєктуванням.",["аналог","зразк"]],
+    "Відпрацювання елемента технології":["Пробне виконання окремої технологічної операції.",["операц","технолог","відпрацюв"]],
+    "Дослідницьке практичне завдання":["Учні порівнюють техніки, матеріали, об’єкти перед виготовленням і обґрунтовують вибір; на початку чи в середині проєкту.",["дослідж","матеріал","властивост"]],
+    "Пояснення алгоритму дій":["Усне чи письмове пояснення послідовності виготовлення.",["алгоритм","послідовн","поясн"]],
+    "Проміжна презентація":["Представлення стану проєкту на проміжному етапі.",["презентац","проміжн"]],
+    "Педагогічне спостереження":["Учитель / учителька постійно фіксує самостійність, дотримання безпеки, розподіл ролей, взаємодію, послідовність дій.",["спостереж","безпек","команд"]],
+    "Портфоліо":["Учень / учениця документує хід проєкту: джерела, карти ідей, ескізи, фото процесу, мінізвіти; може бути цифровим.",["портфоліо","проєктн тек","ескіз"]],
+    "Дорожня карта проєкту":["Схема чи таблиця етапів, термінів і статусу виконання.",["дорожн","план","етап"]],
+    "Чек-листи":["Відстеження виконання етапів, ключових завдань і правил безпеки.",["чек-лист","чекліст"]],
+    "Інструкційні та технологічні карти":["Пояснення етапів роботи, правил безпеки, прийомів роботи з інструментами.",["інструкц","технологічн карт"]],
+    "Аналіз письмових і візуальних джерел":["Аналіз інструкцій, моделей-аналогів, історичних і культурологічних відомостей; 1–2 рази на проєкт.",["джерел","історі","традиц"]],
+    "Усне опитування, тестування":["Перевірка знань з техніки безпеки, технологічних процесів, властивостей матеріалів; 1–2 рази на проєкт.",["тест","опитув","вікторин"]],
+    "Онлайн-опитування":["Визначення потреб, інтересів і зворотний зв’язок учнів щодо процесу, рефлексія після етапів.",["опитув","анкет"]],
+    "Щоденник саморефлексії":["Учень / учениця періодично оцінює власну активність, прогрес, рішення, складнощі.",["щоденник","рефлекс","самооцін"]],
+    "Рольова гра":["Ситуації «клієнт і дизайнер», «виробник і споживач», «продавець і покупець».",["рольов","ролі","ролей"]],
+    "Взаємооцінювання":["Учні оцінюють роботи одне одного за простими критеріями («2 позитиви + порада»); потребує попереднього навчання.",["взаємооцін"]],
+    "Практичне виготовлення частини виробу":["Виготовлення окремої частини продукту.",["виготов"]],
+    "Тестування прототипу":["Перевірка роботи прототипу чи виробу.",["прототип","тестув"]],
+    "Огляд продукту":["Проміжний огляд продукту / результату.",["огляд","продукт"]],
+    "Практичне завдання":["Виконання етапів проєкту, частини чи всього виробу; оцінюють технологічність, точність, креативність, самостійність.",["виготов","практичн"]],
+    "Створення інформаційного продукту":["Інструкція, плакат, буклет, чек-лист, презентація про процес, правила чи переваги виробу.",["буклет","плакат","постер","інструкц"]],
+    "Застосування цифрових інструментів":["Створення моделей, відео, презентацій, прототипів, інструкцій у цифрових середовищах (наприклад, 3D-модель).",["3d","цифров","модел"]],
+    "Аналіз якості власного продукту":["Самооцінювання якості власного чи спільного продукту, відповідності меті й критеріям.",["самооцін","якіст"]],
+    "Якість планування, вибір матеріалів і технологій":["Підсумкове оцінювання процесу: обґрунтованість плану, відповідність обраних матеріалів і технологій.",["план","матеріал"]],
+    "Дотримання безпеки й екологічності":["Оцінювання дотримання критеріїв безпеки та екологічності.",["безпек","еколог"]],
+    "Аналітична частина проєкту":["Використання джерел, дослідження, обґрунтування рішень.",["джерел","аналіз"]],
+    "Презентація і захист ідеї":["Уміння презентувати й захищати ідею чи рішення.",["презентац","захист"]],
+    "Комплексна діагностувальна робота":["За потреби (рівний доступ до оцінювання, освітні втрати) — робота за групами результатів у межах вивченого.",["діагност"]],
+    "Готовий продукт":["Оцінювання готового виробу, послуги чи цифрового продукту: відповідність меті, естетичність, функціональність, точність, екологічність.",["виріб","продукт","виготов"]],
+    "Презентація чи захист продукту":["Відео, доповідь, виставка, усний захист.",["презентац","захист","виставк"]],
+    "Оцінювання продукту за критеріями":["Оцінювання за критеріями: точність, естетика, функціональність, практична доцільність.",["критері"]],
+    "Соціальна чи волонтерська ініціатива":["Реалізація корисного продукту чи послуги для школи, громади; 1–2 рази на рік.",["волонтер","громад","соціальн"]]
+  }},
+"СЗО": { file:"szo", src:"Соціальна і здоров’язбережувальна освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Безпека: уникання загроз, рішення з користю для безпеки","2":"Здоров’я: турбота про здоров’я, вибір здорового способу життя","3":"Добробут: підприємливість та етична поведінка"},
+  map:{"1":["1","2","3"],"2":["1"],"3":["2"],"4":["3"]},
+  mapNote:"За путівником: група 1 стандарту входить до всіх трьох ГР; група 2 — ГР 1 (безпека), група 3 — ГР 2 (здоров’я), група 4 — ГР 3 (добробут).",
+  note:{},
+  cur:{
+    "1":["Робота з інформацією в різних формах","Тестові завдання","Блок-схеми (фішбоун)","Аналіз практикозорієнтованих ситуацій","Практичні вправи з першої допомоги","Групові проєкти та дискусії","Створення інформаційних продуктів"],
+    "2":["Практичні завдання","Мінідослідження","Дискусії","Дебати","Інтерв’ю","Есе","Концептуальна карта","Рольові ігри","Інфографіка, колаж","Моделювання ситуацій","Щоденник чи трекер здоров’я","Проєкти","Портфоліо","Внутрішнє / зовнішнє коло","Картка на вихід","Подумай – обговори в парі – поділися","«Рішення-рішення»","Сортування слів","Спінер ідей","3-2-1","Трихвилинна пауза"],
+    "3":["Групові проєкти","Дискусії (круглий стіл, мініконференція)","Мінідискусія в парах","Есе, твір-роздум","Збір і аналіз статистичних даних","Асоціативний кущ, ментальна карта","Постер, колаж","Інфографіка, комікс","Самооцінювання (чек-лист)","Аналіз висловлювань","«Рішення-рішення»","Ситуативні завдання","Соціальні чи волонтерські ініціативи","Розрахункові завдання","Імпровізація непередбачуваної ситуації","Постановка цілей за SMART"]},
+  sum:{
+    "1":["Підсумкова письмова робота","Тест","Аналіз практикозорієнтованих ситуацій","Практичні дії з першої допомоги","Комплексна підсумкова робота"],
+    "2":["Підсумкова письмова робота","Перетворення інформації з графіків на аналітичне повідомлення","Обґрунтування власного вибору","Коротка промова","Комплексна підсумкова робота"],
+    "3":["Підсумкова письмова робота","Розроблення й презентація волонтерського проєкту","Фінансові цілі, план і бюджет","Ситуаційні завдання з фінансової безпеки","Комплексна підсумкова робота"]},
+  t:{
+    "Робота з інформацією в різних формах":["Учні відповідають на запитання до інформації, встановлюють причини й наслідки небезпек, обґрунтовують профілактичні дії; мінівправи — раз на тиждень.",["інформац","текст","причин"]],
+    "Тестові завдання":["Завдання з вибором однієї чи кількох відповідей, на відповідність, послідовність; короткі тести 1–4 рази на тему.",["тест"]],
+    "Блок-схеми (фішбоун)":["Причиново-наслідкова схема «риб’ячий кістяк»: подія, причини, наслідки.",["схем","фішбоун","причинно","причиново"]],
+    "Аналіз практикозорієнтованих ситуацій":["Аналіз ситуацій за структурою: джерело ризику, причини, перебіг, наслідки, профілактика, дії в небезпеці.",["ситуац","алгоритм"]],
+    "Практичні вправи з першої допомоги":["Відпрацювання вмінь надання першої (домедичної) допомоги.",["допомог","домедичн"]],
+    "Групові проєкти та дискусії":["Спільна робота над темою з розподілом ролей.",["проєкт","дискус","груп"]],
+    "Створення інформаційних продуктів":["Буклети, інформаційні листки, пам’ятки, алгоритми, які учні укладають самостійно.",["буклет","пам’ятк","листів","алгоритм"]],
+    "Практичні завдання":["Практичні дії з тренування вміння піклуватися про здоров’я в безпечних умовах.",["практичн","вправ"]],
+    "Мінідослідження":["Робота з інформацією, спостереження, висновки (наприклад, «Скільки води я п’ю щодня»).",["дослідж","спостереж"]],
+    "Дискусії":["Відкритий діалог у парах чи малих групах на етапах осмислення й рефлексії.",["дискус","обговор"]],
+    "Дебати":["Команди «за» і «проти» готують і обстоюють позиції.",["дебат"]],
+    "Інтерв’ю":["Учні готують запитання, беруть інтерв’ю в дорослих чи однолітків і аналізують відповіді.",["інтерв’ю"]],
+    "Есе":["Письмова рефлексія, особиста думка, усвідомлення відповідальності за власне благополуччя.",["есе","роздум"]],
+    "Концептуальна карта":["Наочне зображення ключових понять і їхніх взаємозв’язків.",["карт понять","концептуальн","ментальн"]],
+    "Рольові ігри":["Розподіл ролей (лікар, пацієнт, друг), короткий сценарій і обговорення після гри.",["рольов","ролі","ролей"]],
+    "Інфографіка, колаж":["Представлення результатів у творчому форматі на вибір учнів.",["інфографік","колаж","постер"]],
+    "Моделювання ситуацій":["Пошук оптимального рішення в запропонованій ситуації з програванням.",["моделюв","ситуац"]],
+    "Щоденник чи трекер здоров’я":["Записи фізичної активності, настрою, харчування в паперовому чи цифровому форматі.",["щоденник","трекер"]],
+    "Проєкти":["Групова чи індивідуальна дослідницька робота з плануванням етапів і кінцевим продуктом.",["проєкт"]],
+    "Портфоліо":["Збірка особистих досягнень: фото, відгуки, есе, презентації.",["портфоліо"]],
+    "Внутрішнє / зовнішнє коло":["Учні у двох колах по черзі обговорюють у парах підготовлені запитання.",["коло","парах","парі","парн"]],
+    "Картка на вихід":["Наприкінці уроку учні коротко відповідають на запитання за темою.",["картк","вихідн"]],
+    "Подумай – обговори в парі – поділися":["Самостійне обмірковування, обговорення в парі й представлення класу.",["парах","парі","парн","обговор"]],
+    "«Рішення-рішення»":["Учні займають позицію згоди чи незгоди з твердженням і аргументують її.",["позиц","аргумент"]],
+    "Сортування слів":["Класифікація понять за групами чи категоріями.",["сортув","класифік"]],
+    "Спінер ідей":["Завдання «Спрогнозуй», «Поясни», «Підсумуй», «Оціни» за результатами навчання.",["спінер","прогноз"]],
+    "3-2-1":["3 нові факти, 2 цікаві ідеї, 1 запитання — для підсумку уроку.",["рефлекс"]],
+    "Трихвилинна пауза":["Зупинка через 15–20 хв уроку: що нового і що лишилося незрозумілим.",["пауз"]],
+    "Групові проєкти":["Спільна тема з розподілом ролей; формує вміння створювати спільний продукт.",["проєкт","груп"]],
+    "Дискусії (круглий стіл, мініконференція)":["Презентація інформації й обговорення проблеми з різних позицій.",["дискус","круглий стіл","конференц"]],
+    "Мінідискусія в парах":["Короткий сфокусований обмін думками в парі.",["парах","парі","парн","дискус"]],
+    "Есе, твір-роздум":["Письмове висловлення щодо проблеми, цитати, події чи власного досвіду.",["есе","роздум","твір"]],
+    "Збір і аналіз статистичних даних":["Учні збирають первинні чи вторинні дані, опрацьовують і представляють їх.",["статистич","даних","опитув"]],
+    "Асоціативний кущ, ментальна карта":["Графічне дослідження поняття: ключове слово в центрі й пов’язані ідеї.",["асоціатив","ментальн","кущ"]],
+    "Постер, колаж":["Індивідуальне чи групове створення постера з ключовою інформацією й графікою.",["постер","колаж","плакат"]],
+    "Інфографіка, комікс":["Візуальне представлення інформації чи знань.",["інфографік","комікс"]],
+    "Самооцінювання (чек-лист)":["Учні відмічають твердження, з якими погоджуються щодо власних знань і вмінь.",["самооцін","чек-лист"]],
+    "Аналіз висловлювань":["Розгляд висловлювань відомих осіб з різних точок зору.",["висловлюв","цитат"]],
+    "Ситуативні завдання":["Прийняття рішення в умовах обмеженої інформації чи кількох альтернатив.",["ситуац","рішен"]],
+    "Соціальні чи волонтерські ініціативи":["Планування й реалізація проєкту для розв’язання соціальної проблеми.",["волонтер","соціальн","акці"]],
+    "Розрахункові завдання":["Фінансові розрахунки, пов’язані з реальними життєвими ситуаціями.",["розрах","бюджет","фінанс"]],
+    "Імпровізація непередбачуваної ситуації":["Учні імпровізують реакцію на несподівані події.",["імпровіз"]],
+    "Постановка цілей за SMART":["Формулювання фінансових та інших життєвих цілей за методикою SMART.",["smart","цілей","цілі"]],
+    "Підсумкова письмова робота":["Завдання на причиново-наслідкові зв’язки, увідповіднення подій з причинами, наслідками й діями; тематична чи семестрова.",["підсумков","письмов"]],
+    "Тест":["Тест (завдання в різній формі) з конкретної теми.",["тест"]],
+    "Практичні дії з першої допомоги":["Елементи практичної діяльності з надання першої допомоги в підсумковій роботі.",["допомог"]],
+    "Комплексна підсумкова робота":["Інтегрований формат за кількома групами: проєкти, дослідження, практичні роботи.",["комплексн","проєкт"]],
+    "Перетворення інформації з графіків на аналітичне повідомлення":["Учні аналізують графіки й пишуть аналітичне повідомлення.",["графік","повідомлен"]],
+    "Обґрунтування власного вибору":["«Поясни свій вибір»: наприклад, раціон на день з поясненням.",["вибір","обґрунт","раціон"]],
+    "Коротка промова":["Промова для однокласників (5–7 речень) про здоровий спосіб життя.",["промов","виступ"]],
+    "Розроблення й презентація волонтерського проєкту":["Портфоліо, лепбук, презентація етапів волонтерської акції.",["волонтер","проєкт","лепбук"]],
+    "Фінансові цілі, план і бюджет":["Укладання фінансових цілей, плану їх реалізації, бюджету, таблиці доходів і витрат.",["бюджет","фінанс","витрат"]],
+    "Ситуаційні завдання з фінансової безпеки":["Ситуації про крадіжку інформації, заборгованість, шахрайство тощо.",["шахрай","фінансов","ситуац"]]
+  }},
+"ГІО": { file:"gio", src:"Громадянська та історична освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Орієнтується в історичному часі та просторі, виявляє взаємозв’язки подій і явищ","2":"Працює з інформацією історичного та суспільствознавчого змісту","3":"Виявляє здатність до співпраці, толерантність, громадянську позицію"},
+  map:{"1":["1"],"2":["1"],"3":["2"],"4":["2"],"5":["3"],"6":["3"]},
+  mapNote:"За таблицею 1 путівника: групи 1–2 стандарту → ГР 1, групи 3–4 → ГР 2, групи 5–6 → ГР 3.",
+  note:{},
+  cur:{
+    "1":["Хронологічні вправи та задачі","Хронологічна таблиця, лінія часу","Робота з картою, карта подій","Порівняльна таблиця подій і явищ"],
+    "2":["Пошук ключових фактів, план, схема, ментальна карта","Аналіз джерела","Виявлення маніпуляцій і фейків","Добір і сортування джерел","Порівняльна таблиця, діаграма","Історичне есе з аргументацією"],
+    "3":["Обговорення в парах і групах","Аналіз проблемної ситуації","Аналіз документів про права людини","Участь у волонтерстві та житті громади","Груповий проєкт, мінідослідження","Обговорення, дебати","Щоденник рефлексій, ціннісна відповідь"]},
+  sum:{
+    "1":["Підсумкова робота за групою результатів","Причиново-наслідкові зв’язки між подіями","Аналіз історичних карт","Історичний маршрут, план екскурсії","Аналіз першоджерел","Комплексна підсумкова робота"],
+    "2":["Підсумкова робота за групою результатів","Історична довідка, есе","Запитання до історичного джерела","Порівняльний і критичний аналіз джерел","Добір аргументів за і проти","Перетворення інформації з одного виду в інший","Комплексна підсумкова робота"],
+    "3":["Підсумкова робота за групою результатів","Аналіз ситуації з пропозиціями","Моделювання ситуації","Колективний проєкт з презентацією","Дебати, дискусії, мініконференції","Соціальний чи волонтерський проєкт","Комплексна підсумкова робота"]},
+  t:{
+    "Хронологічні вправи та задачі":["Короткі вправи на визначення часу, послідовності й тривалості подій.",["хронолог","послідовн","дати","датув"]],
+    "Хронологічна таблиця, лінія часу":["Учні складають лінію часу з причиново-наслідковими зв’язками (вручну чи онлайн); 1–2 рази на тему.",["лінії часу","лінію часу","хронологічн табл","календар"]],
+    "Робота з картою, карта подій":["Аналіз легенди, розповідь за картою, нанесення подій і маршрутів; обговорення впливу географії на події.",["карт","мап"]],
+    "Порівняльна таблиця подій і явищ":["Зіставлення подій, явищ, процесів у таблиці.",["порівняльн","порівнян"]],
+    "Пошук ключових фактів, план, схема, ментальна карта":["Пошук фактів у тексті, переказ, план, схема, ментальна карта, ключові слова, робота з поняттями.",["план","схем","ментальн","ключов"]],
+    "Аналіз джерела":["Завдання різного рівня на інтерпретацію документа, фото, картини, статистики; оцінювання повноти й достовірності.",["джерел","документ"]],
+    "Виявлення маніпуляцій і фейків":["Пошук маніпуляцій, фейків, упереджень у медіатекстах.",["маніпул","фейк","упередж","достовір"]],
+    "Добір і сортування джерел":["Добір і сортування джерел за визначеними критеріями.",["добир","сортув","джерел"]],
+    "Порівняльна таблиця, діаграма":["Таблиця чи діаграма для зіставлення подій, явищ, поглядів; 1 на тему.",["порівняльн","діаграм"]],
+    "Історичне есе з аргументацією":["Короткий текст на основі джерел: проблема, власна думка, обґрунтування.",["есе"]],
+    "Обговорення в парах і групах":["Обговорення історичних чи суспільних питань з повагою до думки іншого.",["обговор","парах","парі","парн","груп"]],
+    "Аналіз проблемної ситуації":["Аналіз ситуації з громадянського життя та пошук рішень.",["ситуац","проблем"]],
+    "Аналіз документів про права людини":["Аналіз ключових документів щодо гідності, прав і свобод людини, демократичних цінностей.",["прав людини","права","правоз","документ","конституц"]],
+    "Участь у волонтерстві та житті громади":["Участь у громадській, шкільній чи волонтерській діяльності.",["волонтер","громад"]],
+    "Груповий проєкт, мінідослідження":["Спільне дослідження з розподілом ролей і рефлексією співпраці; 1 проєкт на семестр.",["проєкт","дослідж"]],
+    "Обговорення, дебати":["Обговорення суспільних чи історичних проблем, дебати з чіткими правилами; 1–2 рази на тему.",["дебат","дискус","обговор"]],
+    "Щоденник рефлексій, ціннісна відповідь":["Короткі тексти: «Що мене здивувало?», «Як це стосується мого життя?»",["щоденник","рефлекс"]],
+    "Підсумкова робота за групою результатів":["Узагальнювальна робота після теми чи розділу для глибшого оцінювання однієї групи результатів.",["підсумков"]],
+    "Причиново-наслідкові зв’язки між подіями":["Встановлення залежності між явищами, їхніми причинами й наслідками, впливу природних чинників.",["причин","наслід"]],
+    "Аналіз історичних карт":["Аналіз карт для опису історичних процесів (міграцій тощо).",["карт"]],
+    "Історичний маршрут, план екскурсії":["Створення історичного маршруту чи лінії часу зі змінами в житті суспільства.",["маршрут","екскурс"]],
+    "Аналіз першоджерел":["Аналіз листів, мемуарів, археологічних знахідок з хронологічно-просторовими зв’язками.",["першоджерел","джерел"]],
+    "Історична довідка, есе":["Написання історичних довідок і есе.",["довідк","есе"]],
+    "Запитання до історичного джерела":["Формулювання запитань до джерела.",["запитан"]],
+    "Порівняльний і критичний аналіз джерел":["Порівняння й критичний аналіз документів і фрагментів текстів.",["порівнян","критичн"]],
+    "Добір аргументів за і проти":["Добір аргументів за чи проти позиції.",["аргумент"]],
+    "Перетворення інформації з одного виду в інший":["Перетворення тексту на схему, таблицю тощо; систематизація джерел.",["перетвор","систематиз"]],
+    "Аналіз ситуації з пропозиціями":["Аналіз ситуації з аргументами й пропозиціями щодо розв’язання проблеми.",["ситуац","пропоз"]],
+    "Моделювання ситуації":["Моделювання ситуації з пропозиціями й застосуванням алгоритму дій.",["моделюв","алгоритм"]],
+    "Колективний проєкт з презентацією":["Представлення результатів колективного проєкту.",["проєкт","презентац"]],
+    "Дебати, дискусії, мініконференції":["Участь у дебатах, дискусіях, мініконференціях.",["дебат","дискус","конференц"]],
+    "Соціальний чи волонтерський проєкт":["Участь у соціальному чи волонтерському проєкті.",["волонтер","соціальн"]],
+    "Комплексна підсумкова робота":["Семестрова робота з інтегрованими завданнями (або проєкти, дослідження) за кількома групами результатів.",["комплексн"]]
+  }},
+"МИО": { file:"mio", src:"Мистецька освітня галузь: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Пізнання мистецтва, художнє мислення","2":"Художньо-творча діяльність, мистецька комунікація","3":"Емоційний досвід, художньо-естетичне ставлення"},
+  map:{"1":["1"],"2":["2"],"3":["3"],"4":["1","2","3"],"4.1":["2"],"4.2":["1"],"4.3":["3"]},
+  mapNote:"Групи 1–3 стандарту відповідають ГР 1–3; група 4 (інформаційне середовище) розподіляється між ГР 1–3 залежно від виду діяльності.",
+  note:{"*":"Підсумкове оцінювання можна провести окремим уроком або як узагальнення поточного оцінювання за кожною групою."},
+  cur:{
+    "1":["Обговорення творів мистецтва","Тести, квести","Аркуш спостереження","Рубрика","Портфоліо","Самооцінювання, рефлексійна картка","3-2-1","Відеорефлексія","Діагностувальна бесіда","Робота з медіатекстами, віртуальні екскурсії"],
+    "2":["Практичне завдання","Завдання в парах","Цифрове творче завдання","Рубрика","Портфоліо","Самооцінювання, рефлексійна картка","Оцінювання проєкту","Взаємооцінювання"],
+    "3":["Обговорення художніх образів","Тести, квести","Усна чи письмова рефлексія","Аркуш спостереження","Рубрика","3-2-1","Відеорефлексія","Діагностувальна бесіда","Взаємооцінювання"]},
+  sum:{
+    "1":["Аналіз і обговорення творів мистецтва","Тест з розділу чи теми","Комплексна підсумкова робота"],
+    "2":["Завершена творча робота","Презентація проєкту","Портфоліо","Мистецький чи культурно-соціальний проєкт","Комплексна підсумкова робота"],
+    "3":["Обговорення художніх образів з виявленням ставлень","Тест з розділу чи теми","Рефлексія","Комплексна підсумкова робота"]},
+  t:{
+    "Обговорення творів мистецтва":["Аналіз виражальних засобів, жанрів, художнього стилю твору.",["обговор","аналіз твор","твір мистецтв","творів мистецтв"]],
+    "Тести, квести":["Перевірка знань у формі гри, вікторини, цифрової вправи; 1 раз на тему чи блок.",["тест","квест","вікторин"]],
+    "Аркуш спостереження":["Учитель / учителька фіксує активність, глибину й обґрунтованість міркувань, рівень рефлексії під час дискусії.",["дискус","обговор"]],
+    "Рубрика":["Заздалегідь обговорена з учнями шкала з критеріями (техніка, креативність, композиція тощо).",["рубрик","критері"]],
+    "Портфоліо":["Збірка творчих робіт, фото, письмових відгуків і саморефлексій; огляд раз на семестр.",["портфоліо"]],
+    "Самооцінювання, рефлексійна картка":["Учні оцінюють роботу за критеріями: що вдалося, що було складно, що покращити; 1–2 рази на місяць.",["самооцін","рефлекс"]],
+    "3-2-1":["Після обговорення: 3 важливі думки, 2 — згоден чи не згоден, 1 запитання.",["обговор"]],
+    "Відеорефлексія":["Короткий відео- чи аудіозапис усного висловлення про твір мистецтва.",["відео","аудіо"]],
+    "Діагностувальна бесіда":["Індивідуальна чи групова розмова про розуміння теми, враження, труднощі; 1 раз на тему.",["бесід"]],
+    "Робота з медіатекстами, віртуальні екскурсії":["Пошук і аналіз інформації про мистецтво, віртуальні екскурсії музеями, онлайн-концерти з описом побаченого.",["медіатекст","віртуальн","екскурс","музе"]],
+    "Практичне завдання":["Ескізи, етюди, мінівиступи, вокальна чи інструментальна діяльність.",["ескіз","етюд","малюв","спів","виконавськ","імпровіз"]],
+    "Завдання в парах":["Творче завдання, яке учні виконують у парі.",["парах","парі","парн"]],
+    "Цифрове творче завдання":["Фото різних жанрів, колажі, відео, презентації з цифровими ресурсами.",["фото","колаж","відео","цифров"]],
+    "Оцінювання проєкту":["Оцінювання міні- чи тривалого проєкту з урахуванням етапів, креативності, цілісності презентації; 1–2 рази на семестр.",["проєкт","виставк","сценк"]],
+    "Взаємооцінювання":["Учні аналізують роботи одне одного за критеріями; не частіше ніж раз на 2–3 теми.",["взаємооцін"]],
+    "Обговорення художніх образів":["Характеристика художніх образів, зокрема в парах і групах.",["образ","обговор"]],
+    "Усна чи письмова рефлексія":["Опис власних вражень, емоцій і ставлень.",["рефлекс","враж","емоці"]],
+    "Аналіз і обговорення творів мистецтва":["Підготовлене обговорення з запитаннями на аналіз мови, жанрів, стилю мистецтва.",["аналіз","обговор"]],
+    "Тест з розділу чи теми":["Тестові завдання в межах матеріалу розділу чи теми.",["тест"]],
+    "Завершена творча робота":["Малюнок, колаж, театральна сценка, відеофрагмент, виконавська інтерпретація пісні.",["малюн","колаж","сценк","відео","пісн"]],
+    "Презентація проєкту":["Презентація завершеного проєкту.",["презентац","проєкт"]],
+    "Мистецький чи культурно-соціальний проєкт":["Попередньо підготовлений проєкт чи творча презентація, яку учні захищають у групах.",["проєкт"]],
+    "Обговорення художніх образів з виявленням ставлень":["Підготовлене обговорення з виявленням ставлень і емоційних станів, зокрема в парах і групах.",["образ","ставлен","емоці"]],
+    "Рефлексія":["Підсумкова рефлексія щодо власних вражень і ставлень.",["рефлекс"]],
+    "Комплексна підсумкова робота":["Демонстрація чи захист проєктів, дослідження, практичні роботи з оцінюванням за кількома групами; враховують співпрацю й рефлексію.",["комплексн","проєкт"]]
+  }},
+"ФІО": { file:"fio", src:"Освітня галузь «Фізична культура»: як оцінювати в НУШ (путівник, 2025)",
+  gr:{"1":"Формування психічної та соціально-психологічної сфер засобами фізичного виховання","2":"Систематичні заняття фізичними вправами, володіння технікою фізичних вправ","3":"Усвідомлення значення рухової активності для здоров’я та задоволення від фізичного виховання"},
+  map:{}, mapNote:"Групи результатів збігаються з групами стандарту (ФІО 1–3).",
+  note:{"3":"Фізичну підготовленість відстежують тричі на рік (жовтень, січень, травень) окремими оцінками; тести добирають з урахуванням медичної групи.","*":"Путівник не розділяє види робіт на формувальні й підсумкові: ті самі види застосовують для обох."},
+  cur:{
+    "1":["Спостереження","Опитування","Анкетування","Есе","Проєктна діяльність","Пошукова робота","Аналіз","Відеоресурс, презентація","Взаємооцінювання"],
+    "2":["Спостереження за технікою","Опитування","Аналіз техніки виконання","Проєктна діяльність"],
+    "3":["Спостереження","Опитування","Аналіз","Відео","Самооцінювання","Взаємооцінювання","Портфоліо","Проєктна діяльність","Тести фізичної підготовленості"]},
+  sum:{
+    "1":["Спостереження","Опитування","Анкетування","Есе","Проєктна діяльність","Пошукова робота","Відеоресурс, презентація"],
+    "2":["Спостереження за технікою","Опитування","Аналіз техніки виконання","Проєктна діяльність"],
+    "3":["Тести фізичної підготовленості","Опитування","Самооцінювання","Портфоліо","Проєктна діяльність"]},
+  t:{
+    "Спостереження":["Спостереження за активністю, вольовими якостями, роботою в команді, дотриманням правил «чесної гри».",["спостереж","команд","ігров","рухлив"]],
+    "Опитування":["Запитання про мету фізичного виховання, техніку вправ, базові знання; вправи «Доповни думку», «Сортування слів».",["опитув","запитан","поясн"]],
+    "Анкетування":["Анкети щодо мотивації, ставлення до занять і командної взаємодії.",["анкет"]],
+    "Есе":["Короткий текст (4–5 речень) про мету власного фізичного розвитку.",["есе"]],
+    "Проєктна діяльність":["Розроблення комплексу вправ відповідно до власної мети, правил гри тощо.",["комплекс вправ","проєкт","розробл"]],
+    "Пошукова робота":["Пошук інформації з різних джерел (наприклад, про мотивацію спортсменів).",["пошук","джерел"]],
+    "Аналіз":["Аналіз власних дій, ролей у команді, прикладів.",["аналіз"]],
+    "Відеоресурс, презентація":["Перегляд і обговорення відео гри, підготовка презентації.",["відео","презентац"]],
+    "Взаємооцінювання":["Учні оцінюють виконання вправ і ролей одне одного за критеріями.",["взаємооцін"]],
+    "Спостереження за технікою":["Учитель / учителька оцінює правильність основних елементів руху під час виконання вправ.",["технік","виконан","вправ"]],
+    "Аналіз техніки виконання":["Аналіз власної та чужої техніки виконання вправ, зокрема за відео.",["технік","аналіз"]],
+    "Відео":["Відеофіксація виконання вправ для аналізу й самооцінювання.",["відео"]],
+    "Самооцінювання":["Учні оцінюють власний фізичний і емоційний стан, досягнення («смайлики», шкали).",["самооцін","самоконтрол"]],
+    "Портфоліо":["Збірка особистих досягнень і результатів тестів.",["портфоліо"]],
+    "Тести фізичної підготовленості":["Тести на швидкість, витривалість, гнучкість, силу тричі на рік з оцінками за орієнтовними нормативами.",["тест","норматив","підготовлен"]]
+  }}
+};
+
+const FIELD_NAMES={"ІФО":"Інформатична","МОВ":"Мовно-літературна","ІНО":"Іншомовна","МАО":"Математична","ПРО":"Природнича","ТЕО":"Технологічна","СЗО":"Соціальна і здоров’язбережувальна","ГІО":"Громадянська та історична","МИО":"Мистецька","ФІО":"Фізична культура"};
+const IDX_RE=/\[\s*(\d{1,2})\s*([А-ЯІЇЄҐ]{2,5})\s*(\d+)\s*\.\s*(\d+)/g;
+const fieldOfSubj=s=>FIELD_NAMES[s]?s:(/^ІН/.test(s)?"ІНО":null);
+const fieldGroups=F=>F==="ІФО"?["1","2","3","4"]:Object.keys(AG[F]?.gr||{});
+const codeKeys=(F,g,s)=>F==="ІФО"?["ІФО:"+g]:AG[F]?(AG[F].map[g+"."+s]||AG[F].map[g]||[g]).filter(x=>AG[F].gr[x]).map(x=>F+":"+x):[];
+function rawKeys(it){ const m=new Map(); for(const x of liveO(it)){ const seen=new Set(); let r; IDX_RE.lastIndex=0;
+    while((r=IDX_RE.exec(x.t))){ const F=fieldOfSubj(r[2]); if(!F) continue; for(const k of codeKeys(F,r[3],r[4])){ if(seen.has(k)) continue; seen.add(k); m.set(k,(m.get(k)||0)+1); } } }
+  return m; }
+function detectField(){ const c={}; for(const t of topics()) for(const k of rawKeys(t).keys()){ const F=k.split(":")[0]; c[F]=(c[F]||0)+1; } return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0]||""; }
+const progField=()=>S.field||detectField();
+const kSort=(a,b)=>{ const [A,ga]=a.split(":"), [B,gb]=b.split(":"); return A!==B?(A==="ІФО"?-1:B==="ІФО"?1:A.localeCompare(B,"uk")):(+ga-+gb); };
+function topicKeys(it){ const m=rawKeys(it); if(!m.size){ const F=progField(); if(F) for(const g of fieldGroups(F)) m.set(F+":"+g,0); } return [...m.entries()].sort((a,b)=>kSort(a[0],b[0])); }
+const kInfo=k=>{ const [F,g]=k.split(":"); return {F,g,name:F==="ІФО"?(A_GR_NAME[g]||""):(AG[F]?.gr?.[g]||"")}; };
+const multiF=it=>new Set(topicKeys(it).map(([k])=>k.split(":")[0])).size>1;
+const kLabel=(k,it)=>{ const {F,g}=kInfo(k); return (it&&multiF(it)?F+" · ":"")+"ГР "+g; };
+const IFO_CUR=[...new Set(A_STRAT.flatMap(x=>x[2]))];
+const sumList=k=>{ const {F,g}=kInfo(k); return F==="ІФО"?(A_SUM[g]||[]):(AG[F]?.sum?.[g]||AG[F]?.sum?.["*"]||[]); };
+const curList=k=>{ const {F,g}=kInfo(k); return F==="ІФО"?IFO_CUR:(AG[F]?.cur?.[g]||AG[F]?.cur?.["*"]||[]); };
+const tDesc=(F,t)=>AG[F]?.t?.[t]?.[0]||A_TOOLS[t]||(FORMA_SET.has(t)?"Метод з каталогу формувального оцінювання FormA.":"");
+const tKeys=(F,t)=>AG[F]?.t?.[t]?.[1]||A_KEYS[t]||[];
+const evid=(F,t,acts)=>{ const ks=tKeys(F,t).map(norm); return ks.length?acts.filter(a=>{ const n=norm(a); return ks.some(k=>n.includes(k)); }):[]; };
+const aSt=id=>{ S.assess=S.assess||{}; const a=S.assess[id]=S.assess[id]||{f:[],s:{},note:""}; a.f=a.f||[]; a.s=a.s||{}; return a; };
+function fBlocks(it){ const by=new Map();
+  for(const [k] of topicKeys(it)){ const {F,g}=kInfo(k); if(!by.has(F)) by.set(F,new Map()); const M=by.get(F);
+    for(const t of curList(k)){ if(!M.has(t)) M.set(t,[]); if(!M.get(t).includes(g)) M.get(t).push(g); } }
+  return [...by.entries()].map(([F,M])=>({F,common:F==="ІФО"||!!AG[F]?.cur?.["*"],tools:[...M.entries()].map(([t,gs])=>({t,gs}))})).filter(B=>B.tools.length); }
+function recommend(it){ const acts=live(it.act).map(x=>x.t); const r={f:{},s:{}};
+  for(const B of fBlocks(it)) for(const x of B.tools){ const ev=evid(B.F,x.t,acts); if(ev.length) r.f["g:"+B.F+"|"+x.t]=ev; }
+  for(const [sid] of A_STRAT) for(const t of (A_FORMA[sid]||[])){ const ev=evid("",t,acts); if(ev.length) r.f[sid+"|"+t]=ev; }
+  for(const [k] of topicKeys(it)){ r.s[k]={}; for(const t of sumList(k)){ const ev=evid(kInfo(k).F,t,acts); if(ev.length) r.s[k][t]=ev; } }
+  return r; }
+function applyRec(it){ const a=aSt(it.id), r=recommend(it); const top=(keys,n)=>keys.map(k=>[k,(r.f[k]||[]).length]).filter(x=>x[1]).sort((x,y)=>y[1]-x[1]).slice(0,n).map(x=>x[0]);
+  for(const [sid] of A_STRAT) for(const k of top((A_FORMA[sid]||[]).map(t=>sid+"|"+t),1)) if(!a.f.includes(k)) a.f.push(k);
+  for(const B of fBlocks(it)) for(const k of top(B.tools.map(x=>"g:"+B.F+"|"+x.t),3)) if(!a.f.includes(k)) a.f.push(k);
+  for(const [k] of topicKeys(it)){ const best=Object.entries(r.s[k]||{}).sort((x,y)=>y[1].length-x[1].length).slice(0,2).map(x=>x[0]); a.s[k]=a.s[k]||[]; for(const t of best) if(!a.s[k].includes(t)) a.s[k].push(t); }
+  return Object.keys(r.f).length+Object.values(r.s).reduce((n,o)=>n+Object.keys(o).length,0); }
+function assessOut(it){ const a=(S.assess||{})[it.id]; if(!a) return null;
+  const ok=new Set(fBlocks(it).flatMap(B=>B.tools.map(x=>"g:"+B.F+"|"+x.t)).concat(A_STRAT.flatMap(([sid])=>(A_FORMA[sid]||[]).map(t=>sid+"|"+t))));
+  const f=[...new Set(a.f.filter(k=>ok.has(k)).map(k=>k.split("|")[1]))];
+  const s=topicKeys(it).map(([k])=>[k,(a.s[k]||[]).filter(t=>sumList(k).includes(t))]).filter(x=>x[1].length);
+  const note=String(a.note||"").trim(); if(!f.length&&!s.length&&!note) return null; return {f,s,note}; }
+function guideSources(){ const fs=new Set(topics().flatMap(t=>topicKeys(t).map(([k])=>k.split(":")[0]))); const out=[];
+  if(fs.has("ІФО")) out.push(SRC_ASSESS[0]); for(const [F,G] of Object.entries(AG)) if(fs.has(F)) out.push([G.src,AG_URL(G.file)]); out.push(SRC_ASSESS[1]); return out; }
+const lc=x=>/^[А-ЯІЇЄҐA-Z][а-яіїєґa-z’ʼ']/.test(x)?x[0].toLowerCase()+x.slice(1):x;
+function assessHTML(it){
+  const keys=topicKeys(it), a=aSt(it.id), r=recommend(it), acts=live(it.act).length, F=progField();
+  const chip=(attr,on,ev,label,desc,extra="")=>`<button class="tchip ${ev?"rec":""}" ${attr} aria-pressed="${on}" title="${esc(desc)}${ev?"\n\nПідтримує діяльність теми: "+esc(ev.slice(0,3).join("; ")):""}">${ev?"★ ":""}${esc(label)}${extra}</button>`;
+  if(!keys.length) return `<div class="asx"><h4>Оцінювання в темі</h4><p class="muted" style="margin:4px 0">Галузь не визначено: у результатах немає індексів. Оберіть галузь угорі сторінки, щоб отримати підказки.</p></div>`;
+  const noIdx=!rawKeys(it).size;
+  return `<div class="asx"><div class="ash"><h4>Оцінювання в темі</h4><span class="row"><button class="btn sm pri" data-arec="${it.id}" title="Позначити інструменти, які підтримують види діяльності цієї теми">★ Застосувати рекомендації</button><button class="btn sm ghost" data-aclr="${it.id}">Очистити</button></span></div>
+    <div class="grbar">${keys.map(([k,n])=>`<span class="pill"><b>${esc(kLabel(k,it))}</b>${kInfo(k).name?" · "+esc(kInfo(k).name):""}${n?` · орієнтирів: ${n}`:""}</span>`).join("")}</div>
+    ${noIdx?`<p class="muted tiny">У результатах теми немає індексів, тому показано всі групи результатів галузі «${esc(FIELD_NAMES[F]||F)}».</p>`:""}
+    <p class="muted tiny">${acts?"★ — інструмент підтримує види діяльності, обрані в темі (наведіть курсор, щоб побачити які).":"У темі ще немає видів діяльності, тому рекомендацій немає."}</p>
+    <div class="asub">Формувальне оцінювання</div>
+    ${fBlocks(it).map(B=>`<div class="ablk"><div class="abn">${B.F==="ІФО"?"Путівник з оцінювання: інформатична галузь":"Путівник з оцінювання: "+esc((FIELD_NAMES[B.F]||B.F).toLowerCase())+" галузь"}</div><div class="tchips">${B.tools.map(x=>{ const k="g:"+B.F+"|"+x.t, gl=B.common?"":x.gs.join(", ");
+        return chip(`data-af="${it.id}|${esc(k)}"`,a.f.includes(k),r.f[k],x.t,tDesc(B.F,x.t)+(gl?"\n\nДля груп результатів: ГР "+gl:""),gl?`<span class="tgr">ГР ${esc(gl)}</span>`:""); }).join("")}</div></div>`).join("")}
+    <details class="ablk"><summary class="abn">Методи з каталогу FormA за етапами формувального оцінювання (спільні для всіх галузей)</summary>
+      ${A_STRAT.map(([sid,name])=>`<div class="astage"><span class="muted tiny">${sid}. ${esc(name)}</span><div class="tchips">${(A_FORMA[sid]||[]).map(t=>chip(`data-af="${it.id}|${esc(sid+"|"+t)}"`,a.f.includes(sid+"|"+t),r.f[sid+"|"+t],t,tDesc("",t))).join("")}</div></div>`).join("")}</details>
+    <div class="asub">Підсумкове оцінювання</div>
+    ${keys.map(([k])=>{ const {F,g}=kInfo(k), gn=AG[F]?.note?.[g]; return `<div class="ablk"><div class="abn">${esc(kLabel(k,it))}${kInfo(k).name?". "+esc(kInfo(k).name):""}${gn?`<div class="muted tiny" style="font-weight:400">${esc(gn)}</div>`:""}</div><div class="tchips">${sumList(k).map(t=>chip(`data-as="${it.id}|${esc(k)}|${esc(t)}"`,(a.s[k]||[]).includes(t),(r.s[k]||{})[t],t,tDesc(F,t))).join("")}</div></div>`; }).join("")}
+    ${keys.length>1?`<p class="muted tiny">Можна провести комплексну підсумкову роботу за всіма групами результатів теми або кілька робіт для окремих груп.</p>`:""}
+    <label class="muted tiny" for="an_${it.id}" style="display:block;margin-top:8px">Примітки: задум підсумкової роботи, критерії, терміни</label>
+    <textarea id="an_${it.id}" data-anote="${it.id}" rows="2" placeholder="Наприклад: комплексний проєкт «…» з оцінюванням за рубрикою">${esc(a.note||"")}</textarea></div>`;
+}
+
+/* ================= рендер ================= */
+function renderSteps(){
+  const pc=[null,partPct(INTRO,S.intro),S.items.length?mainPct():null,partPct(FINAL,S.final),null];
+  const nav=$("#steps");
+  if(nav.children.length!==STEPS.length) nav.innerHTML=STEPS.map((s,i)=>`<button data-step="${i}"><b>${i+1}</b>${s}<span class="pc"></span></button>`).join("");
+  [...nav.children].forEach((b,i)=>{ b.setAttribute("aria-current",String(S.step===i)); b.querySelector(".pc").textContent=pc[i]!=null?pc[i]+"%":""; });
+}
+const hintLabel=h=>{ const s=h.replace(/^[…;,\s]+/,"").replace(/\s*\([^)]*…[^)]*\)/g,"").replace(/\s*…\.?$/,"").replace(/[:—–-]\s*$/,""); const a=s.split(/:\s|\s—\s/)[0]; const t=a.length<=48?a:a.slice(0,46).replace(/\s\S*$/,"").replace(/[\s…(.,;]+$/,"")+"…"; return t; };
+function fieldHTML(obj,part,b,f){
+  if(f.k==="#") return `<div class="grp">${esc(f.l)}</div>`;
+  const k=b.c+"."+f.k, v=obj[k]||"", id="f_"+part+"_"+k.replace(/\W/g,"_");
+  if(f.o) return `<div class="fld"><label>${esc(f.l)}</label><div class="chips">${f.o.map(o=>`<label><input type="radio" name="${id}" data-part="${part}" data-k="${k}" value="${esc(o)}" ${v===o?"checked":""}>${esc(o)}</label>`).join("")}</div></div>`;
+  if(f.rub) return `<div class="fld"><label>${esc(f.l)}</label><div id="rub_${f.rub}">${rubHTML(f.rub)}</div></div>`;
+  const auto=f.auto?`<div class="fld"><label>Клас(и)</label>${String(S.meta.grades||"").trim()?`<div class="okn" style="margin:0">${esc(S.meta.grades)} <span class="muted">— з титульного аркуша</span></div>`:`<div class="note" style="margin:0">Класи не вказано. <button class="btn sm" data-step="0">Вказати на кроці «Початок»</button></div>`}</div>`:"";
+  return auto+`<div class="fld"><label for="${id}">${esc(f.l)}${f.s?` <span class="sub">— ${esc(f.s)}</span>`:""}</label><textarea id="${id}" data-part="${part}" data-k="${k}" rows="2">${esc(v)}</textarea>
+    <div class="todo ${v.includes(TODO)?"on":""}">Замініть «…» своїм текстом — без цього поле не вважається заповненим.</div>
+    ${f.h?`<div class="hints"><span>Почати з:</span>${f.h.map((h,i)=>`<button class="hint" data-hint="${part}|${k}|${i}" title="${esc(h)}">${esc(hintLabel(h))}</button>`).join("")}</div>`:""}</div>`;
+}
+function rubHTML(which){
+  const r=S.rub[which], n=r.levels.length;
+  const idx=[...new Set(topics().flatMap(t=>liveO(t).map(x=>(x.t.match(/\[[^\]]+\]/g)||[]).join(" ")).filter(Boolean)))];
+  return `<div class="rubbar"><label>Рівні: <select data-rublev="${which}"><option value="4" ${n===4?"selected":""}>4 — початковий, середній, достатній, високий</option><option value="3" ${n===3?"selected":""}>3 — недостатній, достатній, високий</option></select></label>
+     <span class="muted">Рівні відрізняються складністю й самостійністю, а не словами «погано — добре».</span></div>
+   ${r.rows.length?`<div class="rub"><table><thead><tr><th style="width:24%">Критерій і результат навчання</th>${r.levels.map((l,i)=>`<th><input type="text" data-rubl="${which}|${i}" value="${esc(l)}" aria-label="Назва рівня ${i+1}"></th>`).join("")}<th style="width:40px"></th></tr></thead><tbody>
+     ${r.rows.map((x,ri)=>`<tr><td><textarea data-rubc="${which}|${ri}" aria-label="Критерій" placeholder="Критерій">${esc(x.c)}</textarea><input type="text" list="idxList" data-rubr="${which}|${ri}" value="${esc(x.r||"")}" placeholder="Результат [індекс]" aria-label="Результат навчання"></td>
+       ${x.d.map((d,li)=>`<td><textarea data-rubd="${which}|${ri}|${li}" aria-label="${esc(r.levels[li])}" placeholder="Опис рівня «${esc(r.levels[li])}»">${esc(d)}</textarea></td>`).join("")}
+       <td><button class="ib" data-rubdel="${which}|${ri}" title="Видалити критерій" aria-label="Видалити критерій">✕</button></td></tr>`).join("")}
+   </tbody></table></div>`:`<p class="muted" style="margin:8px 0">Додайте 3–5 критеріїв і опишіть для кожного, як виглядає виконання на кожному рівні.</p>`}
+   <div class="hints"><button class="btn sm" data-rubadd="${which}|">+ Критерій</button><span>або оберіть:</span>${RUB_HINTS[which].map((h,i)=>`<button class="hint" data-rubadd="${which}|${i}">${esc(h)}</button>`).join("")}</div>
+   <datalist id="idxList">${idx.map(x=>`<option value="${esc(x)}">`).join("")}</datalist>`;
+}
+function assessNoteHTML(){ const n=topics().filter(assessOut).length;
+  return `<div class="okn" style="margin-top:14px">${n?`Оцінювання заплановано в темах: <b>${n}</b> з ${topics().length}. У файлі воно з’явиться тут таблицею «Планування оцінювання за темами».`:`Формувальне й підсумкове оцінювання для кожної теми можна спланувати в основній частині: розгорніть тему — там є підказки за путівником з оцінювання для вашої галузі.`}</div>`; }
+function blocksHTML(blocks,obj,part){
+  return blocks.map(b=>{const st=blockState(b,obj); return `<section class="card" id="b_${b.c}"><div class="bh"><h3>${esc(b.t)}</h3><span class="pts"><span class="dot ${st}" data-dot="${b.c}" title="${st==="full"?"Усі поля заповнено":st==="part"?"Заповнено частково":"Ще не заповнено"}"></span></span></div>
+    ${b.f.map(f=>fieldHTML(obj,part,b,f)).join("")}${b.c==="В2"?assessNoteHTML():""}</section>`;}).join("");
+}
+function refHTML(txt,which){
+  if(!String(txt||"").trim()) return "";
+  return `<details class="ref"><summary>Текст ${which==="intro"?"вступної":"прикінцевої"} частини модельної програми — для довідки</summary><textarea readonly aria-label="Текст модельної програми">${esc(txt)}</textarea></details>`;
+}
+const hasAny=()=>S.items.length||Object.values(S.intro).some(Boolean)||Object.values(S.final).some(Boolean)||Object.entries(S.meta).some(([k,v])=>k!=="year"&&v)||String(S.sources||"").trim()||S.rub.kz.rows.length||S.rub.pr.rows.length;
+const RESET_BTN=`<button class="btn ghost" data-act="reset" style="color:var(--amber)">Почати заново</button>`;
+const next=()=>S.step<4?`<div class="row" style="margin-top:6px"><button class="btn pri" data-step="${S.step+1}">Далі: ${STEPS[S.step+1]}</button></div>`:"";
+function viewStart(){
+  const m=S.meta, nT=topics().length;
+  return `<div class="lead"><h2>З чого почати</h2><p>Інструмент працює у вашому браузері: файл нікуди не надсилається, а введене зберігається на цьому пристрої автоматично. Щоб перенести роботу на інший комп’ютер, збережіть файл проєкту на останньому кроці.</p></div>
+  <div class="drop" id="drop" tabindex="0" role="button" aria-label="Завантажити модельну програму">
+    <h3>${nT?"Завантажити іншу модельну програму":"Завантажте модельну програму (.docx)"}</h3>
+    <p>Перетягніть файл сюди або натисніть. Буде розпізнано вступну частину, таблицю основної частини з темами та прикінцеву частину.</p>
+    <span class="btn pri">Обрати файл Word</span></div>
+  ${nT?`<div class="okn">Розпізнано тем: <b>${nT}</b>. Перевірте відомості нижче й переходьте далі.</div>`:""}
+  <p class="muted" style="margin:10px 0 0;font-size:15px">Потрібно спершу укласти модельну програму? Скористайтеся інструментом <a href="https://oksanapas.github.io/MNP/constructor.html" target="_blank" rel="noopener" style="color:var(--teal);font-weight:500">Конструктор модельної навчальної програми</a>.</p>
+  <div class="row" style="margin:14px 0 22px"><button class="btn" data-act="openJson">Відкрити збережений проєкт (.json)</button>${nT?"":`<button class="btn ghost" data-act="blankStart">Почати без модельної програми</button>`}${hasAny()?RESET_BTN:""}</div>
+  <section class="card"><h3 style="font-size:17px">Титульні відомості</h3><div class="grid2">
+   ${[["school","Заклад освіти — повна назва","1/-1"],["title","Назва навчальної програми (предмет або курс)",""],["grades","Клас(и)",""],["author","Автор(ка) — прізвище, ім’я, по батькові",""],["year","Рік",""],["model","Модельна програма, на основі якої укладено (назва та автори)","1/-1"]].map(([k,l,sp])=>`<div class="fld" ${sp?`style="grid-column:${sp}"`:""}><label for="m_${k}">${l}</label><textarea id="m_${k}" data-meta="${k}" rows="1" style="min-height:0">${esc(m[k])}</textarea></div>`).join("")}
+  </div></section>${next()}`;
+}
+function srcHints(){ const m=String(S.meta.model||""); const tq=(m.match(/«([^»]+)»/)||[])[1]||"…", au=(m.match(/автори\s+([^)]+)\)/)||[])[1]||"…";
+  return [["Модельна програма",`${au} ${tq} : модельна навчальна програма для закладів загальної середньої освіти. Рекомендовано МОН України (наказ від … № …). URL: … (дата звернення: …).`],
+   ["Державний стандарт","Про затвердження Державного стандарту профільної середньої освіти : постанова Кабінету Міністрів України від … № …. URL: … (дата звернення: …)."],
+   ["Книга","Прізвище І. Б. Назва книги : вид видання. Місто : Видавництво, рік. … с."],
+   ["Стаття","Прізвище І. Б. Назва статті. Назва журналу. Рік. № …. С. …–…."],
+   ["Вебресурс","Назва ресурсу. URL: … (дата звернення: дд.мм.рррр)."],
+   ...(topics().some(assessOut)?guideSources().map(([n,u])=>/^Каталог/.test(n)?["Каталог FormA",`${n.replace(/\s*\(ETF\)/,"")}. URL: ${u} (дата звернення: …).`]:["Путівник: "+n.split(" освітня галузь")[0].toLowerCase(),`${n.replace(/\s*\(путівник, (\d{4})\)$/,"")} : путівник. $1. URL: ${u} (дата звернення: …).`.replace("$1",(n.match(/(\d{4})\)$/)||[,""])[1])]):[])]; }
+function sourcesHTML(){ const v=S.sources||"";
+  return `<section class="card" id="b_src"><div class="bh"><h3>Список використаних джерел</h3></div>
+   <div class="fld"><label for="f_src">Кожне джерело — з нового рядка <span class="sub">— в алфавітному порядку, оформлення за ДСТУ 8302:2015; нумерація з’явиться у файлі</span></label>
+   <textarea id="f_src" data-src="1" rows="4">${esc(v)}</textarea>
+   <div class="todo ${v.includes(TODO)?"on":""}">Замініть «…» своїм текстом.</div>
+   <div class="hints"><button class="btn sm" data-act="sortSrc">Упорядкувати за алфавітом</button><span>Зразок запису:</span>${srcHints().map((h,i)=>`<button class="hint" data-srch="${i}" title="${esc(h[1])}">${esc(h[0])}</button>`).join("")}</div></div></section>`; }
+const srcSort=t=>{ const L=String(t||"").split("\n").map(x=>x.replace(/^\s*\d+[.)]\s*/,"").trim()).filter(Boolean); const cyr=x=>/^[«"„(]?[А-ЯІЇЄҐа-яіїєґ]/.test(x)?0:1;
+  return L.sort((a,b)=>cyr(a)-cyr(b)||a.replace(/^[«"„(]/,"").localeCompare(b.replace(/^[«"„(]/,""),"uk")).join("\n"); };
+function viewPart(which){
+  const intro=which==="intro", blocks=intro?INTRO:FINAL, obj=intro?S.intro:S.final;
+  return `<div class="lead"><h2>${intro?"Вступна частина":"Прикінцева частина"}</h2><p>${intro?"Опишіть мету й завдання, місце предмета (курсу) в освітній траєкторії, адаптацію до профілю і потреб учнів, наскрізні завдання й проєкти, підтримку учнів і зв’язок із професіями. Пишіть про свій заклад, свій профіль і своїх учнів.":"Опишіть методичні підходи, систему оцінювання (зокрема рубрики для компетентнісного завдання і проєкту), використання ШІ й цифрових ресурсів, правила академічної доброчесності, а також перелічіть використані джерела."} Під полями є підказки: оберіть початок фрази й допишіть місця, позначені «…».</p></div>
+  ${refHTML(intro?S.ref.intro:S.ref.final,which)}${blocksHTML(blocks,obj,which)}${intro?"":sourcesHTML()}${next()}`;
+}
+const num=v=>parseFloat(String(v||"").replace(",","."))||0;
+function hoursSum(){return topics().reduce((s,t)=>s+num(t.hours),0);}
+function secHours(i){let s=0; for(let j=i+1;j<S.items.length&&S.items[j].k!=="sec";j++) s+=num(S.items[j].hours); return s;}
+function listHTML(t,f,opts){
+  const arr=t[f];
+  return arr.map((x,i)=>{
+    const key=`${t.id}|${f}|${i}`;
+    if(x.g) return `<div class="gl"><span>${esc(x.t)}</span>${x.d?`<button class="ib" data-lr="${key}" title="Повернути підпис групи">↺</button>`:`<button class="ib" data-ld="${key}" title="Прибрати підпис групи">✕</button>`}</div>`;
+    const chg=x.o!==null&&x.t!==x.o&&!x.d, td=x.t.includes(TODO);
+    const canDel=opts.del||x.o===null, prevOk=i>0&&!arr[i-1].g&&!arr[i-1].d&&!x.d;
+    return `<div class="li ${x.d?"del":""} ${chg?"chg":""} ${td?"todo2":""}"><textarea rows="1" data-li="${key}" ${x.d?"disabled":""} aria-label="${opts.label}" title="${chg?"Уточнено. У модельній програмі: "+esc(x.o):""}">${esc(x.t)}</textarea>
+      <span class="ops">${x.d?`<button class="ib" data-lr="${key}" title="Повернути">↺</button>`:`${canDel?`<button class="ib" data-ld="${key}" title="${x.o===null?"Видалити":"Вилучити"}" aria-label="Вилучити">✕</button>`:""}<button class="ib" data-lsplit="${key}" title="Розділити в місці курсора" aria-label="Розділити">✂</button>${prevOk?`<button class="ib" data-lmerge="${key}" title="Об’єднати з попереднім пунктом" aria-label="Об’єднати з попереднім">⤒</button>`:""}`}</span></div>`;}).join("")
+   +`<button class="btn sm ghost" data-la="${t.id}|${f}">+ ${opts.add}</button>`;
+}
+function tagsHTML(it){
+  const nd=it.cont.filter(x=>x.d).length+it.act.filter(x=>x.d).length, ntodo=it.act.filter(x=>!x.d&&x.t.includes(TODO)).length;
+  return [it.kz?'<span class="tag">КЗ</span>':"",it.pr?'<span class="tag">Проєкт</span>':"",it.orig===""?'<span class="tag">власна</span>':"",nd?`<span class="tag w">вилучено: ${nd}</span>`:"",ntodo?'<span class="tag w">допишіть «…»</span>':"",!String(it.tools).trim()?'<span class="tag w">засоби</span>':"",assessOut(it)?'<span class="tag">оцінювання</span>':""].join("");
+}
+function updateTags(el){ if(!el) return; const it=S.items[+el.dataset.i]; const tg=el.querySelector(".tags"); if(it&&tg&&it.k==="topic") tg.innerHTML=tagsHTML(it); renderSteps(); }
+function itemHTML(it,i){
+  const first=i===0,last=i===S.items.length-1;
+  const ctl=`<button class="ib" data-mv="${i}|-1" ${first?"disabled":""} title="Вище" aria-label="Вище">↑</button><button class="ib" data-mv="${i}|1" ${last?"disabled":""} title="Нижче" aria-label="Нижче">↓</button><button class="ib" data-rm="${i}" title="Видалити" aria-label="Видалити">✕</button>`;
+  if(it.k==="sec"){ const h=secHours(i); return `<div class="it sec" data-i="${i}"><div class="ih"><span class="hd" draggable="true" data-drag="${i}" title="Перетягніть">⠿</span><input class="nm" data-nm="${i}" value="${esc(it.name)}" aria-label="Назва розділу"><span class="hrs">${h?h+" год":""}</span>${ctl}</div></div>`; }
+  const n=S.items.slice(0,i+1).filter(x=>x.k==="topic").length, op=!!S.open[it.id];
+  const tags=tagsHTML(it);
+  return `<div class="it" data-i="${i}"><div class="ih"><span class="hd" draggable="true" data-drag="${i}" title="Перетягніть, щоб змінити порядок">⠿</span><span class="num">${n}</span>
+    <input class="nm" data-nm="${i}" value="${esc(it.name)}" aria-label="Назва теми">
+    <span class="tags">${tags}</span>
+    <label class="hrs"><input type="number" min="0" step="1" inputmode="numeric" data-h="${i}" value="${esc(it.hours)}" aria-label="Кількість годин"> год</label>
+    <button class="tg" data-tg="${it.id}" aria-expanded="${op}">${op?"Згорнути ▴":"Розгорнути ▾"}</button>${ctl}</div>
+    ${op?`<div class="ibody">
+      <div class="col"><h4>Очікувані результати навчання</h4>${listHTML(it,"res",{label:"Результат",add:"результат",del:false})}</div>
+      <div class="col"><h4>Пропонований зміст</h4>${listHTML(it,"cont",{label:"Зміст",add:"зміст",del:true})}</div>
+      <div class="col"><h4>Види навчальної діяльності</h4>${listHTML(it,"act",{label:"Діяльність",add:"діяльність",del:true})}</div>
+      <div class="col tools"><h4>Засоби навчання / обладнання</h4><textarea data-tools="${i}" aria-label="Засоби навчання" placeholder="Програмне забезпечення, платформи, обладнання, наявні у вашому закладі">${esc(it.tools)}</textarea></div>
+      <div class="flags"><span class="muted">У цій темі:</span><div class="chips"><label><input type="checkbox" data-fl="${i}|kz" ${it.kz?"checked":""}> компетентнісне завдання</label><label><input type="checkbox" data-fl="${i}|pr" ${it.pr?"checked":""}> навчальний проєкт</label></div><span class="muted">— у видах діяльності з’явиться пункт, де треба вписати тематику</span></div>
+      ${assessHTML(it)}
+    </div>`:""}</div>`;
+}
+function sumHTML(){ const s=hoursSum(), p=num(S.meta.plan); const cls=p?(s===p?"good":"bad"):"";
+  return `<span class="sum ${cls}" id="sum">Разом: <b>${s}</b> год${p?(s===p?" — збігається з планом":s<p?` — ще ${p-s} год до плану`:` — на ${s-p} год більше за план`):""}</span>`; }
+function viewMain(){
+  if(!S.items.length) return `<div class="lead"><h2>Основна частина</h2><p>Спершу завантажте модельну програму на кроці 1 — її теми з’являться тут.</p></div><div class="row"><button class="btn pri" data-step="0">До кроку 1</button><button class="btn" data-act="blankStart">Почати з порожньої таблиці</button></div>`;
+  const allOpen=topics().every(t=>S.open[t.id]);
+  return `<div class="lead"><h2>Основна частина</h2><p>Перетягуйте теми за ⠿ або стрілками, записуйте години. Натисніть «Розгорнути», щоб уточнити або вилучити зміст і види діяльності. Результати навчання можна уточнювати, розділяти й об’єднувати, але не вилучати.</p></div>
+  <div class="legend">Підказки до оцінювання в кожній темі — за путівниками МОН з оцінювання для галузі, яку визначено з індексів результатів. <span class="fsel" style="display:inline-flex">Галузь: <select data-field aria-label="Галузь для підказок з оцінювання"><option value="">автоматично${detectField()?" ("+esc(FIELD_NAMES[detectField()])+")":""}</option>${Object.entries(FIELD_NAMES).map(([c,n])=>`<option value="${c}" ${S.field===c?"selected":""}>${esc(n)}</option>`).join("")}</select></span></div>
+  <div class="gsrc">Джерела: ${guideSources().map(([n,u])=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(n)}</a>`).join(" · ")}</div>
+  <div class="legend">Біля кожного пункту: ✂ — розділити там, де стоїть курсор; ⤒ — об’єднати з попереднім; ✕ — вилучити (↺ повертає). Бірюзова смужка — уточнено, бурштинова — треба дописати «…».</div>
+  <div class="bar"><label class="plan">Обсяг за навчальним планом <input type="number" min="0" data-meta="plan" value="${esc(S.meta.plan)}" aria-label="Обсяг годин за планом"> год</label>${sumHTML()}
+    <span class="row" style="margin-left:auto"><select id="preset" style="width:auto" aria-label="Що додати">${PRESETS.map((p,i)=>`<option value="${i}">${p[0]}</option>`).join("")}<option value="sec">Розділ (заголовок групи тем)</option></select><button class="btn sm" data-act="add">Додати</button>
+    <button class="btn sm ghost" data-act="${allOpen?"collapse":"expand"}">${allOpen?"Згорнути всі":"Розгорнути всі"}</button></span></div>
+  <div id="list">${S.items.map(itemHTML).join("")}</div>${next()}`;
+}
+function viewFile(){
+  return `<div class="lead"><h2>Збереження</h2><p>Завантажте готову програму у форматі Word. Щоб продовжити роботу пізніше чи на іншому комп’ютері, збережіть файл проєкту (.json) і відкрийте його тут.</p></div>
+  <section class="card"><div class="row"><button class="btn pri" data-act="docx">Завантажити програму (.docx)</button><button class="btn" data-act="saveJson">Зберегти файл проєкту (.json)</button><button class="btn" data-act="openJson">Відкрити проєкт</button>${RESET_BTN}</div></section>`;
+}
+function render(){
+  renderSteps();
+  $("#view").innerHTML=[viewStart,()=>viewPart("intro"),viewMain,()=>viewPart("final"),viewFile][S.step]();
+  document.querySelectorAll("#view textarea:not([readonly])").forEach(autosize);
+}
+function autosize(t){ t.style.height="auto"; t.style.height=(t.scrollHeight+2)+"px"; }
+function rerenderList(){ const y=window.scrollY; const l=$("#list"); if(l){ l.innerHTML=S.items.map(itemHTML).join(""); l.querySelectorAll("textarea").forEach(autosize); $("#sum").outerHTML=sumHTML(); } window.scrollTo(0,y); renderSteps(); }
+function rerenderRub(w){ const el=$("#rub_"+w); if(!el) return; el.innerHTML=rubHTML(w); el.querySelectorAll("textarea").forEach(autosize); refreshDot("В2"); }
+function refreshDot(c){ const bl=[...INTRO,...FINAL].find(b=>b.c===c), obj=INTRO.includes(bl)?S.intro:S.final; const dot=$(`[data-dot="${c}"]`); if(dot) dot.className="dot "+blockState(bl,obj); renderSteps(); }
+const focusTodo=el=>{ const i=el.value.indexOf(TODO); el.focus(); if(i>=0) el.setSelectionRange(i,i+1); };
+
+/* ================= події ================= */
+const view=$("#view");
+const topicBy=id=>S.items.find(x=>x.id===id);
+const kzLine=w=>w==="kz"?`Виконання компетентнісного завдання «…».`:`Робота над навчальним проєктом «…».`;
+document.addEventListener("click",e=>{
+  const b=e.target.closest("button,#drop"); if(!b) return;
+  const d=b.dataset;
+  if(d.step!=null){ S.step=+d.step; save(); render(); window.scrollTo(0,0); return; }
+  if(b.id==="drop"){ $("#fDocx").click(); return; }
+  if(d.hint){ const [part,k,i]=d.hint.split("|"); const obj=part==="intro"?S.intro:S.final; const blk=[...INTRO,...FINAL].find(x=>x.c===k.split(".")[0]); const f=blk.f.find(x=>x.k===k.split(".")[1]);
+    const ta=view.querySelector(`textarea[data-k="${k}"]`); const cur=ta.value.replace(/\s+$/,""); ta.value=(cur?cur+"\n":"")+f.h[+i]; obj[k]=ta.value; autosize(ta); save();
+    ta.parentNode.querySelector(".todo").classList.add("on"); refreshDot(blk.c); const at=ta.value.lastIndexOf("\n")+1; const p=ta.value.indexOf(TODO,at); ta.focus(); if(p>=0) ta.setSelectionRange(p,p+1); return; }
+  if(d.srch!=null){ const ta=$("#f_src"); const cur=ta.value.replace(/\s+$/,""); ta.value=(cur?cur+"\n":"")+srcHints()[+d.srch][1]; S.sources=ta.value; autosize(ta); save(); ta.parentNode.querySelector(".todo").classList.add("on"); const at=ta.value.lastIndexOf("\n")+1, q=ta.value.indexOf(TODO,at); ta.focus(); if(q>=0) ta.setSelectionRange(q,q+1); return; }
+  if(d.af){ const i=d.af.indexOf("|"), id=d.af.slice(0,i), k=d.af.slice(i+1); const a=aSt(id); a.f=a.f.includes(k)?a.f.filter(x=>x!==k):[...a.f,k]; b.setAttribute("aria-pressed",String(a.f.includes(k))); save(); updateTags(b.closest(".it")); return; }
+  if(d.as){ const [id,k,t]=d.as.split("|"); const a=aSt(id); const L=a.s[k]=a.s[k]||[]; a.s[k]=L.includes(t)?L.filter(x=>x!==t):[...L,t]; b.setAttribute("aria-pressed",String(a.s[k].includes(t))); save(); updateTags(b.closest(".it")); return; }
+  if(d.arec){ const it=topicBy(d.arec); const prev=JSON.stringify(S.assess[it.id]||null); const n=applyRec(it); save(); rerenderList(); toast(n?"Позначено інструменти, які підтримують види діяльності теми.":"У видах діяльності теми не знайдено ознак жодного інструмента.",n?()=>{ const v=JSON.parse(prev); if(v) S.assess[it.id]=v; else delete S.assess[it.id]; save(); rerenderList(); }:null); return; }
+  if(d.aclr){ const prev=S.assess?.[d.aclr]; if(!prev) return; delete S.assess[d.aclr]; save(); rerenderList(); toast("Вибір оцінювання в темі очищено.",()=>{ S.assess[d.aclr]=prev; save(); rerenderList(); }); return; }
+  if(d.tg){ S.open[d.tg]=!S.open[d.tg]; save(); rerenderList(); return; }
+  if(d.mv){ const [i,dir]=d.mv.split("|").map(Number); const j=i+dir; [S.items[i],S.items[j]]=[S.items[j],S.items[i]]; save(); rerenderList(); return; }
+  if(d.rm){ const i=+d.rm; const it=S.items.splice(i,1)[0]; save(); rerenderList(); toast(`Видалено: «${it.name}»`,()=>{S.items.splice(i,0,it); save(); rerenderList();}); return; }
+  const li=d.ld||d.lr||d.la||d.lsplit||d.lmerge;
+  if(li){ const [id,f,ixs]=li.split("|"), ix=+ixs; const t=topicBy(id); if(!t) return; const arr=t[f]; let focus=null;
+    if(d.la){ arr.push(L("",false)); focus=arr.length-1; }
+    else if(d.lr) arr[ix].d=false;
+    else if(d.ld){ const x=arr[ix]; if(x.o===null&&!x.g) arr.splice(ix,1); else x.d=true; }
+    else if(d.lsplit){ const ta=view.querySelector(`[data-li="${li}"]`); const x=arr[ix]; let pos=ta?ta.selectionStart:0; const v=x.t;
+      if(!pos||pos>=v.length){ const m=v.slice(1).search(/[.;]\s|\]\s/); pos=m>=0?m+2+(v[m+1]==="]"?0:1):Math.floor(v.length/2); }
+      const a=v.slice(0,pos).trim(), c=v.slice(pos).trim(); if(!a||!c){toast("Поставте курсор туди, де треба розділити пункт.");return;}
+      const orig=x.o!==null&&x.t===x.o; arr.splice(ix,1,{...x,t:a,o:orig?a:null},{...x,t:c,o:orig?c:null}); focus=ix+1; }
+    else if(d.lmerge){ const x=arr[ix], p=arr[ix-1]; const orig=p.o!==null&&x.o!==null&&p.t===p.o&&x.t===x.o; const nt=(p.t+" "+x.t).replace(/\s+/g," ").trim();
+      arr.splice(ix-1,2,{...p,t:nt,o:orig?nt:(p.o!==null?p.o+" "+(x.o||""):null)}); focus=ix-1; }
+    save(); rerenderList();
+    if(focus!==null){ const el=view.querySelector(`[data-li="${id}|${f}|${focus}"]`); el&&el.focus(); }
+    return; }
+  if(d.rubadd!=null){ const [w,i]=d.rubadd.split("|"); const r=S.rub[w]; r.rows.push({c:i===""?"":RUB_HINTS[w][+i],r:"",d:r.levels.map(()=>"")}); save(); rerenderRub(w);
+    const tas=view.querySelectorAll(`[data-rubc^="${w}|"]`); const last=tas[tas.length-1]; if(last){ (i===""?last:view.querySelector(`[data-rubd="${w}|${r.rows.length-1}|0"]`)).focus(); } return; }
+  if(d.rubdel){ const [w,ri]=d.rubdel.split("|"); const row=S.rub[w].rows.splice(+ri,1)[0]; save(); rerenderRub(w); toast("Критерій видалено.",()=>{S.rub[w].rows.splice(+ri,0,row); save(); rerenderRub(w);}); return; }
+  const a=d.act; if(!a) return;
+  if(a==="openJson") $("#fJson").click();
+  if(a==="sortSrc"){ const ta=$("#f_src"); const prev=S.sources||""; S.sources=srcSort(ta.value); ta.value=S.sources; autosize(ta); save(); toast("Джерела впорядковано за алфавітом.",()=>{S.sources=prev; save(); render();}); }
+  if(a==="reset"){
+    if(!b.dataset.armed){ b.dataset.armed="1"; b.textContent="Так, стерти все й почати заново"; b.classList.remove("ghost"); setTimeout(()=>{ if(b.isConnected){ delete b.dataset.armed; b.textContent="Почати заново"; b.classList.add("ghost"); } },5000); return; }
+    const prev=JSON.stringify(S); S=blank(); save(); render(); window.scrollTo(0,0);
+    toast("Усе очищено. Можна завантажувати модельну програму.",()=>{S=fix(JSON.parse(prev)); save(); render();}); }
+  if(a==="blankStart"){ S.items=[{id:uid("t"),k:"topic",name:"Нова тема",orig:"",hours:"",res:[],cont:[],act:[],tools:"",kz:false,pr:false}]; S.open[S.items[0].id]=true; S.step=2; save(); render(); }
+  if(a==="add"){ const v=$("#preset").value; let it;
+    if(v==="sec") it={id:uid("s"),k:"sec",name:"Новий розділ"};
+    else { const p=PRESETS[+v]; const isPr=p[0]==="Навчальний проєкт"; it={id:uid("t"),k:"topic",name:p[1]||"Нова тема",orig:"",hours:"",res:[],cont:[],act:isPr?[L(kzLine("pr"),false,{w:"pr"})]:[],tools:"",kz:false,pr:isPr}; S.open[it.id]=true; }
+    S.items.push(it); save(); rerenderList(); view.querySelector(`[data-i="${S.items.length-1}"] input.nm`)?.select(); }
+  if(a==="expand"||a==="collapse"){ topics().forEach(t=>S.open[t.id]=a==="expand"); save(); render(); }
+  if(a==="saveJson") saveFile(fname("json"),new Blob([JSON.stringify(S,null,1)],{type:"application/json"}));
+  if(a==="docx") exportDocx();
+});
+view.addEventListener("input",e=>{
+  const t=e.target, d=t.dataset;
+  if(t.tagName==="TEXTAREA"&&!t.readOnly) autosize(t);
+  if(d.k){ const obj=d.part==="intro"?S.intro:S.final; obj[d.k]=t.value; const td=t.parentNode.querySelector(".todo"); if(td) td.classList.toggle("on",t.value.includes(TODO)); refreshDot(d.k.split(".")[0]); save(); return; }
+  if(d.src){ S.sources=t.value; const td=t.parentNode.querySelector(".todo"); if(td) td.classList.toggle("on",t.value.includes(TODO)); save(); return; }
+  if(d.meta){ S.meta[d.meta]=t.value; save(); if(d.meta==="plan"&&$("#sum")) $("#sum").outerHTML=sumHTML(); return; }
+  if(d.nm){ S.items[+d.nm].name=t.value; save(); return; }
+  if(d.h){ S.items[+d.h].hours=t.value; save(); $("#sum").outerHTML=sumHTML(); view.querySelectorAll(".it.sec").forEach(el=>{const h=secHours(+el.dataset.i); el.querySelector(".hrs").textContent=h?h+" год":"";}); renderSteps(); return; }
+  if(d.tools){ S.items[+d.tools].tools=t.value; save(); renderSteps(); return; }
+  if(d.anote){ aSt(d.anote).note=t.value; save(); return; }
+  if(d.li){ const [id,f,ix]=d.li.split("|"); const x=topicBy(id)[f][+ix]; x.t=t.value; t.parentNode.classList.toggle("chg",x.o!==null&&t.value!==x.o); t.parentNode.classList.toggle("todo2",t.value.includes(TODO)); save(); return; }
+  if(d.rubc){ const [w,ri]=d.rubc.split("|"); S.rub[w].rows[+ri].c=t.value; save(); refreshDot("В2"); return; }
+  if(d.rubr){ const [w,ri]=d.rubr.split("|"); S.rub[w].rows[+ri].r=t.value; save(); return; }
+  if(d.rubd){ const [w,ri,li]=d.rubd.split("|"); S.rub[w].rows[+ri].d[+li]=t.value; save(); refreshDot("В2"); return; }
+  if(d.rubl){ const [w,li]=d.rubl.split("|"); S.rub[w].levels[+li]=t.value; save(); return; }
+});
+view.addEventListener("change",e=>{
+  const t=e.target,d=t.dataset;
+  if(d.k&&t.type==="radio"){ return; }
+  if(d.fl){ const [i,w]=d.fl.split("|"); const it=S.items[+i]; it[w]=t.checked;
+    if(t.checked){ it.act.push(L(kzLine(w),false,{w})); S.open[it.id]=true; save(); rerenderList(); const ix=it.act.length-1; const el=view.querySelector(`[data-li="${it.id}|act|${ix}"]`); if(el) focusTodo(el); }
+    else { const removed=it.act.filter(x=>x.w===w); it.act=it.act.filter(x=>x.w!==w); save(); rerenderList(); if(removed.some(x=>done(x.t))) toast("Пункт про "+(w==="kz"?"компетентнісне завдання":"проєкт")+" прибрано з видів діяльності.",()=>{it[w]=true; it.act.push(...removed); save(); rerenderList();}); } }
+  if(d.rublev){ const r=S.rub[d.rublev], n=+t.value; const old=r.levels.length; if(n!==old){ r.levels=[...LEVELS[n]]; r.rows.forEach(x=>{ x.d = n>old ? [...x.d.slice(0,1),"",...x.d.slice(1)].slice(0,n) : [x.d[0]||x.d[1]?((x.d[0]||"")+(x.d[0]&&x.d[1]?" ":"")+(x.d[1]||"")):"",...x.d.slice(2)]; }); save(); rerenderRub(d.rublev); } }
+  if(t.matches("[data-field]")){ S.field=t.value; save(); render(); return; }
+  if(d.li||d.tools||d.anote) updateTags(t.closest(".it"));
+});
+view.addEventListener("change",e=>{ const t=e.target; if(t.type==="radio"&&t.dataset.k){ const obj=t.dataset.part==="intro"?S.intro:S.final; obj[t.dataset.k]=t.value; save(); refreshDot(t.dataset.k.split(".")[0]); } });
+/* перетягування */
+let dragI=null;
+view.addEventListener("dragstart",e=>{ const h=e.target.closest("[data-drag]"); if(!h) return; dragI=+h.dataset.drag; e.dataTransfer.effectAllowed="move"; try{e.dataTransfer.setData("text/plain",String(dragI));}catch(_){} const c=h.closest(".it"); e.dataTransfer.setDragImage(c,20,20); c.classList.add("drag"); });
+const clearOver=()=>view.querySelectorAll(".over-top,.over-bot").forEach(x=>x.classList.remove("over-top","over-bot"));
+view.addEventListener("dragover",e=>{ const dz=e.target.closest("#drop"); if(dz&&dragI===null){e.preventDefault(); dz.classList.add("on"); return;}
+  if(dragI===null) return; const c=e.target.closest(".it"); if(!c) return; e.preventDefault(); clearOver(); const r=c.getBoundingClientRect(); c.classList.add(e.clientY<r.top+r.height/2?"over-top":"over-bot"); });
+view.addEventListener("dragleave",e=>{ const dz=e.target.closest("#drop"); if(dz) dz.classList.remove("on"); });
+view.addEventListener("drop",e=>{ const dz=e.target.closest("#drop");
+  if(dz){ e.preventDefault(); dz.classList.remove("on"); const f=e.dataTransfer.files[0]; if(f) importDocx(f); return; }
+  if(dragI===null) return; const c=e.target.closest(".it"); if(!c) return; e.preventDefault(); const r=c.getBoundingClientRect(); let to=+c.dataset.i+(e.clientY<r.top+r.height/2?0:1);
+  const it=S.items.splice(dragI,1)[0]; if(to>dragI) to--; S.items.splice(to,0,it); dragI=null; save(); rerenderList(); });
+view.addEventListener("dragend",()=>{ dragI=null; clearOver(); view.querySelectorAll(".drag").forEach(x=>x.classList.remove("drag")); });
+view.addEventListener("keydown",e=>{ if(e.target.id==="drop"&&(e.key==="Enter"||e.key===" ")){e.preventDefault(); $("#fDocx").click();} });
+/* файли */
+$("#fDocx").onchange=e=>{const f=e.target.files[0]; if(f) importDocx(f); e.target.value="";};
+$("#fJson").onchange=async e=>{const f=e.target.files[0]; e.target.value=""; if(!f) return; try{const o=JSON.parse(await f.text()); if(!o||o.v!==1||!Array.isArray(o.items)) throw 0; const prev=JSON.stringify(S); S=fix(o); save(); render(); toast("Проєкт відкрито.",()=>{S=JSON.parse(prev);save();render();});}catch(_){toast("Це не файл проєкту цього конструктора.");}};
+const fname=ext=>((["Навчальна програма",S.meta.title,S.meta.grades].map(x=>String(x||"").trim()).filter(Boolean).join(". ")).replace(/[\\/:*?"<>|«»]+/g,"").replace(/\s+/g," ").trim().slice(0,80)||"Навчальна програма")+"."+ext;
+let DL=null; try{ window.claude?.use?.("downloads").then(x=>DL=x).catch(()=>{}); }catch(_){}
+async function saveFile(name,blob){
+  if(DL){ try{ await DL.save({filename:name,data:blob}); toast("Файл збережено."); return; }catch(e){ if(e&&e.code==="declined") return; if(e&&e.code==="host_unavailable"){toast("Тут файл не зберегти — відкрийте сторінку в браузері на комп’ютері."); return;} } }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href); a.remove();},1500);
+}
+
+/* ================= експорт у Word =================
+   оформлення за рекомендаціями (лист УІРО 26.05.2025): А4; Times New Roman 14 пт, у таблицях 12 пт; інтервал 1,0;
+   поля: ліве 30 мм, праве 10 мм, верхнє й нижнє 20 мм; вирівнювання за шириною (крім титулу);
+   нумерація з титулу, номер — з другої сторінки; кожна частина з нової сторінки */
+async function exportDocx(){
+  const D=window.docx; if(!D){toast("Бібліотека для створення Word не завантажилася. Перевірте інтернет і перезавантажте сторінку.");return;}
+  const {Document,Packer,Paragraph,TextRun,Table,TableRow,TableCell,WidthType,PageOrientation,AlignmentType,HeadingLevel,ShadingType,Footer,PageNumber}=D;
+  const J=AlignmentType.JUSTIFIED, C=AlignmentType.CENTER;
+  const P=(t,o={})=>new Paragraph({alignment:o.align||J,spacing:{after:o.after??0,before:o.before??0},keepNext:o.keepNext,children:[new TextRun({text:t,bold:o.bold,italics:o.it,allCaps:o.caps})]});
+  const paras=t=>String(t||"").split(/\n+/).filter(x=>x.trim()).map(x=>P(x.trim()));
+  const H=(t,l)=>new Paragraph({heading:l,children:[new TextRun({text:t})]});
+  const cell=(lines,o={})=>new TableCell({columnSpan:o.span,shading:o.fill?{type:ShadingType.CLEAR,color:"auto",fill:o.fill}:undefined,width:o.w?{size:o.w,type:WidthType.PERCENTAGE}:undefined,
+    children:(lines.length?lines:[""]).map(x=>{ const it=typeof x==="object"; const tx=it?x.t:x; return new Paragraph({alignment:o.center?C:AlignmentType.LEFT,children:[new TextRun({text:tx,bold:o.bold||(it&&x.b),italics:it&&x.i,size:24})]}); })});
+  const rubTable=w=>{ const r=S.rub[w]; if(!r.rows.length) return []; const lw=Math.floor(72/r.levels.length);
+    return [new Table({width:{size:100,type:WidthType.PERCENTAGE},rows:[new TableRow({tableHeader:true,children:[cell(["Критерій"],{bold:true,fill:"E7EEF0",w:28}),...r.levels.map(l=>cell([l],{bold:true,fill:"E7EEF0",center:true,w:lw}))]}),
+      ...r.rows.map(x=>new TableRow({children:[cell([{t:x.c,b:true},...(String(x.r||"").trim()?[{t:x.r,i:true}]:[])],{w:28}),...x.d.map(d=>cell(String(d||"").split(/\n+/).filter(Boolean),{w:lw}))]}))]}),P("")]; };
+  const m=S.meta;
+  const part=(blocks,obj)=>blocks.flatMap(b=>{ const out=[H(b.t,HeadingLevel.HEADING_2)];
+    b.f.forEach((f,fi)=>{ if(f.k==="#"){ const nx=b.f.slice(fi+1); const u=nx.findIndex(x=>x.k==="#"); if((u<0?nx:nx.slice(0,u)).some(x=>String(obj[b.c+"."+x.k]||"").trim())) out.push(H(f.l,HeadingLevel.HEADING_3)); return; }
+      if(f.auto==="grades"&&String(m.grades||"").trim()) out.push(new Paragraph({alignment:J,children:[new TextRun({text:"Клас(и): ",bold:true}),new TextRun(m.grades)]}));
+      if(f.rub){ const t=rubTable(f.rub); if(t.length){ out.push(P(f.l,{bold:true,keepNext:true,before:120}),...t); } return; }
+      const v=obj[b.c+"."+f.k]; if(!String(v||"").trim()) return;
+      if(f.o) out.push(new Paragraph({alignment:J,children:[new TextRun({text:f.l+": ",bold:true}),new TextRun(v)]}));
+      else { out.push(P(f.l,{bold:true,keepNext:true,before:120})); out.push(...paras(v)); } });
+    if(b.c==="В2"){ const at=assessTable(); if(at.length) out.push(P("Планування оцінювання за темами",{bold:true,keepNext:true,before:120}),...at); }
+    return out.length>1?out:[]; });
+  function assessTable(){ const T=topics(); if(!T.some(assessOut)) return []; let n=0;
+    const rows=[new TableRow({tableHeader:true,children:[cell(["Тема"],{bold:true,fill:"E7EEF0",w:28}),cell(["Формувальне оцінювання"],{bold:true,fill:"E7EEF0",center:true,w:36}),cell(["Підсумкове оцінювання"],{bold:true,fill:"E7EEF0",center:true,w:36})]})];
+    S.items.forEach((it,i)=>{ if(it.k==="sec"){ rows.push(new TableRow({children:[cell([it.name],{bold:true,span:3,fill:"F2F2F2"})]})); return; }
+      n++; const o=assessOut(it)||{f:[],s:[],note:""};
+      rows.push(new TableRow({children:[cell([`Тема ${n}. ${it.name}`],{w:28}),cell(o.f.length?[o.f.join(", ")]:["—"],{w:36}),
+        cell([...o.s.map(([k,l])=>({t:`${kLabel(k,it)}: ${l.map(lc).join(", ")}`})),...(o.note?[o.note]:[]),...(!o.s.length&&!o.note?["—"]:[])],{w:36})]})); });
+    return [new Table({width:{size:100,type:WidthType.PERCENTAGE},rows}),P("")]; }
+  /* титульний аркуш */
+  const model=String(m.model||"").trim();
+  const name=[String(m.title||"").trim(),String(m.grades||"").trim()].filter(Boolean).join(". ");
+  const title=[
+    P(String(m.school||"").trim()||"Назва закладу освіти",{align:C,bold:true}),
+    ...Array.from({length:9},()=>P("",{align:C})),
+    P("Навчальна програма",{align:C,bold:true,caps:true,after:120}),
+    P(name?`«${name}»`:"«Назва навчальної програми»",{align:C,bold:true,after:120}),
+    P("для закладів загальної середньої освіти,",{align:C}),
+    P("розроблена на основі модельної навчальної програми",{align:C}),
+    ...(model?[P(model,{align:C})]:[]),
+    ...Array.from({length:6},()=>P("",{align:C})),
+    ...(String(m.author||"").trim()?[P("Автор(ка):",{align:AlignmentType.RIGHT,bold:true}),P(m.author.trim(),{align:AlignmentType.RIGHT})]:[]),
+    ...Array.from({length:8},()=>P("",{align:C})),
+    P(String(m.year||"").trim(),{align:C})];
+  /* основна частина */
+  const W=[9,25,22,25,19];
+  const head=new TableRow({tableHeader:true,children:["Кількість годин","Очікувані результати навчання","Пропонований зміст","Пропоновані види навчальної діяльності","Пропоновані засоби навчання / обладнання"].map((t,c)=>cell([t],{bold:true,w:W[c],fill:"E7EEF0",center:true}))});
+  const rows=[head]; let n=0;
+  S.items.forEach((it,i)=>{
+    if(it.k==="sec"){ const h=secHours(i); rows.push(new TableRow({children:[cell([h?String(h):""],{bold:true,w:W[0],fill:"F2F2F2",center:true}),cell([it.name],{bold:true,span:4,fill:"F2F2F2"})]})); return; }
+    n++;
+    rows.push(new TableRow({children:[cell([String(it.hours||"")],{bold:true,w:W[0],center:true}),cell([`Тема ${n}. ${it.name}`],{bold:true,span:4})]}));
+    rows.push(new TableRow({children:[cell([],{w:W[0]}),cell(live(it.res).map(x=>x.g?{t:x.t,b:true,i:true}:x.t),{w:W[1]}),cell(live(it.cont).map(x=>x.t),{w:W[2]}),cell(live(it.act).map(x=>x.t),{w:W[3]}),cell(String(it.tools||"").split(/\n+/).filter(x=>x.trim()),{w:W[4]})]}));
+  });
+  rows.push(new TableRow({children:[cell([String(hoursSum())],{bold:true,w:W[0],center:true}),cell(["Разом годин"],{bold:true,span:4})]}));
+  /* джерела */
+  const src=String(S.sources||"").split("\n").map(x=>x.replace(/^\s*\d+[.)]\s*/,"").trim()).filter(Boolean);
+  const srcPart=src.length?[H("Список використаних джерел",HeadingLevel.HEADING_1),...src.map((x,k)=>P(`${k+1}. ${x}`,{after:60}))]:[];
+  const mm=x=>Math.round(x*56.6929);
+  const pg={size:{width:11906,height:16838},margin:{top:mm(20),bottom:mm(20),left:mm(30),right:mm(10),footer:mm(10)}};
+  const land={...pg,size:{...pg.size,orientation:PageOrientation.LANDSCAPE}};
+  const num=new Footer({children:[new Paragraph({alignment:C,children:[new TextRun({children:[PageNumber.CURRENT],size:24})]})]});
+  const none=new Footer({children:[new Paragraph("")]});
+  const sec=(page,children,foot=num)=>({properties:{page},footers:{default:foot},children});
+  const sections=[sec(pg,title,none),sec(pg,[H("Вступна частина",HeadingLevel.HEADING_1),...part(INTRO,S.intro)]),
+    sec(land,[H("Основна частина",HeadingLevel.HEADING_1),new Table({width:{size:100,type:WidthType.PERCENTAGE},rows})]),
+    sec(pg,[H("Прикінцева частина",HeadingLevel.HEADING_1),...part(FINAL,S.final)])];
+  if(srcPart.length) sections.push(sec(pg,srcPart));
+  const hs=(id,name,o)=>({id,name,basedOn:"Normal",next:"Normal",quickFormat:true,run:{size:28,bold:true,italics:o.it,color:"000000"},paragraph:{alignment:o.al,spacing:{before:o.b,after:o.a,line:240},keepNext:true}});
+  const doc=new Document({creator:m.author||"",title:name||"Навчальна програма",
+    styles:{default:{document:{run:{font:"Times New Roman",size:28},paragraph:{spacing:{line:240}}}},paragraphStyles:[
+      hs("Heading1","Heading 1",{al:C,b:0,a:240}),hs("Heading2","Heading 2",{al:J,b:240,a:120}),hs("Heading3","Heading 3",{al:J,b:120,a:60,it:true})]},
+    sections});
+  try{ const blob=await Packer.toBlob(doc); await saveFile(fname("docx"),blob); }catch(e){ toast("Не вдалося створити файл: "+e.message); }
+}
+window.__np={get S(){return S;}};
+render();
+}
+</script>
+</body>
+</html>
