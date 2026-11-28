@@ -10,7 +10,7 @@
 <style>
 :root{
   /* layout: sticky header with steps; step 1 = structure sidebar + outcome matrix; step 2 = topic list + 3-column table; drawer = activity reference */
-  --bg:#f3f4f0; --panel:#ffffff; --ink:#1b2230; --muted:#5b6474; --line:#dcdfd8; --soft:#eceee8;
+  --bg:#e4eaf2; --panel:#ffffff; --ink:#1b2230; --muted:#56607a; --line:#cdd6e2; --soft:#eef2f8; --hdr:#1f3d60; --th:#dbe6f3; --shadow:0 1px 2px rgba(16,34,60,.07),0 6px 18px rgba(16,34,60,.07);
   --accent:#2a5885; --accent-soft:#e4edf6; --accent-ink:#ffffff;
   --warn:#a8650f; --warn-soft:#fbefda; --multi:#74479e; --multi-soft:#f0e8f7; --ok:#2e7650; --ok-soft:#e2f1e8;
   --g1:#2a5885; --g2:#2e7650; --g3:#b25f22; --g4:#8a4a8e;
@@ -21,7 +21,7 @@
 }
 @media (prefers-color-scheme:dark){
   :root:not([data-theme="light"]){
-    --bg:#13171e; --panel:#1b2029; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2e3542; --soft:#232935;
+    --bg:#0f1319; --panel:#1b2029; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2e3542; --soft:#232935; --hdr:#141b26; --th:#23324a; --shadow:0 1px 3px rgba(0,0,0,.35);
     --accent:#7fb0e0; --accent-soft:#1f2f42; --accent-ink:#0e1520;
     --warn:#e0a54f; --warn-soft:#3a2c17; --multi:#c29be6; --multi-soft:#2f2440; --ok:#6cc596; --ok-soft:#1b3226;
     --g1:#7fb0e0; --g2:#6cc596; --g3:#e59a62; --g4:#d08ad3;
@@ -29,7 +29,7 @@
   }
 }
 :root[data-theme="dark"]{
-  --bg:#13171e; --panel:#1b2029; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2e3542; --soft:#232935;
+  --bg:#0f1319; --panel:#1b2029; --ink:#e7eaf0; --muted:#9aa3b2; --line:#2e3542; --soft:#232935; --hdr:#141b26; --th:#23324a; --shadow:0 1px 3px rgba(0,0,0,.35);
   --accent:#7fb0e0; --accent-soft:#1f2f42; --accent-ink:#0e1520;
   --warn:#e0a54f; --warn-soft:#3a2c17; --multi:#c29be6; --multi-soft:#2f2440; --ok:#6cc596; --ok-soft:#1b3226;
   --g1:#7fb0e0; --g2:#6cc596; --g3:#e59a62; --g4:#d08ad3;
@@ -209,6 +209,7 @@ table.mx{border-collapse:separate;border-spacing:0;width:max-content;min-width:1
 .lchip.ux{font-weight:700}
 .occode{font-size:12px;color:var(--accent);font-weight:600;white-space:nowrap;cursor:help;border-bottom:1px dotted currentColor}
 .ocitem .octxt+.octxt{margin-top:4px}
+.tchip .tgr{margin-left:6px;font-size:10.5px;font-weight:600;opacity:.65;white-space:nowrap}
 .stat .ic{width:13px;height:13px;vertical-align:-2px}
 .stat.done{background:var(--ok-soft);color:var(--ok)}
 .stat.part{background:var(--warn-soft);color:var(--warn)}
@@ -454,6 +455,23 @@ table.am{border-collapse:collapse;margin-top:10px;font-size:12.5px}
 .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;z-index:60;font-size:14px;max-width:90vw}
 [hidden]{display:none !important}
 @media (prefers-reduced-motion:no-preference){.btn,.gcard,.schip{transition:background .12s,border-color .12s}}
+
+/* contrast: dark top bar, tinted page, panels lifted with a shadow */
+header .hbar{background:var(--hdr);color:#fff}
+header .brand{color:rgba(255,255,255,.72)}
+header #title{color:#fff}
+header #title:hover,header #title:focus{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3)}
+header .saved{color:rgba(255,255,255,.7)}
+header .hbar .btn{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.28)}
+header .hbar .btn:hover{background:rgba(255,255,255,.2)}
+header .hbar .pop{color:var(--ink)}
+header{box-shadow:0 2px 8px rgba(16,34,60,.12)}
+.panel{box-shadow:var(--shadow)}
+.prog th{background:var(--th)}
+.uxitem{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 45%,transparent)}
+.links{background:var(--soft)}
+.tlist button[aria-current="true"]{box-shadow:inset 3px 0 0 var(--accent)}
+.hintbar{background:var(--panel);box-shadow:var(--shadow)}
 </style>
 </head>
 <body>
@@ -1971,19 +1989,30 @@ function aState(tid){ S.assess=S.assess||{}; const a=S.assess[tid]=S.assess[tid]
   /* keep earlier choices valid after the stages were rearranged: a tool that left its stage moves to the first stage that has it */
   a.f = [...new Set(a.f.map(k=>{ if(k.startsWith("g:")) return k; const [sid,tool]=k.split("|"); const ok=(A_STRAT.find(x=>x[0]===sid)?.[2]||[]).concat(A_FORMA[sid]||[]).includes(tool); if(ok) return k; const ns=A_STRAT.find(x=>x[2].includes(tool)||(A_FORMA[x[0]]||[]).includes(tool)); return ns? ns[0]+"|"+tool : null; }).filter(Boolean))];
   if(a.fm){ for(const m of a.fm){ const sid=Object.keys(A_FORMA).find(k=>A_FORMA[k].includes(m)); if(sid && !a.f.includes(sid+"|"+m)) a.f.push(sid+"|"+m); } delete a.fm; }
+  /* formative kinds of work are kept per field (not per group or stage): «g:МАО|tool», «g:ІФО|tool»; FormA methods stay by stage */
+  a.f=[...new Set(a.f.map(k=>{ const [p,tool]=k.split("|"); if(p.startsWith("g:")){ const i=p.indexOf(":",2); return i>0 ? p.slice(0,i)+"|"+tool : k; }
+      if(!FORMA_SET.has(tool) && A_STRAT.some(x=>x[2].includes(tool))) return "g:ІФО|"+tool; return k; }))];
   return a; }
+/* kinds of work for formative assessment: one block per field of the topic; each tool remembers the groups the guide gives it for */
+function fieldBlocks(tid){ const by=new Map();
+  for(const [g] of topicGRs(tid)){ const I=agInfo(g); const f=I.f; if(!by.has(f)) by.set(f,{f, common:false, m:new Map()}); const B=by.get(f);
+    let L;
+    if(f==="ІФО"){ L=[...new Set(A_STRAT.flatMap(x=>x[2]))]; B.common=true; }
+    else { if(!I.G) continue; L=agList(g,"cur"); if(!I.prim && I.G.cur["*"]) B.common=true; }
+    for(const tool of L){ if(!B.m.has(tool)) B.m.set(tool,{tool, gs:[], key:g, desc: f==="ІФО" ? (A_TOOLS[tool]||"")+"\n\nЕтап формувального оцінювання: "+A_STRAT.filter(x=>x[2].includes(tool)).map(x=>x[0]).join(", ") : toolDesc(g,tool)}); const x=B.m.get(tool); if(!x.gs.includes(g)) x.gs.push(g); } }
+  return [...by.values()].map(B=>({f:B.f, common:B.common, tools:[...B.m.values()]})).filter(B=>B.tools.length); }
 function assessRecommend(tid){
-  const {all, byGR}=topicActs(tid); const rec={f:{}, s:{}}; const ifo=hasIFO();
-  for(const [sid,,tools] of A_STRAT){ for(const tool of (ifo?tools:[]).concat(A_FORMA[sid]||[])){ const ev=toolEvidence(tool, all); if(ev.length) rec.f[sid+"|"+tool]=ev; } }
-  for(const b of curBlocks(tid)){ const L = b.star ? all : (byGR[b.key]||[]); for(const tool of b.tools){ const ev=toolEvidence(tool, L, b.key); if(ev.length) rec.f["g:"+b.key+"|"+tool]=ev; } }
+  const {all, byGR}=topicActs(tid); const rec={f:{}, s:{}};
+  for(const [sid] of A_STRAT){ for(const tool of (A_FORMA[sid]||[])){ const ev=toolEvidence(tool, all); if(ev.length) rec.f[sid+"|"+tool]=ev; } }
+  for(const B of fieldBlocks(tid)) for(const x of B.tools){ const L = B.common ? all : [...new Set(x.gs.flatMap(g=>byGR[g]||[]))]; const ev=toolEvidence(x.tool, L, x.key); if(ev.length) rec.f["g:"+B.f+"|"+x.tool]=ev; }
   for(const [g] of topicGRs(tid)){ rec.s[g]={}; for(const tool of agList(g,"sum")){ const ev=toolEvidence(tool, byGR[g]||[], g); if(ev.length) rec.s[g][tool]=ev; } }
   return rec;
 }
 function applyRecommend(tid){
-  const a=aState(tid); const rec=assessRecommend(tid); const ifo=hasIFO();
+  const a=aState(tid); const rec=assessRecommend(tid);
   const best = keys => keys.map(k=>[k,(rec.f[k]||[]).length]).filter(x=>x[1]).sort((x,y)=>y[1]-x[1])[0];
-  for(const [sid,,tools] of A_STRAT){ for(const pool of [ifo?tools:[], A_FORMA[sid]||[]]){ const b=best(pool.map(t=>sid+"|"+t)); if(b && !a.f.includes(b[0])) a.f.push(b[0]); } }
-  for(const bl of curBlocks(tid)){ const b=best(bl.tools.map(t=>"g:"+bl.key+"|"+t)); if(b && !a.f.includes(b[0])) a.f.push(b[0]); }
+  for(const [sid] of A_STRAT){ const b=best((A_FORMA[sid]||[]).map(t=>sid+"|"+t)); if(b && !a.f.includes(b[0])) a.f.push(b[0]); }
+  for(const B of fieldBlocks(tid)){ const ks=B.tools.map(x=>"g:"+B.f+"|"+x.tool).map(k=>[k,(rec.f[k]||[]).length]).filter(x=>x[1]).sort((x,y)=>y[1]-x[1]).slice(0,3); for(const [k] of ks) if(!a.f.includes(k)) a.f.push(k); }
   for(const [g] of topicGRs(tid)){ const top=Object.entries(rec.s[g]||{}).map(([t,ev])=>[t,ev.length]).sort((x,y)=>y[1]-x[1]).slice(0,2); a.s[g]=a.s[g]||[]; for(const [t] of top) if(!a.s[g].includes(t)) a.s[g].push(t); }
   save();
 }
@@ -1994,7 +2023,8 @@ function assessCoverage(){
 }
 function assessText(tid){
   if(!(S.assess||{})[tid]) return null; const a=aState(tid);
-  const f=[...new Set((a.f||[]).map(k=>k.split("|")[1]))];
+  const ok=new Set(fieldBlocks(tid).flatMap(B=>B.tools.map(x=>"g:"+B.f+"|"+x.tool)).concat(A_STRAT.flatMap(([sid])=>(A_FORMA[sid]||[]).map(t=>sid+"|"+t))));
+  const f=[...new Set((a.f||[]).filter(k=>ok.has(k)).map(k=>k.split("|")[1]))];
   const s=topicGRs(tid).map(([g])=>[g,(a.s[g]||[])]).filter(x=>x[1].length);
   if(!f.length && !s.length && !(a.note||"").trim()) return null;
   return {f, s, note:(a.note||"").trim()};
@@ -2029,14 +2059,14 @@ function assessPanelHTML(tid){
     ${!all.length?`<p class="tiny muted">У темі ще немає видів діяльності, тому рекомендацій немає. Їх можна додати на кроці 2.</p>`:`<p class="tiny muted">★ — інструмент підтримує діяльність, яку ви обрали для теми (наведіть, щоб побачити яку). Рекомендації для підсумкового оцінювання враховують діяльність, пов’язану з орієнтирами відповідної групи.</p>`}</div>`;
   const chip = (k, tool, desc, fa) => { const ev=rec.f[k];
     return `<button class="tchip ${ev?"rec":""} ${fa?"fa":""}" aria-pressed="${a.f.includes(k)}" data-af="${esc(k)}" title="${esc(desc)}${ev?"\n\nУ темі: "+esc(ev.slice(0,4).join("; ")):""}">${ev?"★ ":""}${esc(tool)}</button>`; };
-  const blocks=curBlocks(tid);
-  const ifoKeys=grs.map(([g])=>g).filter(g=>!String(g).includes(":"));
-  const ifoBlock = ifo && ifoKeys.length && blocks.length;   // integrated course: ІФО as a block too, its kinds of work by stage stay in the tooltip
-  if(ifoBlock){ const seen=new Set(), tools=[]; for(const [sid,,ts] of A_STRAT) for(const x of ts) if(!seen.has(x)){ seen.add(x); tools.push([sid,x]); }
-    blocks.unshift({key:"ІФО", ifo:true, tools}); }
-  const blocksHTML = blocks.length ? `<p class="tiny muted" style="margin:0 0 8px">Види роботи з путівників галузей для груп результатів теми.</p><div class="strats">${blocks.map(b=> b.ifo ? `<div class="strat"><div class="sn"><span class="gdot" style="--gc:${agColor(ifoKeys[0])}"></span><b>${isMulti()?ftag("ІФО"):""}${ifoKeys.map(g=>"ГР "+g).join(", ")}</b>${ifoKeys.length===1&&agName(ifoKeys[0])?". "+esc(agName(ifoKeys[0])):""}</div><div class="tchips">${b.tools.map(([sid,tool])=>{ const k=[...A_STRAT].map(x=>x[0]).map(id=>id+"|"+tool).find(k=>a.f.includes(k)) || sid+"|"+tool; const st=A_STRAT.filter(x=>x[2].includes(tool)).map(x=>x[0]).join(", "); return chip(k, tool, (A_TOOLS[tool]||"")+"\n\nЕтап формувального оцінювання: "+st, false); }).join("")}</div></div>` : `<div class="strat"><div class="sn">${b.star?`<b>${grLabelHTML(b.key)}</b>`:`<span class="gdot" style="--gc:${agColor(b.key)}"></span><b>${grLabelHTML(b.key)}${agName(b.key)?".":""}</b> ${esc(agName(b.key))}`}</div><div class="tchips">${b.tools.map(tool=>chip("g:"+b.key+"|"+tool, tool, toolDesc(b.key,tool), false)).join("")}</div></div>`).join("")}</div>` : "";
-  const stageTools = (sid, tools) => (ifo && !ifoBlock ? tools : tools.filter(x=>!ifoBlock && a.f.includes(sid+"|"+x))).concat(A_FORMA[sid]||[]);
-  h+=`<div class="asec"><h3>Формувальне оцінювання</h3>${blocksHTML}<p class="tiny muted" style="margin:${blocks.length?"14px":"0"} 0 8px">${ifo&&!ifoBlock?"Для кожного етапу: спершу види роботи з посібника, далі (світлим тлом) методи з каталогу FormA.":"Методи з каталогу FormA за етапами формувального оцінювання."}</p><div class="strats">${A_STRAT.map(([sid,name,tools])=>`<div class="strat"><div class="sn"><b>${sid}.</b> ${esc(name)}</div><div class="tchips">${stageTools(sid,tools).map(tool=>chip(sid+"|"+tool, tool, A_TOOLS[tool]||(FORMA_SET.has(tool)?"Метод з каталогу FormA":""), FORMA_SET.has(tool))).join("")}</div></div>`).join("")}</div></div>`;
+  /* formative: the same for every field — kinds of work from the field guide (one block per field, groups shown on each chip), then FormA methods by stage */
+  const FB=fieldBlocks(tid);
+  const fbHTML = FB.map(B=>`<div class="strat"><div class="sn">${ftag(B.f)}<b>${esc(B.f==="ІФО"?"Посібник з оцінювання (інформатика)":"Путівник з оцінювання: "+fieldName(B.f).toLowerCase()+" галузь")}</b>${B.common?`<div class="tiny muted" style="margin-top:4px">Путівник подає спільний перелік для всіх груп результатів.</div>`:""}</div>
+      <div class="tchips">${B.tools.map(x=>{ const k="g:"+B.f+"|"+x.tool; const ev=rec.f[k]; const gl=x.gs.length && !B.common ? x.gs.map(g=>agInfo(g).g).join(", ") : "";
+        return `<button class="tchip ${ev?"rec":""}" aria-pressed="${a.f.includes(k)}" data-af="${esc(k)}" title="${esc(x.desc)}${gl?"\n\nДля груп результатів: ГР "+esc(gl):""}${ev?"\n\nУ темі: "+esc(ev.slice(0,4).join("; ")):""}">${ev?"★ ":""}${esc(x.tool)}${gl?`<span class="tgr">ГР ${esc(gl)}</span>`:""}</button>`; }).join("")}</div></div>`).join("");
+  h+=`<div class="asec"><h3>Формувальне оцінювання</h3>
+    <p class="tiny muted" style="margin:0 0 8px">1. Види роботи з путівника з оцінювання галузі. Позначка «ГР» показує, для яких груп результатів теми путівник їх радить.</p><div class="strats">${fbHTML}</div>
+    <p class="tiny muted" style="margin:14px 0 8px">2. Методи з каталогу FormA за етапами формувального оцінювання — однакові для всіх галузей.</p><div class="strats">${A_STRAT.map(([sid,name])=>`<div class="strat"><div class="sn"><b>${sid}.</b> ${esc(name)}</div><div class="tchips">${(A_FORMA[sid]||[]).map(tool=>chip(sid+"|"+tool, tool, "Метод з каталогу FormA", true)).join("")}</div></div>`).join("")}</div></div>`;
   const onlyIFO = grs.every(([g])=>!String(g).includes(":"));
   h+=`<div class="asec"><h3>Підсумкове оцінювання</h3><div class="strats">${grs.map(([g])=>{ const I=agInfo(g); const gn=I.G&&!I.prim ? I.G.note[I.g] : "";
       return `<div class="strat"><div class="sn"><span class="gdot" style="--gc:${agColor(g)}"></span><b>${grLabelHTML(g)}${agName(g)?".":""}</b> ${esc(agName(g))}${gn?`<div class="tiny muted" style="margin-top:4px">${esc(gn)}</div>`:""}</div><div class="tchips">${agList(g,"sum").map(tool=>{ const ev=(rec.s[g]||{})[tool]; const on=(a.s[g]||[]).includes(tool);
@@ -3061,7 +3091,7 @@ document.addEventListener("keydown", e=>{ if((e.ctrlKey||e.metaKey) && !e.shiftK
 const HINTS = {
   1:"Ліворуч задайте модулі й теми програми. У матриці позначте, які орієнтири для оцінювання досягатимуться в кожній темі (стовпець — тема); орієнтир може належати кільком темам, а непозначені підсвічено жовтим.",
   2:"Для кожної теми заповніть таблицю. Усі орієнтири теми стоять в одному рядку зі спільним змістом і видами діяльності; орієнтир можна прибрати з таблиці (×) і повернути. Коди орієнтирів біля видів діяльності та рівні — лише для вашого контролю й аналізу, у документ вони не потрапляють.",
-  3:"Для кожної теми оберіть інструменти формувального оцінювання за етапами та види підсумкових робіт для груп результатів (ГР), що є в темі. ★ підказує інструменти, які підтримують види діяльності, обрані на кроці 2; таблиця вгорі показує, скільки разів оцінюється кожна група.",
+  3:"Для кожної теми оберіть: для формувального оцінювання — види роботи з путівника галузі та методи FormA за етапами; для підсумкового — види робіт для кожної групи результатів (ГР) теми. ★ підказує інструменти, які підтримують види діяльності, обрані на кроці 2; таблиця вгорі показує, скільки разів оцінюється кожна група.",
   4:"Заповніть вступну частину (пояснювальну записку) і прикінцеву частину (методичні рекомендації). Абзаци й пункти пишіть з нового рядка; незаповнені поля в документ не потрапляють, а в перегляді позначені.",
   5:"Перегляньте готову програму: вступна частина, таблиці за темами, прикінцева частина з плануванням оцінювання. Завантажте .docx або скопіюйте таблиці; у меню «Експорт» є також Excel. Щоб продовжити роботу на іншому пристрої, збережіть файл проєкту (меню «Проєкт»)."
 };
